@@ -1,6 +1,5 @@
 package controllers
 
-import javax.inject.Singleton
 import play.api.mvc.{Action, Controller}
 
 import org.joda.time.DateTime

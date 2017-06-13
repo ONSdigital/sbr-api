@@ -18,7 +18,6 @@ lazy val constant = new {
   val team = "sbr"
 }
 
-
 lazy val commonSettings = Seq (
   scalaVersion := versions.scala,
   scalacOptions in ThisBuild ++= Seq(
@@ -48,30 +47,25 @@ lazy val commonSettings = Seq (
 )
 
 
-lazy val sbr = (project in file("."))
-  .settings(commonSettings: _*)
-  .settings(
-    name := constant.appName,
-    moduleName := "ons-sbr"
-  ).aggregate("api")
 
-lazy val api = (project in file("api"))
+lazy val api = (project in file("."))
   .enablePlugins(BuildInfoPlugin, GitVersioning, PlayScala)
   .settings(commonSettings: _*)
   .settings(
     scalaVersion := versions.scala,
     name := constant.appName,
+    moduleName := "ons-sbr",
     version := versions.version,
     buildInfoKeys := Seq[BuildInfoKey](organization, name, version, BuildInfoKey.action("gitVersion") {
       git.formattedShaVersion.?.value.getOrElse(Some("Unknown")).getOrElse("Unknown") +"@"+ git.formattedDateVersion.?.value.getOrElse("")
     }),
     buildInfoPackage := "version"
-//    libraryDependencies ++= Seq (
-//      jdbc
-//      cache
-//      ws
-//      "org.scalatestplus.play" %% "scalatestplus-play" % "2.0.0" % Test
-//    )
+    //    libraryDependencies ++= Seq (
+    //      jdbc
+    //      cache
+    //      ws
+    //      "org.scalatestplus.play" %% "scalatestplus-play" % "2.0.0" % Test
+    //    )
   )
 
 
