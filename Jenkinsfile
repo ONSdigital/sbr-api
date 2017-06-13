@@ -1,3 +1,5 @@
+#!groovy
+
 pipeline{
     agent any
     stages{
@@ -6,8 +8,8 @@ pipeline{
                 echo 'Building in processing'
                 sh '''
                     $SBT clean compile "project api" universal:packageBin coverage test coverageReport
-                    cp api/target/universal/ons-bi-api-*.zip api/target/universal/ons-bi-api.zip
-                    rm api/target/universal/ons-bi-api-*.zip
+                    cp api/target/universal/ons-sbr-api-*.zip dev-ons-bi-api.zip
+                    cp api/target/universal/ons-sbr-api-*.zip test-ons-bi-api.zip
                 '''
             }
         }
