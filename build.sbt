@@ -54,7 +54,7 @@ lazy val api = (project in file("."))
   .settings(
     scalaVersion := versions.scala,
     name := constant.appName,
-    moduleName := "ons-sbr",
+    moduleName := "ons-sbr-api",
     version := versions.version,
     buildInfoKeys := Seq[BuildInfoKey](
       organization,

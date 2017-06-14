@@ -8,8 +8,8 @@ pipeline{
                 echo 'Building in processing'
                 sh '''
                     $SBT clean compile "project api" universal:packageBin coverage test coverageReport
-                    cp api/target/universal/ons-sbr-api-*.zip dev-ons-bi-api.zip
-                    cp api/target/universal/ons-sbr-api-*.zip test-ons-bi-api.zip
+                    cp target/universal/ons-sbr-api-*.zip dev-ons-sbr-api.zip
+                    cp target/universal/ons-sbr-api-*.zip test-ons-sbr-api.zip
                 '''
             }
         }
