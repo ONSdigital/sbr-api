@@ -3,7 +3,7 @@ import play.sbt.PlayScala
 import sbtbuildinfo.BuildInfoPlugin.autoImport._
 
 
-licenses := Seq("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0"))
+licenses := Seq("MIT-License" -> url("https://opensource.org/licenses/MIT"))
 
 lazy val versions = new {
   val scala = "2.11.11"
@@ -56,10 +56,14 @@ lazy val api = (project in file("."))
     name := constant.appName,
     moduleName := "ons-sbr",
     version := versions.version,
-    buildInfoKeys := Seq[BuildInfoKey](organization, name, version, BuildInfoKey.action("gitVersion") {
+    buildInfoKeys := Seq[BuildInfoKey](
+      organization,
+      name,
+      version,
+      BuildInfoKey.action("gitVersion") {
       git.formattedShaVersion.?.value.getOrElse(Some("Unknown")).getOrElse("Unknown") +"@"+ git.formattedDateVersion.?.value.getOrElse("")
     }),
-    buildInfoPackage := "version"
+    buildInfoPackage := "controllers"
     //    libraryDependencies ++= Seq (
     //      jdbc
     //      cache
