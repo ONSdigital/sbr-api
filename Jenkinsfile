@@ -35,6 +35,11 @@ pipeline {
         }
     }
     post {
-
+        always {
+            checkstyle canComputeNew: false, defaultEncoding: '', healthy: '', pattern: '**/target/scalastyle-result.xml', unHealthy: ''
+        }
+        failure {
+            echo 'Something went wrong. The post build actions failed!'
+        }
     }
 }
