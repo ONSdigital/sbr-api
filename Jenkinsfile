@@ -1,9 +1,9 @@
 #!groovy
 
-pipeline{
+pipeline {
     agent any
-    stages{
-        stage ('Build') {
+    stages {
+        stage('Build') {
             steps {
                 echo 'Building in processing'
                 sh '''
@@ -13,16 +13,17 @@ pipeline{
                 '''
             }
         }
-        stage ('Code Quality') {
-        stage ('Test') {
-            steps {
-                echo 'Conducting Tests'
+        stage('Code Quality') {
+            stage('Test') {
+                steps {
+                    echo 'Conducting Tests'
+                }
             }
-        }
 
-        stage ('Deploy') {
-            steps {
-                echo 'Deploy the app!!'
+            stage('Deploy') {
+                steps {
+                    echo 'Deploy the app!!'
+                }
             }
         }
     }
