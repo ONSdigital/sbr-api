@@ -35,7 +35,8 @@ pipeline {
     }
     post {
         always {
-            checkstyle canComputeNew: false, defaultEncoding: '', healthy: '', pattern: '**/target/scalastyle-result.xml', unHealthy: ''
+            junit 'target/test-reports/*.xml'
+            step([$class: 'CheckStylePublisher', pattern: 'target/scalastyle-result.xml, target/scala-2.11/scapegoat-report/scapegoat-scalastyle.xml'])
         }
         failure {
             echo 'Something went wrong. The post build actions failed!'
