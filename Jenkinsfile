@@ -16,6 +16,7 @@ pipeline {
         stage('Code Quality') {
             steps {
                 sh '''
+                    $SBT scapegoat
                     $SBT scalastyle
                 '''
             }

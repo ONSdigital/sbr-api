@@ -33,6 +33,14 @@ addSbtPlugin("org.scoverage" % "sbt-coveralls" % "1.1.0")
 
 addSbtPlugin("com.codacy" % "sbt-codacy-coverage" % "1.3.8")
 
+
+// style
+
 addSbtPlugin("org.scalariform" % "sbt-scalariform" % "1.6.0")
 
+
+// test
+
 addSbtPlugin("com.sksamuel.scapegoat" %% "sbt-scapegoat" % "1.0.4")
+
+addSbtPlugin("org.scalastyle" % "scalastyle-sbt-plugin" % "0.8.0")
