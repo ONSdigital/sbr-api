@@ -14,16 +14,21 @@ pipeline {
             }
         }
         stage('Code Quality') {
-            stage('Test') {
-                steps {
-                    echo 'Conducting Tests'
-                }
+            steps {
+                sh '''
+                    $SBT scalastyle
+                '''
             }
+        }
+        stage('Test') {
+            steps {
+                echo 'Conducting Tests'
+            }
+        }
 
-            stage('Deploy') {
-                steps {
-                    echo 'Deploy the app!!'
-                }
+        stage('Deploy') {
+            steps {
+                echo 'Deploy the app!!'
             }
         }
     }
