@@ -17,6 +17,7 @@ pipeline {
             steps {
                 sh '''
                     $SBT scapegoat
+                    $SBT scalastyleGenerateConfig
                     $SBT scalastyle
                 '''
             }
