@@ -8,11 +8,12 @@ licenses := Seq("MIT-License" -> url("https://opensource.org/licenses/MIT"))
 lazy val versions = new {
   val scala = "2.11.11"
   val version = "0.1"
+  val scapegoatVersion = "1.1.0"
 }
 
 
 lazy val constant = new {
-  val appName = "ons-sbr"
+  val appName = "ons-sbr-api"
   val detail = versions.version
   val organisation = "ons"
   val team = "sbr"
@@ -42,6 +43,9 @@ lazy val commonSettings = Seq (
     "-Ywarn-unused", // Warn when local and private vals, vars, defs, and types are unused
     "-Ywarn-unused-import", //  Warn when imports are unused (don't want IntelliJ to do it automatically)
     "-Ywarn-numeric-widen" // Warn when numerics are widened
+  ),
+  resolvers ++= Seq(
+    Resolver.typesafeRepo("releases")
   ),
   coverageExcludedPackages := ".*Routes.*;.*ReverseRoutes.*;.*javascript.*"
 )

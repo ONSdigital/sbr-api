@@ -13,6 +13,7 @@ pipeline{
                 '''
             }
         }
+        stage ('Code Quality') {
         stage ('Test') {
             steps {
                 echo 'Conducting Tests'
