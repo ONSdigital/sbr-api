@@ -6,7 +6,7 @@ load 'common/Constants.groovy'
 pipeline {
     agent any
         stages {
-            try {
+
                 stage('Build') {
                     steps {
                         echo 'Building in processing'
@@ -37,19 +37,7 @@ pipeline {
                     }
                 }
             }
-            catch (Exception e) {
-                currentBuild.result = 'FAILURE'
 
-                if (currentBuild.result == 'SUCCESS') {
-                    mail body: "SBR API project build finished with status ${currentBuild.result} at the post stage. Found exception: $e" ,
-                            from: '${Constants.SENDER_ADDRESS}',
-                            replyTo: '${Constants.REPLY_ADDRESS}',
-                            subject: 'SBR API: project build failed',
-                            to: '${Constants.RECIPIENT_ADDRESS}'
-                }
-
-                throw e
-            }
             echo "INTERMEDIARY RESULT: ${currentBuild.result}"
         }
         post {
