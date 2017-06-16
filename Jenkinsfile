@@ -47,13 +47,14 @@ pipeline {
             echo 'Something went wrong. The post build actions failed!'
 
             currentBuild.result = 'FAILURE'
-
-            if (currentBuild.result == 'SUCCESS') {
-                mail body: "SBR API project build finished with status ${currentBuild.result} at the post stage. Found exception: $e" ,
-                        from: '${Constants.SENDER_ADDRESS}',
-                        replyTo: '${Constants.REPLY_ADDRESS}',
-                        subject: 'SBR API: project build failed',
-                        to: '${Constants.RECIPIENT_ADDRESS}'
+            step {
+                if (currentBuild.result == 'SUCCESS') {
+                    mail body: "SBR API project build finished with status ${currentBuild.result} at the post stage. Found exception: $e",
+                            from: '${Constants.SENDER_ADDRESS}',
+                            replyTo: '${Constants.REPLY_ADDRESS}',
+                            subject: 'SBR API: project build failed',
+                            to: '${Constants.RECIPIENT_ADDRESS}'
+                }
             }
         }
 
