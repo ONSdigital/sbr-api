@@ -1,5 +1,7 @@
 #!groovy
 
+load 'common/Constants.groovy'
+
 pipeline {
     agent any
     stages {
