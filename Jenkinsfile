@@ -3,7 +3,7 @@
 
 
 
-node ('node'){
+node {
 
 
         try {
