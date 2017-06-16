@@ -36,7 +36,7 @@ pipeline {
                         echo 'Deploying the app!'
                     }
                 }
-            }
+
 
             echo "INTERMEDIARY RESULT: ${currentBuild.result}"
         }
