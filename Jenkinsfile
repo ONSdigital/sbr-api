@@ -47,11 +47,13 @@ pipeline {
 
                 currentBuild.result = 'FAILURE'
 
-                mail body: "SBR API project build finished with status ${currentBuild.result} at the post stage. Found exception: $e" ,
-                from: '${Constants.SENDER_ADDRESS}',
-                replyTo: '${Constants.REPLY_ADDRESS}',
-                subject: 'SBR API: project build failed',
-                to: '${Constants.RECIPIENT_ADDRESS}'
+                if (currentBuild.result == 'SUCCESS') {
+                    mail body: "SBR API project build finished with status ${currentBuild.result} at the post stage. Found exception: $e" ,
+                    from: '${Constants.SENDER_ADDRESS}',
+                    replyTo: '${Constants.REPLY_ADDRESS}',
+                    subject: 'SBR API: project build failed',
+                    to: '${Constants.RECIPIENT_ADDRESS}'
+                }
             }
         }
         currentBuild.result = 'SUCCESS'
@@ -59,13 +61,15 @@ pipeline {
     catch (Exception e) {
         currentBuild.result = 'FAILURE'
 
-        mail body: "SBR API project build finished with status ${currentBuild.result} before reaching post stage. Found exception: $e" ,
-        from: '${Constants.SENDER_ADDRESS}',
-        replyTo: '${Constants.REPLY_ADDRESS}',
-        subject: 'SBR API: project build failed',
-        to: '${Constants.RECIPIENT_ADDRESS}'
+        if (currentBuild.result == 'SUCCESS') {
+            mail body: "SBR API project build finished with status ${currentBuild.result} at the post stage. Found exception: $e" ,
+            from: '${Constants.SENDER_ADDRESS}',
+            replyTo: '${Constants.REPLY_ADDRESS}',
+            subject: 'SBR API: project build failed',
+            to: '${Constants.RECIPIENT_ADDRESS}'
+        }
 
         throw e
     }
-    echo "*RESULT: ${currentBuild.result}"
+    echo "RESULT: ${currentBuild.result}"
 }
