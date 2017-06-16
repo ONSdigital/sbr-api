@@ -3,10 +3,10 @@
 load 'common/Constants.groovy'
 
 
-pipeline {
-    agent any
-    stages {
+node ('node'){
 
+
+        try {
             stage('Build') {
                 steps {
                     echo 'Building in processing'
@@ -36,9 +36,22 @@ pipeline {
                     echo 'Deploying the app!'
                 }
             }
+        }
+        catch (Exception e) {
+            currentBuild.result = 'FAILURE'
+
+            if (currentBuild.result == 'SUCCESS') {
+                mail body: "SBR API project build finished with status ${currentBuild.result} at the post stage. Found exception: $e" ,
+                        from: '${Constants.SENDER_ADDRESS}',
+                        replyTo: '${Constants.REPLY_ADDRESS}',
+                        subject: 'SBR API: project build failed',
+                        to: '${Constants.RECIPIENT_ADDRESS}'
+            }
+
+            throw e
+        }
 
 
-    }
     post {
         always {
             step([$class: 'CoberturaPublisher', coberturaReportFile: '**/target/scala-2.11/coverage-report/*.xml'])
@@ -59,7 +72,7 @@ pipeline {
         }
         currentBuild.result = 'SUCCESS'
     }
-
+    echo "RESULT: ${currentBuild.result}"
 }
 
 
