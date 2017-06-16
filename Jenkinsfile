@@ -1,6 +1,6 @@
 #!groovy
 
-load 'common/Constants.groovy'
+
 
 
 node ('node'){
