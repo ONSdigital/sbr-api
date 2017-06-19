@@ -1,12 +1,13 @@
 #!groovy
 
 
+
 node() {
     checkout scm
-    def example = load "common/Constants.groovy"
+    def constants = load "common/Constants.groovy"
 
-//    example.test()
-//    example.getSender()
+//    constants.test()
+//    constants.getSender()
 
 
     try {
@@ -18,8 +19,7 @@ node() {
         }
 
         stage('Build'){
-
-            echo "Building ${env.BUILD_ID} on ${env.JENKINS_URL}"
+            constants.colourText("info", "Building ${env.BUILD_ID} on ${env.JENKINS_URL}")
 
             env.NODE_STAGE = "Build"
 
@@ -78,7 +78,7 @@ node() {
 
             echo 'All stages complete. Build Successful so far.'
 
-            if (example.getEmailStatus() == true ) {
+            if (constants.getEmailStatus() == true ) {
                 mail body: 'project build successful',
                         from: 'xxxx@yyyyy.com',
                         replyTo: 'xxxx@yyyy.com',
@@ -95,8 +95,9 @@ node() {
     }
     catch (err) {
         currentBuild.result = "FAILURE"
+        constants.colourText("warn","Process failed at: ${env.NODE_STAGE}")
         print "Process failed at: ${env.NODE_STAGE}"
-        if (example.getEmailStatus() == true ) {
+        if (constants.getEmailStatus() == true ) {
             mail body: "project build error is here: ${env.BUILD_URL}",
                     from: 'xxxx@yyyy.com',
                     replyTo: 'yyyy@yyyy.com',
