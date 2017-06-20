@@ -18,16 +18,20 @@ REPLY_ADDRESS = "<REPLY_ADDRESS>"
 RECIPIENT_ADDRESS = "<RECIPIENT_ADDRESS>"
 EMAIL_SERVICE_ENABLED = false
 
-def test () {
-    echo 'Hello Seattle'
-}
-
 def getSender () {
     return SENDER_ADDRESS;
 }
 
 def getEmailStatus () {
     return EMAIL_SERVICE_ENABLED
+}
+
+def getRecipient () {
+    return RECIPIENT_ADDRESS
+}
+
+def getReplyAddress () {
+    return REPLY_ADDRESS
 }
 
 
