@@ -68,7 +68,7 @@ node() {
             milestone()
             // only one execution allowed - no parallel (deployments)
 //            lock('Deployment Initiated') {
-                constants.colourText("info", 'deployment in progress')
+            constants.colourText("info", 'deployment in progress')
 //            }
             constants.colourText("success", 'Deployment Complete.')
         }
@@ -87,7 +87,7 @@ node() {
             constants.colourText("info", 'All stages complete. Build Successful so far.')
 
             if (constants.getEmailStatus() == true ) {
-                sendNotifications currentBuild.result
+                sendNotifications currentBuild.result, "\$SBR_EMAIL_LIST"
             }
             else {
                 constants.colourText("info", 'NO email will be sent - email service has been manually turned off!')
@@ -101,7 +101,7 @@ node() {
         currentBuild.result = "FAILURE"
         constants.colourText("warn","Process failed at: ${env.NODE_STAGE}")
         if (constants.getEmailStatus() == true ) {
-            sendNotifications currentBuild.result, env.NODE_STAGE
+            sendNotifications currentBuild.result, "\$SBR_EMAIL_LIST", env.NODE_STAGE
         }
         else {
             throw err
