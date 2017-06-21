@@ -1,5 +1,6 @@
 #!groovy
-
+@Library('jenkins-pipeline-shared@fix/notifications') _
+@Library('jenkins-pipeline-shared@feature/cloud-foundry-deploy') _
 
 
 node() {
@@ -19,21 +20,21 @@ node() {
 
             env.NODE_STAGE = "Build"
 
-//            sh '''
-//                $SBT clean compile "project api" universal:packageBin coverage test coverageReport
-//                cp target/universal/ons-sbr-api-*.zip dev-ons-sbr-api.zip
-//                cp target/universal/ons-sbr-api-*.zip test-ons-sbr-api.zip
-//            '''
+            sh '''
+                $SBT clean compile "project api" universal:packageBin coverage test coverageReport
+                cp target/universal/ons-sbr-api-*.zip dev-ons-sbr-api.zip
+                cp target/universal/ons-sbr-api-*.zip test-ons-sbr-api.zip
+            '''
         }
 
         stage('Code Quality'){
 
             env.NODE_STAGE = "Code Quality"
 
-//            sh '''
-//                $SBT scapegoat
-//                $SBT scalastyle
-//            '''
+            sh '''
+                $SBT scapegoat
+                $SBT scalastyle
+            '''
 
         }
 
@@ -49,8 +50,8 @@ node() {
 
         stage('Post Actions') {
             env.NODE_STAGE = "Post Actions"
-//            step([$class: 'CoberturaPublisher', coberturaReportFile: '**/target/scala-2.11/coverage-report/*.xml'])
-//            step([$class: 'CheckStylePublisher', pattern: 'target/scalastyle-result.xml, target/scala-2.11/scapegoat-report/scapegoat-scalastyle.xml'])
+            step([$class: 'CoberturaPublisher', coberturaReportFile: '**/target/scala-2.11/coverage-report/*.xml'])
+            step([$class: 'CheckStylePublisher', pattern: 'target/scalastyle-result.xml, target/scala-2.11/scapegoat-report/scapegoat-scalastyle.xml'])
         }
 
         stage ('Approve') {
@@ -85,11 +86,12 @@ node() {
             constants.colourText("info", 'All stages complete. Build Successful so far.')
 
             if (constants.getEmailStatus() == true ) {
-                mail body: 'project build successful',
-                        from: constants.getSender(),
-                        replyTo: constants.getReplyAddress(),
-                        subject: 'project build successful',
-                        to: constants.getRecipient()
+//                mail body: 'project build successful',
+//                        from: constants.getSender(),
+//                        replyTo: constants.getReplyAddress(),
+//                        subject: 'project build successful',
+//                        to: constants.getRecipient()
+                sendNotifications currentBuild.result
             }
             else {
                 constants.colourText("info", 'NO email will be sent - email service has been manually turned off!')
@@ -103,11 +105,12 @@ node() {
         currentBuild.result = "FAILURE"
         constants.colourText("warn","Process failed at: ${env.NODE_STAGE}")
         if (constants.getEmailStatus() == true ) {
-            mail body: "project build error is here: ${env.BUILD_URL}",
-                    from: constants.getSender(),
-                    replyTo: constants.getReplyAddress(),
-                    subject: 'project build failed',
-                    to: constants.getRecipient()
+//            mail body: "project build error is here: ${env.BUILD_URL}",
+//                    from: constants.getSender(),
+//                    replyTo: constants.getReplyAddress(),
+//                    subject: 'project build failed',
+//                    to: constants.getRecipient()
+            sendNotifications currentBuild.result, env.NODE_STAGE
         }
         else {
             throw err
