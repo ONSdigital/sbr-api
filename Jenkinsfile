@@ -74,6 +74,7 @@ node() {
         }
 
         stage('Versioning'){
+            env.NODE_STAGE = "Versioning"
 //            sh '''
 //            git checkout devops/temp
 //            echo version : \\\"0.${env.BUILD_ID}\\\" >> build.sbt
@@ -82,15 +83,10 @@ node() {
         }
 
         stage('Confirmation'){
-
+            env.NODE_STAGE = "Confirmation Notification"
             constants.colourText("info", 'All stages complete. Build Successful so far.')
 
             if (constants.getEmailStatus() == true ) {
-//                mail body: 'project build successful',
-//                        from: constants.getSender(),
-//                        replyTo: constants.getReplyAddress(),
-//                        subject: 'project build successful',
-//                        to: constants.getRecipient()
                 sendNotifications currentBuild.result
             }
             else {
@@ -105,11 +101,6 @@ node() {
         currentBuild.result = "FAILURE"
         constants.colourText("warn","Process failed at: ${env.NODE_STAGE}")
         if (constants.getEmailStatus() == true ) {
-//            mail body: "project build error is here: ${env.BUILD_URL}",
-//                    from: constants.getSender(),
-//                    replyTo: constants.getReplyAddress(),
-//                    subject: 'project build failed',
-//                    to: constants.getRecipient()
             sendNotifications currentBuild.result, env.NODE_STAGE
         }
         else {
