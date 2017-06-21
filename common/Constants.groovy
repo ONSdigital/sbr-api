@@ -13,6 +13,13 @@
 //
 //}
 
+EMAIL_SERVICE_ENABLED = true
+
+def getEmailStatus () {
+    return EMAIL_SERVICE_ENABLED
+}
+
+
 
 /*
 * @method colourText(level,text)
