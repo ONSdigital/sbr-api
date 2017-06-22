@@ -104,7 +104,7 @@ pipeline {
                 script {
                     env.NODE_STAGE = "Deploy"
                 }
-                milestone()
+                milestone(0)
                 lock('Deployment Initiated') {
                     colourText("info", 'deployment in progress')
                 }
