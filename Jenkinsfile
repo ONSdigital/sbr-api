@@ -44,7 +44,6 @@ pipeline {
         }
 
         stage('Code Quality'){
-            agent { label 'adrianharristesting' }
             steps {
                 script {
                     env.NODE_STAGE = "Code Quality"
