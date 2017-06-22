@@ -19,9 +19,11 @@ pipeline {
                 deleteDir()
                 checkout scm
                 stash name: 'app'
-                version = '1.0.' + env.BUILD_NUMBER
-                currentBuild.displayName = version
-                currentBuild.result = "SUCCESS"
+                script {
+                    version = '1.0.' + env.BUILD_NUMBER
+                    currentBuild.displayName = version
+                    currentBuild.result = "SUCCESS"
+                }
             }
         }
 
@@ -29,9 +31,9 @@ pipeline {
             agent { label 'adrianharristesting' }
             steps {
                 colourText("info", "Building ${env.BUILD_ID} on ${env.JENKINS_URL}")
-
-                env.NODE_STAGE = "Build"
-
+                script {
+                    env.NODE_STAGE = "Build"
+                }
                 sh '''
                 $SBT clean compile "project api" universal:packageBin coverage test coverageReport
                 cp target/universal/ons-sbr-api-*.zip dev-ons-sbr-api.zip
@@ -43,7 +45,9 @@ pipeline {
         stage('Code Quality'){
             agent { label 'adrianharristesting' }
             steps {
-                env.NODE_STAGE = "Code Quality"
+                script {
+                    env.NODE_STAGE = "Code Quality"
+                }
                 sh '''
                 $SBT scapegoat
                 $SBT scalastyle
@@ -55,21 +59,27 @@ pipeline {
         stage('Test - Functional'){
             agent { label 'adrianharristesting' }
             steps{
-                env.NODE_STAGE = "Test - Functional"
+                script{
+                    env.NODE_STAGE = "Test - Functional"
+                }
             }
         }
 
         stage('Integration Test'){
             agent { label 'adrianharristesting' }
             steps {
-                env.NODE_STAGE = "Integration Test"
+                script{
+                    env.NODE_STAGE = "Integration Test"
+                }
             }
         }
 
         stage('Reports') {
             agent { label 'adrianharristesting' }
             steps {
-                env.NODE_STAGE = "Reports"
+                script{
+                    env.NODE_STAGE = "Reports"
+                }
                 step([$class: 'CoberturaPublisher', coberturaReportFile: '**/target/scala-2.11/coverage-report/*.xml'])
                 step([$class: 'CheckStylePublisher', pattern: 'target/scalastyle-result.xml, target/scala-2.11/scapegoat-report/scapegoat-scalastyle.xml'])
             }
@@ -89,7 +99,9 @@ pipeline {
         stage('Deploy'){
             agent any
             steps {
-                env.NODE_STAGE = "Deploy"
+                script {
+                    env.NODE_STAGE = "Deploy"
+                }
                 milestone()
                 lock('Deployment Initiated') {
                     colourText("info", 'deployment in progress')
@@ -100,7 +112,9 @@ pipeline {
 
         stage('Versioning'){
             steps {
-                env.NODE_STAGE = "Versioning"
+                script {
+                    env.NODE_STAGE = "Versioning"
+                }
 //            sh '''
 //            git checkout devops/temp
 //            echo version : \\\"0.${env.BUILD_ID}\\\" >> build.sbt
@@ -111,7 +125,9 @@ pipeline {
 
         stage('Confirmation'){
             steps {
-                env.NODE_STAGE = "Confirmation Notification"
+                script {
+                    env.NODE_STAGE = "Confirmation Notification"
+                }
                 colourText("info", 'All stages complete. Build Successful so far.')
 
                 if (getEmailStatus() == true ) {
