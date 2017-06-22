@@ -88,7 +88,9 @@ pipeline {
         stage ('Approve') {
             agent any
             steps {
-                env.NODE_STAGE = "Approve"
+                script {
+                    env.NODE_STAGE = "Approve"
+                }
                 timeout(time: 2, unit: 'MINUTES') {
                     input message: 'Do you wish to deploy the build?'
                 }
@@ -129,25 +131,33 @@ pipeline {
                     env.NODE_STAGE = "Confirmation Notification"
                 }
                 colourText("info", 'All stages complete. Build Successful so far.')
-
-                if (getEmailStatus() == true ) {
-                    sendNotifications currentBuild.result, "\$SBR_EMAIL_LIST"
-                }
-                else {
-                    colourText("info", 'NO email will be sent - email service has been manually turned off!')
+                script {
+                    if (getEmailStatus() == true ) {
+                        sendNotifications currentBuild.result, "\$SBR_EMAIL_LIST"
+                    }
+                    else {
+                        colourText("info", 'NO email will be sent - email service has been manually turned off!')
+                    }
                 }
             }
         }
     }
     post {
         always {
-            env.NODE_STAGE = "Post"
+            script {
+                env.NODE_STAGE = "Post"
+            }
         }
         failure {
-            currentBuild.result = "FAILURE"
+            script {
+                env.NODE_STAGE = "Approve"
+            }
+//            currentBuild.result = "FAILURE"
             colourText("warn","Process failed at: ${env.NODE_STAGE}")
-            if (getEmailStatus() == true ) {
-                sendNotifications currentBuild.result, ${env.NODE_STAGE}
+            script {
+                if (getEmailStatus() == true ) {
+                    sendNotifications currentResult, ${env.NODE_STAGE}
+                }
             }
             colourText("warn", "Build has failed! Stopped on stage: ${env.NODE_STAGE} - NO email will be sent")
         }
