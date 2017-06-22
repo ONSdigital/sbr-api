@@ -58,7 +58,7 @@ pipeline {
         }
 
         stage('Test - Functional'){
-            agent { label 'adrianharristesting' }
+            agent any
             steps{
                 script{
                     env.NODE_STAGE = "Test - Functional"
@@ -67,7 +67,7 @@ pipeline {
         }
 
         stage('Integration Test'){
-            agent { label 'adrianharristesting' }
+            agent any
             steps {
                 script{
                     env.NODE_STAGE = "Integration Test"
@@ -76,7 +76,7 @@ pipeline {
         }
 
         stage('Reports') {
-            agent { label 'adrianharristesting' }
+            agent any
             steps {
                 script{
                     env.NODE_STAGE = "Reports"
