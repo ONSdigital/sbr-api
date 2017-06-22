@@ -64,12 +64,10 @@ node() {
 
         stage('Deploy'){
             env.NODE_STAGE = "Deploy"
-            // aborts old pipeline deployment processes
             milestone()
-            // only one execution allowed - no parallel (deployments)
-//            lock('Deployment Initiated') {
+            lock('Deployment Initiated') {
             constants.colourText("info", 'deployment in progress')
-//            }
+            }
             constants.colourText("success", 'Deployment Complete.')
         }
 
