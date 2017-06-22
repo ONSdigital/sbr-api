@@ -1,39 +1,40 @@
 #!groovy
-@Library('jenkins-pipeline-shared@email-sbr') _
+//@Library('jenkins-pipeline-shared@email-sbr') _
 //@Library('jenkins-pipeline-shared@feature/cloud-foundry-deploy') _
 
 pipeline {
     agent any
-    stages {
-        checkout scm
-        def constants = load "common/Constants.groovy"
 
+    stages {
         stage('Configure'){
+            checkout scm
+            env.CONSTANTS = load "common/Constants.groovy"
+
             version = '1.0.' + env.BUILD_NUMBER
             currentBuild.displayName = version
             currentBuild.result = "SUCCESS"
         }
 
         stage('Build'){
-            constants.colourText("info", "Building ${env.BUILD_ID} on ${env.JENKINS_URL}")
+            env.CONSTANTS.colourText("info", "Building ${env.BUILD_ID} on ${env.JENKINS_URL}")
 
             env.NODE_STAGE = "Build"
 
-            sh '''
-                $SBT clean compile "project api" universal:packageBin coverage test coverageReport
-                cp target/universal/ons-sbr-api-*.zip dev-ons-sbr-api.zip
-                cp target/universal/ons-sbr-api-*.zip test-ons-sbr-api.zip
-            '''
+//            sh '''
+//                $SBT clean compile "project api" universal:packageBin coverage test coverageReport
+//                cp target/universal/ons-sbr-api-*.zip dev-ons-sbr-api.zip
+//                cp target/universal/ons-sbr-api-*.zip test-ons-sbr-api.zip
+//            '''
         }
 
         stage('Code Quality'){
 
             env.NODE_STAGE = "Code Quality"
 
-            sh '''
-                $SBT scapegoat
-                $SBT scalastyle
-            '''
+//            sh '''
+//                $SBT scapegoat
+//                $SBT scalastyle
+//            '''
 
         }
 
@@ -49,8 +50,8 @@ pipeline {
 
         stage('Reports') {
             env.NODE_STAGE = "Reports"
-            step([$class: 'CoberturaPublisher', coberturaReportFile: '**/target/scala-2.11/coverage-report/*.xml'])
-            step([$class: 'CheckStylePublisher', pattern: 'target/scalastyle-result.xml, target/scala-2.11/scapegoat-report/scapegoat-scalastyle.xml'])
+//            step([$class: 'CoberturaPublisher', coberturaReportFile: '**/target/scala-2.11/coverage-report/*.xml'])
+//            step([$class: 'CheckStylePublisher', pattern: 'target/scalastyle-result.xml, target/scala-2.11/scapegoat-report/scapegoat-scalastyle.xml'])
         }
 
         stage ('Approve') {
@@ -67,9 +68,9 @@ pipeline {
             milestone()
             // only one execution allowed - no parallel (deployments)
             lock('Deployment Initiated') {
-                constants.colourText("info", 'deployment in progress')
+                env.CONSTANTS.colourText("info", 'deployment in progress')
             }
-            constants.colourText("success", 'Deployment Complete.')
+            env.CONSTANTS.colourText("success", 'Deployment Complete.')
         }
 
         stage('Versioning'){
@@ -83,13 +84,13 @@ pipeline {
 
         stage('Confirmation'){
             env.NODE_STAGE = "Confirmation Notification"
-            constants.colourText("info", 'All stages complete. Build Successful so far.')
+            env.CONSTANTS.colourText("info", 'All stages complete. Build Successful so far.')
 
-            if (constants.getEmailStatus() == true ) {
+            if (env.CONSTANTS.getEmailStatus() == true ) {
                 sendNotifications currentBuild.result, "\$SBR_EMAIL_LIST"
             }
             else {
-                constants.colourText("info", 'NO email will be sent - email service has been manually turned off!')
+                env.CONSTANTS.colourText("info", 'NO email will be sent - email service has been manually turned off!')
             }
         }
     }
@@ -99,11 +100,11 @@ pipeline {
         }
         failure {
             currentBuild.result = "FAILURE"
-            constants.colourText("warn","Process failed at: ${env.NODE_STAGE}")
-            if (constants.getEmailStatus() == true ) {
-                sendNotifications currentBuild.result, "\$SBR_EMAIL_LIST", "\${env.NODE_STAGE}"
+            env.CONSTANTS.colourText("warn","Process failed at: ${env.NODE_STAGE}")
+            if (env.CONSTANTS.getEmailStatus() == true ) {
+                sendNotifications currentBuild.result, "\$SBR_EMAIL_LIST", ${env.NODE_STAGE}
             }
-            constants.colourText("warn", "Build has failed! Stopped on stage: ${env.NODE_STAGE} - NO email will be sent")
+            env.CONSTANTS.colourText("warn", "Build has failed! Stopped on stage: ${env.NODE_STAGE} - NO email will be sent")
         }
     }
 }
