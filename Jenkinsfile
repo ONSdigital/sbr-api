@@ -29,7 +29,7 @@ pipeline {
         }
 
         stage('Build'){
-            agent { label 'adrianharristesting' }
+            agent any
             steps {
                 colourText("info", "Building ${env.BUILD_ID} on ${env.JENKINS_URL}")
                 script {
@@ -39,7 +39,7 @@ pipeline {
                 $SBT clean compile "project api" universal:packageBin coverage test coverageReport
                 cp target/universal/ons-sbr-api-*.zip dev-ons-sbr-api.zip
                 cp target/universal/ons-sbr-api-*.zip test-ons-sbr-api.zip
-            '''
+                 '''
             }
         }
 
