@@ -15,6 +15,7 @@ pipeline {
 
     stages {
         stage('Checkout'){
+            agent any
             steps{
                 deleteDir()
                 checkout scm
@@ -113,6 +114,7 @@ pipeline {
         }
 
         stage('Versioning'){
+            agent any
             steps {
                 script {
                     env.NODE_STAGE = "Versioning"
@@ -126,6 +128,7 @@ pipeline {
         }
 
         stage('Confirmation'){
+            agent any
             steps {
                 script {
                     env.NODE_STAGE = "Confirmation Notification"
