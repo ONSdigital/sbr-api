@@ -2,12 +2,11 @@
 @Library('jenkins-pipeline-shared@email-sbr') _
 //@Library('jenkins-pipeline-shared@feature/cloud-foundry-deploy') _
 
-
-node() {
-    checkout scm
-    def constants = load "common/Constants.groovy"
-
-    try {
+pipeline {
+    agent any
+    stages {
+        checkout scm
+        def constants = load "common/Constants.groovy"
 
         stage('Configure'){
             version = '1.0.' + env.BUILD_NUMBER
@@ -48,8 +47,8 @@ node() {
 
         }
 
-        stage('Post Actions') {
-            env.NODE_STAGE = "Post Actions"
+        stage('Reports') {
+            env.NODE_STAGE = "Reports"
             step([$class: 'CoberturaPublisher', coberturaReportFile: '**/target/scala-2.11/coverage-report/*.xml'])
             step([$class: 'CheckStylePublisher', pattern: 'target/scalastyle-result.xml, target/scala-2.11/scapegoat-report/scapegoat-scalastyle.xml'])
         }
@@ -64,9 +63,11 @@ node() {
 
         stage('Deploy'){
             env.NODE_STAGE = "Deploy"
+            // aborts old pipeline deployment processes
             milestone()
+            // only one execution allowed - no parallel (deployments)
             lock('Deployment Initiated') {
-            constants.colourText("info", 'deployment in progress')
+                constants.colourText("info", 'deployment in progress')
             }
             constants.colourText("success", 'Deployment Complete.')
         }
@@ -91,21 +92,18 @@ node() {
                 constants.colourText("info", 'NO email will be sent - email service has been manually turned off!')
             }
         }
-
-
-
     }
-    catch (err) {
-        currentBuild.result = "FAILURE"
-        constants.colourText("warn","Process failed at: ${env.NODE_STAGE}")
-        if (constants.getEmailStatus() == true ) {
-            sendNotifications currentBuild.result, "\$SBR_EMAIL_LIST", "\${env.NODE_STAGE}"
+    post {
+        always {
+            env.NODE_STAGE = "Post"
         }
-        else {
-            throw err
+        failure {
+            currentBuild.result = "FAILURE"
+            constants.colourText("warn","Process failed at: ${env.NODE_STAGE}")
+            if (constants.getEmailStatus() == true ) {
+                sendNotifications currentBuild.result, "\$SBR_EMAIL_LIST", "\${env.NODE_STAGE}"
+            }
+            constants.colourText("warn", "Build has failed! Stopped on stage: ${env.NODE_STAGE} - NO email will be sent")
         }
-
-        throw err
     }
-
 }
