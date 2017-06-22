@@ -4,7 +4,7 @@
 //@Library('jenkins-pipeline-shared@feature/cloud-foundry-deploy') _
 
 pipeline {
-    agent none
+    agent any
 
     options {
         skipDefaultCheckout()
@@ -15,7 +15,7 @@ pipeline {
 
     stages {
         stage('Checkout'){
-            agent any
+
             steps{
                 deleteDir()
                 checkout scm
@@ -29,7 +29,7 @@ pipeline {
         }
 
         stage('Build'){
-            agent any
+
             steps {
                 colourText("info", "Building ${env.BUILD_ID} on ${env.JENKINS_URL}")
                 script {
@@ -58,7 +58,7 @@ pipeline {
         }
 
         stage('Test - Functional'){
-            agent any
+
             steps{
                 script{
                     env.NODE_STAGE = "Test - Functional"
@@ -67,7 +67,7 @@ pipeline {
         }
 
         stage('Integration Test'){
-            agent any
+
             steps {
                 script{
                     env.NODE_STAGE = "Integration Test"
@@ -76,7 +76,7 @@ pipeline {
         }
 
         stage('Reports') {
-            agent any
+
             steps {
                 script{
                     env.NODE_STAGE = "Reports"
@@ -87,7 +87,7 @@ pipeline {
         }
 
         stage ('Approve') {
-            agent any
+
             steps {
                 script {
                     env.NODE_STAGE = "Approve"
@@ -100,7 +100,7 @@ pipeline {
 
 
         stage('Deploy'){
-            agent any
+
             steps {
                 script {
                     env.NODE_STAGE = "Deploy"
@@ -114,7 +114,7 @@ pipeline {
         }
 
         stage('Versioning'){
-            agent any
+
             steps {
                 script {
                     env.NODE_STAGE = "Versioning"
@@ -128,7 +128,7 @@ pipeline {
         }
 
         stage('Confirmation'){
-            agent any
+
             steps {
                 script {
                     env.NODE_STAGE = "Confirmation Notification"
