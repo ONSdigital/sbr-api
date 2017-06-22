@@ -1,5 +1,5 @@
 #!groovy
-@Library('jenkins-pipeline-shared@email-sbr') _
+@Library('jenkins-pipeline-shared@develop') _
 //@Library('jenkins-pipeline-shared@feature/cloud-foundry-deploy') _
 
 
@@ -101,7 +101,7 @@ node() {
         currentBuild.result = "FAILURE"
         constants.colourText("warn","Process failed at: ${env.NODE_STAGE}")
         if (constants.getEmailStatus() == true ) {
-            sendNotifications currentBuild.result, "\$SBR_EMAIL_LIST", "Failed at stage: ${env.NODE_STAGE}"
+            sendNotifications currentBuild.result, "\$SBR_EMAIL_LIST", ${env.NODE_STAGE}
         }
         else {
             throw err
