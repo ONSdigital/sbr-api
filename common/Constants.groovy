@@ -4,9 +4,6 @@
 ////    static final REPLY_ADDRESS = envConf.getBoolean("alert.email.reply")
 ////    static final RECIPIENT_ADDRESS = envConf.getBoolean("alert.email.recipient")
 //
-////    def test () {
-////        return 'Hello Seattle'
-////    }
 //    def getSender2 () {
 //        return SENDER_ADDRESS2;
 //    }
