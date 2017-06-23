@@ -6,13 +6,6 @@
 pipeline {
     agent any
 
-    options {
-        skipDefaultCheckout()
-    }
-    triggers {
-        pollSCM('*/5 * * * *') // pollSCM every 5 minutes
-    }
-
     stages {
         stage('Checkout'){
 
@@ -39,38 +32,32 @@ pipeline {
                 $SBT clean compile "project api" universal:packageBin coverage test coverageReport
                 cp target/universal/ons-sbr-api-*.zip dev-ons-sbr-api.zip
                 cp target/universal/ons-sbr-api-*.zip test-ons-sbr-api.zip
-                 '''
+                '''
             }
         }
 
-        stage('Code Quality'){
+        stage('Static Analysis'){
             steps {
                 script {
-                    env.NODE_STAGE = "Code Quality"
+                    env.NODE_STAGE = "Static Analysis"
                 }
                 sh '''
                 $SBT scapegoat
                 $SBT scalastyle
                 '''
             }
-
         }
 
-        stage('Test - Functional'){
 
-            steps{
-                script{
-                    env.NODE_STAGE = "Test - Functional"
-                }
-            }
-        }
-
-        stage('Integration Test'){
-
+        // bundle all libs and dependencies
+        stage ('Bundle') {
             steps {
-                script{
-                    env.NODE_STAGE = "Integration Test"
+                dir('conf') {
+                    git(url: "$GITLAB_URL/StatBusReg/sbr-api.git", credentialsId: 'sbr-gitlab-id', branch: 'develop')
                 }
+
+                packageApp('dev')
+                packageApp('test')
             }
         }
 
@@ -104,7 +91,7 @@ pipeline {
                 script {
                     env.NODE_STAGE = "Deploy"
                 }
-                milestone(0)
+                milestone(1)
                 lock('Deployment Initiated') {
                     colourText("info", 'deployment in progress')
                 }
@@ -149,19 +136,40 @@ pipeline {
             script {
                 env.NODE_STAGE = "Post"
             }
+            colourText("info", 'Post steps initiated')
         }
-        failure {
-            script {
-                env.NODE_STAGE = "Approve"
-            }
-//            currentBuild.result = "FAILURE"
-            colourText("warn","Process failed at: ${env.NODE_STAGE}")
+        success {
+            colourText("success", 'All stages complete. Build was successful.')
             script {
                 if (getEmailStatus() == true ) {
-                    sendNotifications currentResult, ${env.NODE_STAGE}
+                    sendNotifications currentBuild.result, "\$SBR_EMAIL_LIST"
+                }
+                else {
+                    colourText("info", 'NO email will be sent - email service has been manually turned off!')
                 }
             }
-            colourText("warn", "Build has failed! Stopped on stage: ${env.NODE_STAGE} - NO email will be sent")
+        }
+        unstable {
+            colourText("warn", 'Something went wrong, build finished with result ${currentResult}. This may be caused by failed tests, code violation or in some cases unexpected interrupt.')
+            script {
+                if (getEmailStatus() == true ) {
+                    sendNotifications currentResult, "\$SBR_EMAIL_LIST", ${env.NODE_STAGE}
+                }
+                else {
+                    colourText("info", 'NO email will be sent - email service has been manually turned off!')
+                }
+            }
+
+        }
+        failure {
+//            currentBuild.result = "FAILURE"
+            colourText("warn",'Process failed at: ${env.NODE_STAGE}')
+            script {
+                if (getEmailStatus() == true ) {
+                    sendNotifications currentResult, "\$SBR_EMAIL_LIST", ${env.NODE_STAGE}
+                }
+            }
+            colourText("warn", 'Build has failed! Stopped on stage: ${env.NODE_STAGE} - NO email will be sent')
         }
     }
 }
@@ -216,4 +224,14 @@ def getLevelCode(level) {
             break
     }
     colourCode
+}
+
+
+def packageApp(String env) {
+    withEnv(["ENV=${env}"]) {
+        sh '''
+			  zip -g $ENV-ons-bi-api.zip conf/$ENV/krb5.conf
+			  zip -g $ENV-ons-bi-api.zip conf/$ENV/bi-$ENV-ci.keytab
+		'''
+    }
 }
