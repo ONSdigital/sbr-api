@@ -13,7 +13,6 @@ pipeline {
         stage('Checkout'){
 
             steps{
-                deleteDir()
                 checkout scm
                 stash name: 'app'
                 script {
@@ -28,8 +27,7 @@ pipeline {
         stage('Build'){
 
             steps {
-                colourText("info", "Building ${env.BUILD_ID} on ${env.JENKINS_URL}")
-                colourText("info", "Current branch: ${branch}")
+                colourText("info", "Building ${env.BUILD_ID} on ${env.JENKINS_URL} from branch ${env.BRANCH_NAME}")
                 script {
                     env.NODE_STAGE = "Build"
                 }
@@ -67,70 +65,74 @@ pipeline {
 
         // bundle all libs and dependencies
         stage ('Bundle') {
-//            steps {
+            when {
+                branch "develop"
+            }
+            steps {
+                colourText("info", "Bundling....")
 //                dir('conf') {
 //                    git(url: "$GITLAB_URL/StatBusReg/sbr-api.git", credentialsId: 'sbr-gitlab-id', branch: 'develop')
 //                }
 //
 //                packageApp('dev')
 //                packageApp('test')
-//            }
+            }
         }
 
 
         stage('Deploy Dev'){
-
+            when {
+                branch "develop"
+            }
             steps {
-                script {
-                    env.NODE_STAGE = "Deploy"
-                }
-//                milestone(1)
+                colourText("success", 'Deploy Dev.')
+                milestone(1)
                 lock('Deployment Initiated') {
                     colourText("info", 'deployment in progress')
                 }
-                colourText("success", 'Deployment Complete.')
             }
+
         }
 
         stage('Integration Tests - Dev') {
-            colourText("success", 'Integration Tests - Dev.')
+            when {
+                branch "develop"
+            }
+            steps {
+                colourText("success", 'Integration Tests - Dev.')
+            }
         }
 
 
         stage('Deploy Test'){
-
+            when {
+                branch "develop"
+            }
             steps {
-                script {
-                    env.NODE_STAGE = "Deploy"
-                }
+                colourText("success", 'Deploy Test.')
 //                milestone(1)
                 lock('Deployment Initiated') {
                     colourText("info", 'deployment in progress')
                 }
-                colourText("success", 'Deployment Complete.')
             }
+
         }
 
         stage('Integration Tests - Test') {
-            colourText("success", 'Integration Tests - Test.')
-        }
-
-        stage('Versioning'){
-
+            when {
+                branch "develop"
+            }
             steps {
-                script {
-                    env.NODE_STAGE = "Versioning"
-                }
-//            sh '''
-//            git checkout devops/temp
-//            echo version : \\\"0.${env.BUILD_ID}\\\" >> build.sbt
-//            git commit -am "Updated version number"
-//            '''
+                colourText("success", 'Integration Tests - Test.')
             }
         }
 
+
         stage ('Approve') {
-            agent { label 'adrianharristesting' }
+//            agent { label 'adrianharristesting' }
+            when {
+                branch "master"
+            }
             steps {
                 script {
                     env.NODE_STAGE = "Approve"
@@ -146,33 +148,43 @@ pipeline {
             when {
                 branch "master"
             }
-            colourText("success", 'Release.')
+            steps {
+                colourText("success", 'Release.')
+            }
         }
 
         stage ('Package') {
             when {
                 branch "master"
             }
-            colourText("success", 'Package.')
+            steps {
+                colourText("success", 'Package.')
+            }
+
         }
 
-        stage ('Store') {
+        stage ('Make Artifact') {
             when {
                 branch "master"
             }
-            colourText("success", 'Store.')
+            steps {
+                colourText("success", 'Store.')
+            }
+
         }
 
         stage ('Deploy Live') {
             when {
                 branch "master"
             }
-//            milestone(1)
-            lock('Deployment Initiated') {
-                colourText("info", 'deployment in progress')
+            steps {
+                colourText("success", 'Deploy Live.')
+                milestone(1)
+                lock('Deployment Initiated') {
+                    colourText("info", 'deployment in progress')
+                }
             }
 
-            colourText("success", 'Deploy Live.')
         }
     }
     post {
@@ -180,7 +192,7 @@ pipeline {
             script {
                 env.NODE_STAGE = "Post"
             }
-
+            deleteDir()
             colourText("info", 'Post steps initiated')
 
         }
