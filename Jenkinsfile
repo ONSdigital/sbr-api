@@ -5,9 +5,10 @@
 
 pipeline {
     agent any
-	options {
-    		buildDiscarder(logRotator(numToKeepStr: '30', artifactNumToKeepStr: '30'))
-  	}
+    options {
+        skipDefaultCheckout()
+        buildDiscarder(logRotator(numToKeepStr: '30', artifactNumToKeepStr: '30'))
+    }
     stages {
         stage('Checkout'){
 
@@ -19,6 +20,7 @@ pipeline {
                     version = '1.0.' + env.BUILD_NUMBER
                     currentBuild.displayName = version
                     currentBuild.result = "SUCCESS"
+                    env.NODE_STAGE = "Checkout"
                 }
             }
         }
@@ -27,6 +29,7 @@ pipeline {
 
             steps {
                 colourText("info", "Building ${env.BUILD_ID} on ${env.JENKINS_URL}")
+                colourText("info", "Current branch: ${branch}")
                 script {
                     env.NODE_STAGE = "Build"
                 }
@@ -50,19 +53,6 @@ pipeline {
             }
         }
 
-
-        // bundle all libs and dependencies
-        stage ('Bundle') {
-            steps {
-                dir('conf') {
-                    git(url: "$GITLAB_URL/StatBusReg/sbr-api.git", credentialsId: 'sbr-gitlab-id', branch: 'develop')
-                }
-
-                packageApp('dev')
-                packageApp('test')
-            }
-        }
-
         stage('Reports') {
 
             steps {
@@ -74,31 +64,55 @@ pipeline {
             }
         }
 
-        stage ('Approve') {
 
-            steps {
-                script {
-                    env.NODE_STAGE = "Approve"
-                }
-                timeout(time: 2, unit: 'MINUTES') {
-                    input message: 'Do you wish to deploy the build?'
-                }
-            }
+        // bundle all libs and dependencies
+        stage ('Bundle') {
+//            steps {
+//                dir('conf') {
+//                    git(url: "$GITLAB_URL/StatBusReg/sbr-api.git", credentialsId: 'sbr-gitlab-id', branch: 'develop')
+//                }
+//
+//                packageApp('dev')
+//                packageApp('test')
+//            }
         }
 
 
-        stage('Deploy'){
+        stage('Deploy Dev'){
 
             steps {
                 script {
                     env.NODE_STAGE = "Deploy"
                 }
-                milestone(1)
+//                milestone(1)
                 lock('Deployment Initiated') {
                     colourText("info", 'deployment in progress')
                 }
                 colourText("success", 'Deployment Complete.')
             }
+        }
+
+        stage('Integration Tests - Dev') {
+            colourText("success", 'Integration Tests - Dev.')
+        }
+
+
+        stage('Deploy Test'){
+
+            steps {
+                script {
+                    env.NODE_STAGE = "Deploy"
+                }
+//                milestone(1)
+                lock('Deployment Initiated') {
+                    colourText("info", 'deployment in progress')
+                }
+                colourText("success", 'Deployment Complete.')
+            }
+        }
+
+        stage('Integration Tests - Test') {
+            colourText("success", 'Integration Tests - Test.')
         }
 
         stage('Versioning'){
@@ -115,22 +129,50 @@ pipeline {
             }
         }
 
-        stage('Confirmation'){
-
+        stage ('Approve') {
+            agent { label 'adrianharristesting' }
             steps {
                 script {
-                    env.NODE_STAGE = "Confirmation Notification"
+                    env.NODE_STAGE = "Approve"
                 }
-                colourText("info", 'All stages complete. Build Successful so far.')
-                script {
-                    if (getEmailStatus() == true ) {
-                        sendNotifications currentBuild.result, "\$SBR_EMAIL_LIST"
-                    }
-                    else {
-                        colourText("info", 'NO email will be sent - email service has been manually turned off!')
-                    }
+                timeout(time: 2, unit: 'MINUTES') {
+                    input message: 'Do you wish to deploy the build?'
                 }
             }
+        }
+
+
+        stage ('Release') {
+            when {
+                branch "master"
+            }
+            colourText("success", 'Release.')
+        }
+
+        stage ('Package') {
+            when {
+                branch "master"
+            }
+            colourText("success", 'Package.')
+        }
+
+        stage ('Store') {
+            when {
+                branch "master"
+            }
+            colourText("success", 'Store.')
+        }
+
+        stage ('Deploy Live') {
+            when {
+                branch "master"
+            }
+//            milestone(1)
+            lock('Deployment Initiated') {
+                colourText("info", 'deployment in progress')
+            }
+
+            colourText("success", 'Deploy Live.')
         }
     }
     post {
@@ -138,40 +180,22 @@ pipeline {
             script {
                 env.NODE_STAGE = "Post"
             }
+
             colourText("info", 'Post steps initiated')
+
         }
         success {
             colourText("success", 'All stages complete. Build was successful.')
-            script {
-                if (getEmailStatus() == true ) {
-                    sendNotifications currentBuild.result, "\$SBR_EMAIL_LIST"
-                }
-                else {
-                    colourText("info", 'NO email will be sent - email service has been manually turned off!')
-                }
-            }
+            sendNotifications currentBuild.result, "\$SBR_EMAIL_LIST"
         }
         unstable {
             colourText("warn", 'Something went wrong, build finished with result ${currentResult}. This may be caused by failed tests, code violation or in some cases unexpected interrupt.')
-            script {
-                if (getEmailStatus() == true ) {
-                    sendNotifications currentResult, "\$SBR_EMAIL_LIST", ${env.NODE_STAGE}
-                }
-                else {
-                    colourText("info", 'NO email will be sent - email service has been manually turned off!')
-                }
-            }
-
+            sendNotifications currentResult, "\$SBR_EMAIL_LIST", ${env.NODE_STAGE}
         }
         failure {
 //            currentBuild.result = "FAILURE"
             colourText("warn",'Process failed at: ${env.NODE_STAGE}')
-            script {
-                if (getEmailStatus() == true ) {
-                    sendNotifications currentResult, "\$SBR_EMAIL_LIST", ${env.NODE_STAGE}
-                }
-            }
-            colourText("warn", 'Build has failed! Stopped on stage: ${env.NODE_STAGE} - NO email will be sent')
+            sendNotifications currentResult, "\$SBR_EMAIL_LIST", ${env.NODE_STAGE}
         }
     }
 }
