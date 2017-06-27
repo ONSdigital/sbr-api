@@ -31,11 +31,11 @@ pipeline {
                 script {
                     env.NODE_STAGE = "Build"
                 }
-                sh '''
-                $SBT clean compile "project api" universal:packageBin coverage test coverageReport
-                cp target/universal/ons-sbr-api-*.zip dev-ons-sbr-api.zip
-                cp target/universal/ons-sbr-api-*.zip test-ons-sbr-api.zip
-                '''
+//                sh '''
+//                $SBT clean compile "project api" universal:packageBin coverage test coverageReport
+//                cp target/universal/ons-sbr-api-*.zip dev-ons-sbr-api.zip
+//                cp target/universal/ons-sbr-api-*.zip test-ons-sbr-api.zip
+//                '''
             }
         }
 
@@ -44,10 +44,10 @@ pipeline {
                 script {
                     env.NODE_STAGE = "Static Analysis"
                 }
-                sh '''
-                $SBT scapegoat
-                $SBT scalastyle
-                '''
+//                sh '''
+//                $SBT scapegoat
+//                $SBT scalastyle
+//                '''
             }
         }
 
@@ -57,8 +57,8 @@ pipeline {
                 script{
                     env.NODE_STAGE = "Reports"
                 }
-                step([$class: 'CoberturaPublisher', coberturaReportFile: '**/target/scala-2.11/coverage-report/*.xml'])
-                step([$class: 'CheckStylePublisher', pattern: 'target/scalastyle-result.xml, target/scala-2.11/scapegoat-report/scapegoat-scalastyle.xml'])
+//                step([$class: 'CoberturaPublisher', coberturaReportFile: '**/target/scala-2.11/coverage-report/*.xml'])
+//                step([$class: 'CheckStylePublisher', pattern: 'target/scalastyle-result.xml, target/scala-2.11/scapegoat-report/scapegoat-scalastyle.xml'])
             }
         }
 
