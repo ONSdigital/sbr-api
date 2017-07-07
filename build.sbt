@@ -9,6 +9,7 @@ lazy val versions = new {
   val scala = "2.11.11"
   val version = "0.1"
   val scapegoatVersion = "1.1.0"
+  val util = "0.27.8"
 }
 
 
@@ -45,7 +46,8 @@ lazy val commonSettings = Seq (
     "-Ywarn-numeric-widen" // Warn when numerics are widened
   ),
   resolvers ++= Seq(
-    Resolver.typesafeRepo("releases")
+    Resolver.typesafeRepo("releases"),
+    Resolver.bintrayRepo("outworkers", "oss-releases")
   ),
   coverageExcludedPackages := ".*Routes.*;.*ReverseRoutes.*;.*javascript.*"
 )
@@ -67,13 +69,14 @@ lazy val api = (project in file("."))
       BuildInfoKey.action("gitVersion") {
       git.formattedShaVersion.?.value.getOrElse(Some("Unknown")).getOrElse("Unknown") +"@"+ git.formattedDateVersion.?.value.getOrElse("")
     }),
-    buildInfoPackage := "controllers"
-    //    libraryDependencies ++= Seq (
-    //      jdbc
-    //      cache
-    //      ws
-    //      "org.scalatestplus.play" %% "scalatestplus-play" % "2.0.0" % Test
-    //    )
+    buildInfoPackage := "controllers",
+        libraryDependencies ++= Seq (
+          filters,
+          "com.outworkers" %% "util-parsers-cats" % versions.util,
+          "com.outworkers" %% "util-play" % versions.util,
+          "com.outworkers" %% "util-testing" % versions.util % Test,
+          "org.scalatestplus.play" %% "scalatestplus-play" % "2.0.0" % Test
+        )
   )
 
 

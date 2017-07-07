@@ -1,12 +1,11 @@
 package controllers
 
 import javax.inject.Singleton
-import play.api.mvc.{Action, Controller}
-
+import play.api.mvc.{ Action, Controller }
 
 /**
-  * ...............
-  */
+ * ...............
+ */
 @Singleton
 class VersionController extends Controller {
   def version = Action {
