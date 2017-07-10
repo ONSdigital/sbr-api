@@ -69,13 +69,17 @@ lazy val api = (project in file("."))
       BuildInfoKey.action("gitVersion") {
       git.formattedShaVersion.?.value.getOrElse(Some("Unknown")).getOrElse("Unknown") +"@"+ git.formattedDateVersion.?.value.getOrElse("")
     }),
+    // di router -> swagger
+    routesGenerator := InjectedRoutesGenerator,
     buildInfoPackage := "controllers",
         libraryDependencies ++= Seq (
           filters,
           "com.outworkers" %% "util-parsers-cats" % versions.util,
           "com.outworkers" %% "util-play" % versions.util,
           "com.outworkers" %% "util-testing" % versions.util % Test,
-          "org.scalatestplus.play" %% "scalatestplus-play" % "2.0.0" % Test
+          "org.scalatestplus.play" %% "scalatestplus-play" % "2.0.0" % Test,
+          "io.swagger" %% "swagger-play2" % "1.5.3",
+          "org.webjars" % "swagger-ui" % "2.2.10-1"
         )
   )
 
