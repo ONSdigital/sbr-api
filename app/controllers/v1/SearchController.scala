@@ -1,8 +1,5 @@
 package controllers.v1
 
-import java.lang.annotation.Annotation
-//import javax.ws.rs.GET
-
 import io.swagger.annotations._
 import play.api.mvc.{ Action, AnyContent, Controller }
 import utils.Utilities._
@@ -16,7 +13,7 @@ class SearchController extends Controller with Source {
 
   //public api
   @ApiOperation(
-    value = "Returns a json list that matches the given anonymous id",
+    value = "Json list of id matches",
     notes = "The matches can occur from any id field (hence anonymous) and multiple records can be matched",
     responseContainer = "JSONObject",
     code = 200,
@@ -28,7 +25,10 @@ class SearchController extends Controller with Source {
     new ApiResponse(code = 404, responseContainer = "JSONObject", message = "Client Side Error -> Id not found."),
     new ApiResponse(code = 500, responseContainer = "JSONObject", message = "Server Side Error -> Request could not be completed.")
   ))
-  def searchById(id: Option[String], origin: Option[String]): Action[AnyContent] = {
+  def searchById(
+    @ApiParam(value = "An identifier of any type", example = "825039145000", required = true) id: Option[String],
+    @ApiParam(value = "term to categories the id source", required = true) origin: Option[String]
+  ): Action[AnyContent] = {
     Action { implicit request =>
       val res = id match {
         case Some(id) if id.length > 0 => findRecord(id, "conf/sample/data.csv") match {
@@ -42,19 +42,3 @@ class SearchController extends Controller with Source {
   }
 
 }
-
-//    {
-//      override def code(): Int = ???
-//
-//      override def message(): String = ???
-//
-//      override def reference(): String = ???
-//
-//      override def responseHeaders(): Array[ResponseHeader] = ???
-//
-//      override def response(): Class[_] = ???
-//
-//      override def responseContainer(): String = ???
-//
-//      override def annotationType(): Class[_ <: Annotation] = ???
-//    }
