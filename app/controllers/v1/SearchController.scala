@@ -34,7 +34,6 @@ class SearchController extends Controller with Source {
         case Some(id) if id.length > 0 => findRecord(id, "conf/sample/data.csv") match {
           case Nil => NotFound(errAsJson(404, "not found", s"Could not find value ${id}"))
           case x => Ok(s"""[${MatchObj.toString(x)}]""")
-          //          case x => Ok(Json.parse(s"""[${MatchObj.toString(x)}]"""))
         }
         case _ => BadRequest(errAsJson(400, "missing parameter", "No query string found"))
       }
