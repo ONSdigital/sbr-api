@@ -14,7 +14,7 @@ OPTIONS /*all                       controllers.HomeController
 GET     /version                    controllers.VersionController.version
 
 # build dates
-GET     /latest                    controllers.v1.LastUpdateController.latestListings
+# GET     /latest                    controllers.v1.LastUpdateController.latestListings
 
 # Route for health check information (in JSON).
 GET     /health                     controllers.HealthController.health

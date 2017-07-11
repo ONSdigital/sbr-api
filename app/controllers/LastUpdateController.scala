@@ -16,7 +16,8 @@ import com.outworkers.util.play._
  */
 @Api("Utils")
 @Singleton
-class LastUpdateController @Inject() (val config: Config) extends ControllerUtils {
+class LastUpdateController @Inject() (implicit val config: Config) extends ControllerUtils {
+
   @ApiOperation(
     value = "A Json list of dates representing dates of last changes made",
     notes = "Dates are typically for official releases (i.e. deployment not development level). Time is registered in system time millis.",
