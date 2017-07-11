@@ -1,5 +1,4 @@
 import play.sbt.PlayScala
-//import sbtassembly.AssemblyPlugin.autoImport._
 import sbtbuildinfo.BuildInfoPlugin.autoImport._
 
 
@@ -62,18 +61,27 @@ lazy val api = (project in file("."))
     name := constant.appName,
     moduleName := "ons-sbr-api",
     version := versions.version,
+    buildInfoPackage := "controllers",
     buildInfoKeys := Seq[BuildInfoKey](
       organization,
       name,
       version,
+      scalaVersion,
+      sbtVersion,
+      buildInfoBuildNumber,
       BuildInfoKey.action("gitVersion") {
       git.formattedShaVersion.?.value.getOrElse(Some("Unknown")).getOrElse("Unknown") +"@"+ git.formattedDateVersion.?.value.getOrElse("")
     }),
     // di router -> swagger
     routesGenerator := InjectedRoutesGenerator,
+    buildInfoOptions += BuildInfoOption.ToMap,
+    buildInfoOptions += BuildInfoOption.ToJson,
+    buildInfoOptions += BuildInfoOption.BuildTime,
     buildInfoPackage := "controllers",
         libraryDependencies ++= Seq (
           filters,
+          "org.webjars" %% "webjars-play" % "2.5.0-3",
+          "com.typesafe.scala-logging" %% "scala-logging" % "3.5.0",
           "com.outworkers" %% "util-parsers-cats" % versions.util,
           "com.outworkers" %% "util-play" % versions.util,
           "com.outworkers" %% "util-testing" % versions.util % Test,
@@ -82,13 +90,3 @@ lazy val api = (project in file("."))
           "org.webjars" % "swagger-ui" % "2.2.10-1"
         )
   )
-
-
-
-//scalaVersion := "2.11.11"
-// += will append a single element to sequence
-// ++= whereas, concat another seq
-libraryDependencies += jdbc
-libraryDependencies += cache
-libraryDependencies += ws
-libraryDependencies += "org.scalatestplus.play" %% "scalatestplus-play" % "2.0.0" % Test
