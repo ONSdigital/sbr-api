@@ -13,7 +13,7 @@ import scala.util.{ Failure, Success, Try }
  */
 trait ControllerUtils extends Controller with StrictLogging {
 
-  protected def config: Config
+  //  protected def config: Config
 
   @tailrec
   final protected def buildErrMsg(x: Throwable, msgs: List[String] = Nil): String = {

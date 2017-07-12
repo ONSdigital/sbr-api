@@ -1,15 +1,15 @@
 package controllers.v1
 
 import io.swagger.annotations._
-import play.api.mvc.{ Action, AnyContent, Controller }
+import play.api.mvc.{ Action, AnyContent }
 import utils.Utilities._
-import play.api.libs.json._
+import com.outworkers.util.play._
 
 /**
  * Created by haqa on 04/07/2017.
  */
 @Api("Search")
-class SearchController extends Controller {
+class SearchController extends ControllerUtils {
 
   //public api
   @ApiOperation(
@@ -29,13 +29,13 @@ class SearchController extends Controller {
     @ApiParam(value = "An identifier of any type", example = "825039145000", required = true) id: Option[String],
     @ApiParam(value = "term to categories the id source", required = true) origin: Option[String]
   ): Action[AnyContent] = {
-    Action { implicit request =>
+    Action.async { implicit request =>
       val res = id match {
         case Some(id) if id.length > 0 => findRecord(id, "conf/sample/data.csv") match {
-          case Nil => NotFound(errAsJson(404, "not found", s"Could not find value ${id}"))
-          case x => Ok(s"""[${MatchObj.toString(x)}]""")
+          case Nil => NotFound(errAsJson(404, "not found", s"Could not find value ${id}")).future
+          case x => Ok(s"""[${MatchObj.toString(x)}]""").future
         }
-        case _ => BadRequest(errAsJson(400, "missing parameter", "No query string found"))
+        case _ => BadRequest(errAsJson(400, "missing parameter", "No query string found")).future
       }
       res
     }
