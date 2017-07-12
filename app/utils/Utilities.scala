@@ -5,8 +5,8 @@ import java.io.File
 import org.slf4j.LoggerFactory
 import play.api.libs.json._
 import CsvProcessor._
-import controllers.v1.{MatchObj, Matches}
-import play.api.mvc.{Action, AnyContent, Result}
+import controllers.v1.{ MatchObj, Matches }
+import play.api.mvc.{ Action, AnyContent, Result }
 
 import scala.concurrent.Future
 
@@ -41,8 +41,8 @@ object Utilities {
   }
 
   /**
-    * UNUSED - For future use.
-    */
+   * UNUSED - For future use.
+   */
   def getStatUnit(id: String, source: String): JsObject = {
     Json.obj(
       "id" -> id,
@@ -50,18 +50,17 @@ object Utilities {
     )
   }
 
-//  def formatterObj(json : JsValue) : Future[Result] = {
-//    Json.fromJson[Matches](json) match {
-//      case JsSuccess(matchObj, _) => {
-//        logger.debug(s"Feedback Received: $matchObj")
-//        Ok("Success").future
-//      }
-//      case JsError(err) => {
-//        logger.error(s"Invalid Feedback! Please give properly parsable feedback $json -> $err")
-//        BadRequest(errAsJson(400, "invalid_input", s"Invalid Feedback! Please give properly parsable feedback $json -> $err")).future
-//      }
-//    }
-//  }
-
+  //  def formatterObj(json : JsValue) : Future[Result] = {
+  //    Json.fromJson[Matches](json) match {
+  //      case JsSuccess(matchObj, _) => {
+  //        logger.debug(s"Feedback Received: $matchObj")
+  //        Ok("Success").future
+  //      }
+  //      case JsError(err) => {
+  //        logger.error(s"Invalid Feedback! Please give properly parsable feedback $json -> $err")
+  //        BadRequest(errAsJson(400, "invalid_input", s"Invalid Feedback! Please give properly parsable feedback $json -> $err")).future
+  //      }
+  //    }
+  //  }
 
 }

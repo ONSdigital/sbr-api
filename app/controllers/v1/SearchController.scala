@@ -9,12 +9,12 @@ import play.api.libs.json._
  * Created by haqa on 04/07/2017.
  */
 @Api("Search")
-class SearchController extends Controller with Source {
+class SearchController extends Controller {
 
   //public api
   @ApiOperation(
     value = "Json list of id matches",
-    notes = "The matches can occur from any id field (hence anonymous) and multiple records can be matched",
+    notes = "The matches can occur from any id field and multiple records can be matched",
     responseContainer = "JSONObject",
     code = 200,
     httpMethod = "GET"

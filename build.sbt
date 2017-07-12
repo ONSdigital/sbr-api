@@ -68,7 +68,6 @@ lazy val api = (project in file("."))
       version,
       scalaVersion,
       sbtVersion,
-      buildInfoBuildNumber,
       BuildInfoKey.action("gitVersion") {
       git.formattedShaVersion.?.value.getOrElse(Some("Unknown")).getOrElse("Unknown") +"@"+ git.formattedDateVersion.?.value.getOrElse("")
     }),
