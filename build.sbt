@@ -1,10 +1,10 @@
 import play.sbt.PlayScala
 import sbtbuildinfo.BuildInfoPlugin.autoImport._
-
+import sbtassembly.AssemblyPlugin.autoImport._
 
 licenses := Seq("MIT-License" -> url("https://opensource.org/licenses/MIT"))
 
-lazy val versions = new {
+lazy val Versions = new {
   val scala = "2.11.11"
   val version = "0.1"
   val scapegoatVersion = "1.1.0"
@@ -12,15 +12,15 @@ lazy val versions = new {
 }
 
 
-lazy val constant = new {
+lazy val Constant = new {
   val appName = "ons-sbr-api"
-  val detail = versions.version
+  val detail = Versions.version
   val organisation = "ons"
   val team = "sbr"
 }
 
 lazy val commonSettings = Seq (
-  scalaVersion := versions.scala,
+  scalaVersion := Versions.scala,
   scalacOptions in ThisBuild ++= Seq(
     "-language:experimental.macros",
     "-target:jvm-1.8",
@@ -57,10 +57,10 @@ lazy val api = (project in file("."))
   .enablePlugins(BuildInfoPlugin, GitVersioning, PlayScala)
   .settings(commonSettings: _*)
   .settings(
-    scalaVersion := versions.scala,
-    name := constant.appName,
+    scalaVersion := Versions.scala,
+    name := Constant.appName,
     moduleName := "ons-sbr-api",
-    version := versions.version,
+    version := Versions.version,
     buildInfoPackage := "controllers",
     buildInfoKeys := Seq[BuildInfoKey](
       organization,
@@ -77,15 +77,24 @@ lazy val api = (project in file("."))
     buildInfoOptions += BuildInfoOption.ToJson,
     buildInfoOptions += BuildInfoOption.BuildTime,
     buildInfoPackage := "controllers",
-        libraryDependencies ++= Seq (
-          filters,
-          "org.webjars" %% "webjars-play" % "2.5.0-3",
-          "com.typesafe.scala-logging" %% "scala-logging" % "3.5.0",
-          "com.outworkers" %% "util-parsers-cats" % versions.util,
-          "com.outworkers" %% "util-play" % versions.util,
-          "com.outworkers" %% "util-testing" % versions.util % Test,
-          "org.scalatestplus.play" %% "scalatestplus-play" % "2.0.0" % Test,
-          "io.swagger" %% "swagger-play2" % "1.5.3",
-          "org.webjars" % "swagger-ui" % "2.2.10-1"
-        )
+    libraryDependencies ++= Seq (
+      filters,
+      "org.webjars" %% "webjars-play" % "2.5.0-3",
+      "com.typesafe.scala-logging" %% "scala-logging" % "3.5.0",
+      "com.outworkers" %% "util-parsers-cats" % Versions.util,
+      "com.outworkers" %% "util-play" % Versions.util,
+      "com.outworkers" %% "util-testing" % Versions.util % Test,
+      "org.scalatestplus.play" %% "scalatestplus-play" % "2.0.0" % Test,
+      "io.swagger" %% "swagger-play2" % "1.5.3",
+      "org.webjars" % "swagger-ui" % "2.2.10-1"
+    ),
+    assemblyJarName in assembly := "sbr-api.jar",
+    assemblyMergeStrategy in assembly := {
+      case PathList("META-INF", xs @ _*) => MergeStrategy.discard
+      case x => MergeStrategy.first
+//        val oldStrategy = (assemblyMergeStrategy in assembly).value
+      //        oldStrategy(x)
+    },
+    mainClass in assembly := Some("play.core.server.ProdServerStart"),
+    fullClasspath in assembly += Attributed.blank(PlayKeys.playPackageAssets.value)
   )

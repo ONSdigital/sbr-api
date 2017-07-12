@@ -47,8 +47,9 @@ object MatchObj {
   }.map(x => s"""{$x}""").mkString(delim)
 
   def fromMap(values: Array[String]) =
-    Matches(values(0), Option(values(1)), Option(values(2)), Option(values(3).toLong), Option(values(4).toLong), Option(values(5)),
-      Option(values(6).toLong), values(7), values(8), values(9), values(10), values(11), values(12), Option(values(13).toInt),
-      Option(values(14).toInt), Option(values(15).toInt), Option(values(16).toInt), Option(values(17).toInt), Option(values(18).toLong), values(19))
+    Matches(values(0), Option(values(1)), Option(values(2)), Option(values(3).toLong), Option(values(4).toLong),
+      Option(values(5)), Option(values(6).toLong), values(7), values(8), values(9), values(10), values(11), values(12),
+      Option(values(13).toInt), Option(values(14).toInt), Option(values(15).toInt), Option(values(16).toInt),
+      Option(values(17).toInt), Option(values(18).toLong), values(19))
 
 }
