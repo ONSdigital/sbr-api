@@ -79,21 +79,21 @@ lazy val api = (project in file("."))
     buildInfoPackage := "controllers",
     libraryDependencies ++= Seq (
       filters,
-      "org.webjars" %% "webjars-play" % "2.5.0-3",
-      "com.typesafe.scala-logging" %% "scala-logging" % "3.5.0",
-      "com.outworkers" %% "util-parsers-cats" % Versions.util,
-      "com.outworkers" %% "util-play" % Versions.util,
-      "com.outworkers" %% "util-testing" % Versions.util % Test,
-      "org.scalatestplus.play" %% "scalatestplus-play" % "2.0.0" % Test,
-      "io.swagger" %% "swagger-play2" % "1.5.3",
-      "org.webjars" % "swagger-ui" % "2.2.10-1"
+      "org.webjars"                  %%    "webjars-play"        %    "2.5.0-3",
+      "com.typesafe.scala-logging"   %%    "scala-logging"       %    "3.5.0",
+      "com.outworkers"               %%    "util-parsers-cats"   %    Versions.util,
+      "com.outworkers"               %%    "util-play"           %    Versions.util,
+      "com.outworkers"               %%    "util-testing"        %    Versions.util % Test,
+      "org.scalatestplus.play"       %%    "scalatestplus-play"  %    "2.0.0" % Test,
+      "io.swagger"                   %%    "swagger-play2"       %    "1.5.3",
+      "org.webjars"                  %     "swagger-ui"          %    "2.2.10-1"
     ),
     assemblyJarName in assembly := "sbr-api.jar",
     assemblyMergeStrategy in assembly := {
       case PathList("META-INF", xs @ _*) => MergeStrategy.discard
       case x => MergeStrategy.first
 //        val oldStrategy = (assemblyMergeStrategy in assembly).value
-      //        oldStrategy(x)
+//        oldStrategy(x)
     },
     mainClass in assembly := Some("play.core.server.ProdServerStart"),
     fullClasspath in assembly += Attributed.blank(PlayKeys.playPackageAssets.value)

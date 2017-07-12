@@ -1,5 +1,7 @@
 package controllers.v1
 
+import utils.Utilities.{ getElement }
+
 /**
  * Created by haqa on 07/07/2017.
  */
@@ -31,18 +33,8 @@ object MatchObj {
     "source" -> m.source
   )
 
-  def element(value: Any): String = {
-    val res = value match {
-      case x: String => x.toString
-      case Some(z) => s"${z}"
-      case None => ""
-      //    case _ => ???
-    }
-    res
-  }
-
   def toString(returned: List[Matches]): String = returned.map {
-    case z => s"""${toMatch(z).map(x => s""""${x._1}":"${element(x._2)}"""").mkString(delim)}"""
+    case z => s"""${toMatch(z).map(x => s""""${x._1}":${getElement(x._2)}""").mkString(delim)}"""
     case _ => "Error Nothing Found"
   }.map(x => s"""{$x}""").mkString(delim)
 
