@@ -7,7 +7,6 @@ import play.api.mvc.{ Controller, _ }
 
 @Api("Utils")
 class HomeController extends Controller {
-  private[this] val startTime = System.currentTimeMillis()
 
   //public api
   @ApiOperation(
@@ -32,20 +31,15 @@ class HomeController extends Controller {
   @ApiResponses(Array(
     new ApiResponse(code = 200, message = "Success - Displays a json object of basic api health.")
   ))
-  def health = Action {
-    val uptimeInMillis = uptime()
-    Ok(s"{Status: Ok, Uptime: ${uptimeInMillis}ms, Date and Time: " + new DateTime(startTime) + "}")
-  }
-
-  private def uptime(): Long = {
-    val uptimeInMillis = System.currentTimeMillis() - startTime
-    uptimeInMillis
+  def status = Action { request =>
+    val host = request.host
+    Redirect(url = s"http://${host}/health").flashing("redirect" -> "You are being redirected to health status", "status" -> "ok")
   }
 
   //public api
   @ApiOperation(
     value = "Permissions method request",
-    notes = "preflight is used for local OPTIONS requests that precede PUT/DELETE requests. An empty Ok() response allows the actual PUT/DELETE request to be sent.",
+    notes = "pre-flight is used for local OPTIONS requests that precede PUT/DELETE requests. An empty Ok() response allows the actual PUT/DELETE request to be sent.",
     httpMethod = "OPTIONS"
   )
   @ApiResponses(Array(

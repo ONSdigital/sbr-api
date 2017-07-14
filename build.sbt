@@ -54,7 +54,7 @@ lazy val commonSettings = Seq (
 
 
 lazy val api = (project in file("."))
-  .enablePlugins(BuildInfoPlugin, GitVersioning, PlayScala)
+  .enablePlugins(BuildInfoPlugin, GitVersioning, GitBranchPrompt, PlayScala)
   .settings(commonSettings: _*)
   .settings(
     scalaVersion := Versions.scala,
@@ -83,8 +83,8 @@ lazy val api = (project in file("."))
       "com.typesafe.scala-logging"   %%    "scala-logging"       %    "3.5.0",
       "com.outworkers"               %%    "util-parsers-cats"   %    Versions.util,
       "com.outworkers"               %%    "util-play"           %    Versions.util,
-      "com.outworkers"               %%    "util-testing"        %    Versions.util % Test,
-      "org.scalatestplus.play"       %%    "scalatestplus-play"  %    "2.0.0" % Test,
+      "com.outworkers"               %%    "util-testing"        %    Versions.util     % Test,
+      "org.scalatestplus.play"       %%    "scalatestplus-play"  %    "2.0.0"           % Test,
       "io.swagger"                   %%    "swagger-play2"       %    "1.5.3",
       "org.webjars"                  %     "swagger-ui"          %    "2.2.10-1"
     ),
