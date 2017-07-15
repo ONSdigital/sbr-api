@@ -1,16 +1,11 @@
-package controllers.v1
+package models.records.attributes
 
 import io.swagger.annotations.ApiModelProperty
+import models.records.Searchkeys
 
 /**
- * Created by haqa on 11/07/2017.
+ * Created by Ameen on 15/07/2017.
  */
-sealed trait Searchkeys[T] {
-  // enterprise -> id
-  // def id: T
-  def enterprise: Option[T]
-  def source: String
-}
 
 final case class Matches(
   @ApiModelProperty(value = "", example = "", required = false, hidden = false) name: String,
@@ -34,3 +29,4 @@ final case class Matches(
   @ApiModelProperty(value = "", example = "", dataType = "java.lang.Long") turnover: Option[Long],
   @ApiModelProperty(value = "", example = "") source: String
 ) extends Searchkeys[String]
+

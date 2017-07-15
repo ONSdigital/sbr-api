@@ -96,5 +96,7 @@ lazy val api = (project in file("."))
 //        oldStrategy(x)
     },
     mainClass in assembly := Some("play.core.server.ProdServerStart"),
-    fullClasspath in assembly += Attributed.blank(PlayKeys.playPackageAssets.value)
+    fullClasspath in assembly += Attributed.blank(PlayKeys.playPackageAssets.value),
+    /// TEST STUFF ////
+    testForkedParallel in Test := true
   )

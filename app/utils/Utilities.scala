@@ -5,10 +5,7 @@ import java.io.File
 import org.slf4j.LoggerFactory
 import play.api.libs.json._
 import CsvProcessor._
-import controllers.v1.{ MatchObj, Matches }
-import play.api.mvc.{ Action, AnyContent, Result }
-
-import scala.concurrent.Future
+import models.records.attributes.Matches
 
 /**
  * Created by haqa on 05/07/2017.
@@ -21,7 +18,8 @@ object Utilities {
       data <- readFile(filename)
       cols = data.split(",").map(_.trim)
       res: Option[Matches] = if (cols.contains(element)) {
-        logger.info(s"Found matching record with ${element} as data[${cols(cols.indexOf(element))}] identified as ${cols(cols.indexOf(element))} type")
+        logger.info(s"Found matching record with ${element} " +
+          s"as data[${cols(cols.indexOf(element))}] identified as ${cols(cols.indexOf(element))} type")
         Some(MatchObj.fromMap(cols))
       } else {
         None

@@ -23,7 +23,7 @@ class HealthController extends Controller {
   ))
   def health = Action {
     val uptimeInMillis = uptime()
-    Ok(s"{Status: Ok, Uptime: ${uptimeInMillis}ms, Date and Time: " + new DateTime(startTime) + "}")
+    Ok(s"{Status: Ok, Uptime: ${uptimeInMillis}ms, Date and Time: " + new DateTime(startTime) + "}").as(JSON)
   }
 
   private def uptime(): Long = {

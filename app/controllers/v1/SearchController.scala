@@ -4,6 +4,8 @@ import io.swagger.annotations._
 import play.api.mvc.{ Action, AnyContent }
 import utils.Utilities._
 import com.outworkers.util.play._
+import models.records.attributes.Matches
+import utils.MatchObj
 
 /**
  * Created by haqa on 04/07/2017.
@@ -33,7 +35,7 @@ class SearchController extends ControllerUtils {
       val res = id match {
         case Some(id) if id.length > 0 => findRecord(id, "conf/sample/data.csv") match {
           case Nil => NotFound(errAsJson(404, "not found", s"Could not find value ${id}")).future
-          case x => Ok(s"""[${MatchObj.toString(x)}]""").future
+          case x => Ok(s"""[${MatchObj.toString(x)}]""").as(JSON).future
         }
         case _ => BadRequest(errAsJson(400, "missing parameter", "No query string found")).future
       }

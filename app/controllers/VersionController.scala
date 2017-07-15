@@ -22,6 +22,6 @@ class VersionController extends Controller {
     new ApiResponse(code = 200, message = "Success - Displays a version list as json.")
   ))
   def version = Action {
-    Ok(BuildInfo.toJson)
+    Ok(BuildInfo.toJson).as(JSON)
   }
 }
