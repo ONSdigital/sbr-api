@@ -35,7 +35,7 @@ class SearchController extends ControllerUtils {
       val res = id match {
         case Some(id) if id.length > 0 => findRecord(id, "conf/sample/data.csv") match {
           case Nil => NotFound(errAsJson(404, "not found", s"Could not find value ${id}")).future
-          case x => Ok(s"""[${MatchObj.toString(x)}]""").as(JSON).future
+          case x => Ok(s"""${MatchObj.toString(x)}""").as(JSON).future
         }
         case _ => BadRequest(errAsJson(400, "missing parameter", "No query string found")).future
       }
