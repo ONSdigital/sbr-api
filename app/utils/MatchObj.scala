@@ -1,7 +1,7 @@
 package utils
 
 import models.records.attributes.{ Address, AddressObj, Matches }
-import utils.Utilities.getElement
+import utils.Utilities.{ errAsJson, getElement }
 /**
  * Created by haqa on 07/07/2017.
  */
@@ -31,7 +31,7 @@ object MatchObj {
 
   def toString(returned: List[Matches]): String = returned.map {
     case z => s"""${toMap(z).map(x => s""""${x._1}":${fetch(x._2)}""").mkString(delim)}"""
-    case _ => "Error Nothing Found"
+    case _ => errAsJson(404, "missing field", "Cannot find data in field")
   }.map(x => s"""{$x}""").mkString("[", delim, "]")
 
   def fromMap(values: Array[String]): Matches =
