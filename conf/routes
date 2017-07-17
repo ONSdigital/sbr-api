@@ -3,10 +3,9 @@
 # ~~~~
 
 # Searching Feature
-GET     /v1/suggest                 controllers.v1.SearchController.searchById(id: Option[String] ?= None, origin: Option[String] ?= None)
+GET     /v1/search                 controllers.v1.SearchController.searchById(id: Option[String] ?= None, origin: Option[String] ?= None)
 #GET     /v1/suggest/:id<[a-zA-Z]+>              controllers.v1.SearchController.searchById(id: String)
 
-#
 GET     /                           controllers.HomeController.status
 OPTIONS /*all                       controllers.HomeController.preflight(all: String)
 
@@ -25,4 +24,4 @@ GET     /docs                      controllers.HomeController.swagger
 
 
 # Map static resources from the /public folder to the /assets URL path
-GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
+GET     /assets/*file              controllers.Assets.versioned(path="/public", file: Asset)
