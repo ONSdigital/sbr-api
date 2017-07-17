@@ -1,9 +1,9 @@
-package models.records
+package models.units
 
 /**
  * Created by Ameen on 15/07/2017.
  */
-case class VatRef(
+case class Enterprise(
   enterprise: Option[String],
   source: String
 

@@ -1,7 +1,9 @@
 package utils
 
-import models.records.attributes.{ Address, AddressObj, Matches }
+import models.units.attributes.{ Address, AddressObj, Matches }
 import utils.Utilities.{ errAsJson, getElement }
+
+import scala.util.parsing.json.JSONObject
 /**
  * Created by haqa on 07/07/2017.
  */
@@ -41,7 +43,7 @@ object MatchObj {
       Option(values(17).toInt), Option(values(18).toLong), values(19))
 
   def fetch(elem: Any) = elem match {
-    case (a: Address) => s"""${AddressObj.toMap(a).map(v => s""""${v._1}":"${v._2}"""").mkString("{", delim, "}")}"""
+    case (a: Address) => JSONObject(AddressObj.toMap(a))
     case _ => getElement(elem)
   }
 

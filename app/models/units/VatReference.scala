@@ -1,9 +1,9 @@
-package models.records
+package models.units
 
 /**
  * Created by Ameen on 15/07/2017.
  */
-case class UniqueBusinessRegistrationNumber(
+case class VatReference(
   enterprise: Option[String],
   source: String
 

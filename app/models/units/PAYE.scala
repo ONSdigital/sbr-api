@@ -1,4 +1,4 @@
-package models.records
+package models.units
 
 /**
  * Created by Ameen on 15/07/2017.

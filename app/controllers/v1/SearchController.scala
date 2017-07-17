@@ -4,7 +4,7 @@ import io.swagger.annotations._
 import play.api.mvc.{ Action, AnyContent }
 import utils.Utilities._
 import com.outworkers.util.play._
-import models.records.attributes.Matches
+import models.units.attributes.Matches
 import utils.MatchObj
 
 /**

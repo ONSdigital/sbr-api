@@ -1,7 +1,7 @@
-package models.records.attributes
+package models.units.attributes
 
 import io.swagger.annotations.ApiModelProperty
-import models.records.Searchkeys
+import models.units.Searchkeys
 
 /**
  * Created by Ameen on 15/07/2017.

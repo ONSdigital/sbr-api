@@ -1,4 +1,4 @@
-package models.records.attributes
+package models.units.attributes
 
 import io.swagger.annotations.ApiModelProperty
 
