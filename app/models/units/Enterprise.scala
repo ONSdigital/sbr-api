@@ -2,6 +2,7 @@ package models.units
 
 import io.swagger.annotations.ApiModelProperty
 import models.units.attributes.Address
+import utils.Mapping
 
 /**
  * Created by Ameen on 15/07/2017.
@@ -20,4 +21,9 @@ final case class Enterprise(
   @ApiModelProperty(value = "", example = "", dataType = "java.lang.Long") turnover: Option[Long],
   source: String = "Enterprise"
 ) extends Searchkeys[Long]
+
+object EnterpriseObj extends Mapping[Enterprise]{
+  def toMap(t: Enterprise): Map[String,Any] = ???
+  def fromMap(b: Map[String,Any]): Enterprise = ???
+}
 

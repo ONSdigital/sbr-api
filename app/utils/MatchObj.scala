@@ -1,9 +1,9 @@
 package utils
 
 import io.swagger.annotations.ApiModelProperty
-import models.units.Enterprise
-import models.units.attributes.{ Address, AddressObj, Matches }
-import utils.Utilities.{ errAsJson, getElement }
+import models.units.{Enterprise, Searchkeys}
+import models.units.attributes.{Address, AddressObj, Matches}
+import utils.Utilities.{errAsJson, getElement}
 
 import scala.util.parsing.json.JSONObject
 /**
@@ -42,5 +42,16 @@ object MatchObj {
     case (a: Address) => JSONObject(AddressObj.toMap(a))
     case _ => getElement(elem)
   }
+
+
+  def ccToMap(cc: AnyRef) =
+    (Map[String, Any]() /: cc.getClass.getDeclaredFields) {
+      (a, f) =>
+        f.setAccessible(true)
+        a + (f.getName -> f.get(cc))
+    }
+
+  def createCC(values: Array[String], x: AnyRef) = ???
+
 
 }
