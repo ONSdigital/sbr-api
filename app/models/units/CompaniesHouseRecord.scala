@@ -1,14 +1,16 @@
 package models.units
 
-import models.units.attributes.{ Address }
+import io.swagger.annotations.ApiModelProperty
+import models.units.attributes.Address
 
 /**
  * Created by Ameen on 15/07/2017.
  */
 case class CompaniesHouseRecord(
-  enterprise: Option[String],
-  source: String,
+  id: String,
+  @ApiModelProperty(dataType = "Address") address: Address,
   postcode: String,
-  address : Address
+  source: String = "CRN"
 
 ) extends Searchkeys[String]
+

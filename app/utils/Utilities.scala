@@ -5,7 +5,7 @@ import java.io.File
 import org.slf4j.LoggerFactory
 import play.api.libs.json._
 import CsvProcessor._
-import models.units.attributes.{ Address, Matches }
+import models.units.attributes.{ Matches }
 
 /**
  * Created by haqa on 05/07/2017.

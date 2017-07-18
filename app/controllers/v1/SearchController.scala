@@ -29,7 +29,7 @@ class SearchController extends ControllerUtils {
   ))
   def searchById(
     @ApiParam(value = "An identifier of any type", example = "825039145000", required = true) id: Option[String],
-    @ApiParam(value = "term to categories the id source", required = true) origin: Option[String]
+    @ApiParam(value = "term to categories the id source", required = false) origin: Option[String]
   ): Action[AnyContent] = {
     Action.async { implicit request =>
       val res = id match {
