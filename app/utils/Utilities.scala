@@ -5,7 +5,7 @@ import java.io.File
 import org.slf4j.LoggerFactory
 import play.api.libs.json._
 import CsvProcessor._
-import models.units.attributes.{ Matches }
+import models.units.{ Enterprise }
 
 /**
  * Created by haqa on 05/07/2017.
@@ -13,11 +13,11 @@ import models.units.attributes.{ Matches }
 object Utilities {
   private[this] val logger = LoggerFactory.getLogger(getClass)
 
-  def findRecord(element: String, filename: String): List[Matches] = {
+  def findRecord(element: String, filename: String): List[Enterprise] = {
     val records = for {
       data <- readFile(filename)
       cols = data.split(",").map(_.trim)
-      res: Option[Matches] = if (cols.contains(element)) {
+      res: Option[Enterprise] = if (cols.contains(element)) {
         logger.info(s"Found matching record with ${element} " +
           s"as data[${cols(cols.indexOf(element))}] identified as ${cols(cols.indexOf(element))} type")
         Some(MatchObj.fromMap(cols))

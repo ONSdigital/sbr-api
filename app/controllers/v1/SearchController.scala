@@ -33,7 +33,7 @@ class SearchController extends ControllerUtils {
   ): Action[AnyContent] = {
     Action.async { implicit request =>
       val res = id match {
-        case Some(id) if id.length > 0 => findRecord(id, "conf/sample/data.csv") match {
+        case Some(id) if id.length > 0 => findRecord(id, "conf/sample/enterprise.csv") match {
           case Nil => NotFound(errAsJson(404, "not found", s"Could not find value ${id}")).future
           case x => Ok(s"""${MatchObj.toString(x)}""").as(JSON).future
         }
