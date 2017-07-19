@@ -3,6 +3,8 @@ package controllers.v1
 import com.typesafe.config.Config
 import play.api.mvc.{ Controller, Result }
 import com.typesafe.scalalogging.StrictLogging
+import models.units.{ Enterprise, EnterpriseObj }
+import utils.CsvProcessor.readFile
 
 import scala.annotation.tailrec
 import scala.concurrent.Future
@@ -32,14 +34,18 @@ trait ControllerUtils extends Controller with StrictLogging {
       }
   }
 
-
-  //  link: https://gist.github.com/lauris/7dc94fb29804449b1836
-  def ccToMap(cc: AnyRef) =
-    (Map[String, Any]() /: cc.getClass.getDeclaredFields) {
-      (a, f) =>
-        f.setAccessible(true)
-        a + (f.getName -> f.get(cc))
-    }
-  //  ccFromMap ???
-
+  def findRecord(element: String, filename: String): List[Enterprise] = {
+    val records = for {
+      data <- readFile(filename)
+      cols = data.split(",").map(_.trim)
+      res: Option[Enterprise] = if (cols(1).contains(element)) {
+        logger.info(s"Found matching record with ${element} " +
+          s"as data[${cols(cols.indexOf(element))}] identified as ${cols(cols.indexOf(element))} type")
+        Some(EnterpriseObj.fromMap(cols))
+      } else {
+        None
+      }
+    } yield (res)
+    records.flatten.toList
+  }
 }
