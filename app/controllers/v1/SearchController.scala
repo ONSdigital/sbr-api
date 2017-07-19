@@ -1,17 +1,25 @@
 package controllers.v1
 
+import javax.inject.Inject
+
 import io.swagger.annotations._
-import play.api.mvc.{ Action, AnyContent }
-import utils.Utilities.{ errAsJson }
+import play.api.mvc.{ Action, AnyContent, Result }
+import utils.Utilities.errAsJson
 import com.outworkers.util.play._
 import models.units.EnterpriseObj
 import models.units.attributes.Matches
+import play.api.libs.json.Json
+import play.api.libs.ws.WSClient
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{ Future, TimeoutException }
+import scala.concurrent.duration._
 
 /**
  * Created by haqa on 04/07/2017.
  */
 @Api("Search")
-class SearchController extends ControllerUtils {
+class SearchController @Inject() (ws: WSClient) extends ControllerUtils {
 
   //public api
   @ApiOperation(
@@ -43,6 +51,26 @@ class SearchController extends ControllerUtils {
     }
   }
 
-  def searchByUBRN() = ???
+  def searchByUBRN: Action[AnyContent] = Action.async { implicit request =>
+    val id = "123"
+    logger.info(s"Sending request to Business Index for legal unit: ${id}")
+    val url = "http://localhost:9000/v1/search?query=BusinessName:test"
+    val res = sendRequest(url)
+    res
+  }
+
+  def sendRequest(url: String): Future[Result] = {
+    val res = ws.url(url).withRequestTimeout(5000.millis).get().map {
+      response =>
+        Ok(s"res: ${response}").as(JSON)
+    } recover {
+      case t: TimeoutException =>
+        RequestTimeout(errAsJson(408, "request_timeout", "Request Timeout - This may be due to connection being blocked."))
+      case e =>
+        ServiceUnavailable(errAsJson(503, "service_unavailable", "Cannot Connect to host. Please verify the address is correct."))
+    }
+    ws.close()
+    res
+  }
 
 }
