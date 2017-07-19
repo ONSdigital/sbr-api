@@ -6,8 +6,7 @@ import utils.Utilities.{ errAsJson }
 import com.outworkers.util.play._
 import models.units.EnterpriseObj
 import models.units.attributes.Matches
-import utils.MatchObj
-import models.units.attributes.LinksObj
+
 /**
  * Created by haqa on 04/07/2017.
  */
@@ -37,7 +36,6 @@ class SearchController extends ControllerUtils {
         case Some(id) if id.length > 0 => findRecord(id, "conf/sample/enterprise.csv") match {
           case Nil => NotFound(errAsJson(404, "not found", s"Could not find value ${id}")).future
           case x => Ok(s"""${EnterpriseObj.toString(x)}""").as(JSON).future
-          //          case x => Ok(s"x: ${x}").future
         }
         case _ => BadRequest(errAsJson(400, "missing parameter", "No query string found")).future
       }

@@ -23,6 +23,7 @@ trait Mapping[T, Z] {
 
   def fetch(elem: Any) = elem match {
     case (a: Address) => JSONObject(AddressObj.toMap(a))
+    //    case (l: Seq[Option[Long]]) => s"""${l.map(x => s""""${x.toString}":${getElement(x)}""").mkString("{", delim, "}")}"""
     case _ => getElement(elem)
   }
 

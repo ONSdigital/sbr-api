@@ -33,10 +33,12 @@ object MatchObj {
     case _ => errAsJson(404, "missing field", "Cannot find data in field")
   }.map(x => s"""{$x}""").mkString("[", delim, "]")
 
-  def fromMap(values: Array[String]): Enterprise =
-    Enterprise(values(0), values(1).toLong, values(2).toLong, Address(values(3), values(4), values(5), values(6), values(7)),
-      values(8), Option(values(9).toInt), Option(values(10).toInt), Option(values(11).toInt), Option(values(12).toInt),
-      Option(values(13).toInt), Option(values(14).toLong), values(15))
+    @SuppressWarnings(Array("unused"))
+    def fromMap(values: Array[String]): Enterprise =
+  Enterprise(values(0), values(1).toLong, Seq(Option(values(2).toLong), Option(values(3).toLong), Option(values(4).toLong),
+    Option(values(5).toLong)), Address(values(6), values(7), values(8), values(9), values(10)), values(11),
+    Option(values(12).toInt), Option(values(13).toInt), Option(values(14).toInt), Option(values(15).toInt),
+    Option(values(16).toInt), Option(values(17).toLong))
 
   def fetch(elem: Any) = elem match {
     case (a: Address) => JSONObject(AddressObj.toMap(a))

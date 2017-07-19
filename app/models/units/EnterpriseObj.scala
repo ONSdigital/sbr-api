@@ -3,6 +3,7 @@ package models.units
 import io.swagger.annotations.ApiModelProperty
 import models.units.attributes.Address
 import utils.Mapping
+import utils.Utilities._
 
 /**
  * Created by Ameen on 15/07/2017.
@@ -10,7 +11,7 @@ import utils.Mapping
 final case class Enterprise(
   @ApiModelProperty(value = "", example = "", required = false, hidden = false) name: String,
   @ApiModelProperty(value = "", example = "", dataType = "java.lang.Long") id: Long,
-  @ApiModelProperty(value = "", example = "", dataType = "java.lang.String") legalUnit: Long,
+  @ApiModelProperty(value = "", example = "", dataType = "java.lang.String") legalUnits: Seq[Option[Long]],
   @ApiModelProperty(dataType = "Address") address: Address,
   postcode: String,
   @ApiModelProperty(value = "", example = "", dataType = "java.lang.Integer") legalStatus: Option[Int],
@@ -24,23 +25,24 @@ final case class Enterprise(
 
 object EnterpriseObj extends Mapping[Enterprise, Array[String]] {
 
-  def toMap(e: Enterprise): Map[String, Any] = Map(
-    "name" -> e.name,
-    "id" -> e.id,
-    "legalUnit" -> e.legalUnit,
-    "address" -> e.address,
-    "postcode" -> e.postcode,
-    "legalStatus" -> e.legalStatus,
-    "sic" -> e.sic,
-    "employees" -> e.employees,
-    "workingGrouping" -> e.workingGroup,
-    "employment" -> e.employment,
-    "turnover" -> e.turnover
+  def toMap(v: Enterprise): Map[String, Any] = Map(
+    "name" -> v.name,
+    "id" -> v.id,
+    "legalUnits" -> v.legalUnits.map(x => getElement(x)),
+    "address" -> v.address,
+    "postcode" -> v.postcode,
+    "legalStatus" -> v.legalStatus,
+    "sic" -> v.sic,
+    "employees" -> v.employees,
+    "workingGrouping" -> v.workingGroup,
+    "employment" -> v.employment,
+    "turnover" -> v.turnover
   )
 
   def fromMap(values: Array[String]): Enterprise =
-    Enterprise(values(0), values(1).toLong, values(2).toLong, Address(values(3), values(4), values(5), values(6), values(7)),
-      values(8), Option(values(9).toInt), Option(values(10).toInt), Option(values(11).toInt), Option(values(12).toInt),
-      Option(values(13).toInt), Option(values(14).toLong))
+    Enterprise(values(0), values(1).toLong, Seq(Option(values(2).toLong), Option(values(3).toLong), Option(values(4).toLong),
+      Option(values(5).toLong)), Address(values(6), values(7), values(8), values(9), values(10)), values(11),
+      Option(values(12).toInt), Option(values(13).toInt), Option(values(14).toInt), Option(values(15).toInt),
+      Option(values(16).toInt), Option(values(17).toLong))
 
 }
