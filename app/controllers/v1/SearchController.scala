@@ -2,10 +2,10 @@ package controllers.v1
 
 import io.swagger.annotations._
 import play.api.mvc.{ Action, AnyContent }
-import utils.Utilities._
+import utils.Utilities.{ errAsJson }
 import com.outworkers.util.play._
+import models.units.EnterpriseObj
 import models.units.attributes.Matches
-import utils.MatchObj
 
 /**
  * Created by haqa on 04/07/2017.
@@ -29,18 +29,20 @@ class SearchController extends ControllerUtils {
   ))
   def searchById(
     @ApiParam(value = "An identifier of any type", example = "825039145000", required = true) id: Option[String],
-    @ApiParam(value = "term to categories the id source", required = true) origin: Option[String]
+    @ApiParam(value = "term to categories the id source", required = false) origin: Option[String]
   ): Action[AnyContent] = {
     Action.async { implicit request =>
       val res = id match {
-        case Some(id) if id.length > 0 => findRecord(id, "conf/sample/data.csv") match {
+        case Some(id) if id.length > 0 => findRecord(id, "conf/sample/enterprise.csv") match {
           case Nil => NotFound(errAsJson(404, "not found", s"Could not find value ${id}")).future
-          case x => Ok(s"""${MatchObj.toString(x)}""").as(JSON).future
+          case x => Ok(s"""${EnterpriseObj.toString(x)}""").as(JSON).future
         }
         case _ => BadRequest(errAsJson(400, "missing parameter", "No query string found")).future
       }
       res
     }
   }
+
+  def searchByUBRN() = ???
 
 }
