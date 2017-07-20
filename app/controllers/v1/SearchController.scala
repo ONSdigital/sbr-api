@@ -44,8 +44,8 @@ class SearchController @Inject() (ws: WSClient) extends ControllerUtils {
           case Nil =>
             logger.debug(s"No record found for id: ${id}")
             NotFound(errAsJson(404, "not found", s"Could not find value ${id}")).future
-          //          case x => Ok(s"""${EnterpriseObj.toString2(x)}""").as(JSON).future
-          case x => Ok(s"""${EnterpriseObj.toString[Enterprise](EnterpriseObj.toMap, x)}""").as(JSON).future
+          case x => Ok(s"""${EnterpriseObj.toString(EnterpriseObj.toMap, x)}""").as(JSON).future
+          //          case x => Ok(s"""${EnterpriseObj.toString[Enterprise](EnterpriseObj.toMap, x)}""").as(JSON).future
         }
         case _ => BadRequest(errAsJson(400, "missing parameter", "No query string found")).future
       }

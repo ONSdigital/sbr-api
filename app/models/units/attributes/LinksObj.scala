@@ -28,5 +28,8 @@ object LinksObj extends Mapping[Link, Array[String]] {
     Link(Option(values(0).toString), Option(values(1).toString), Option(values(2).toString),
       Option(values(3).toString), Option(values(4).toString))
 
+
+  def filterChildren(z: Array[String]): Any = ???
+
 }
 

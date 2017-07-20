@@ -1,6 +1,7 @@
 package models.units.attributes
 
 import io.swagger.annotations.ApiModelProperty
+import utils.Mapping
 
 /**
  * Created by Ameen on 15/07/2017.

@@ -37,7 +37,7 @@ trait ControllerUtils extends Controller with StrictLogging {
     val records = for {
       data <- readFile(filename)
       cols = data.split(",").map(_.trim)
-      res: Option[Enterprise] = if (cols(1).contains(element)) {
+      res: Option[Enterprise] = if (cols(1).matches(element)) {
         logger.info(s"Found matching record with ${element} " +
           s"as data[${cols(cols.indexOf(element))}] identified as ${cols(cols.indexOf(element))} type")
         Some(EnterpriseObj.fromMap(cols))
