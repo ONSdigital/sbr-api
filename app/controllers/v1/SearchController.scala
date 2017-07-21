@@ -6,7 +6,7 @@ import io.swagger.annotations._
 import play.api.mvc.{ Action, AnyContent, Result }
 import utils.Utilities.errAsJson
 import com.outworkers.util.play._
-import models.units.{ Enterprise, EnterpriseObj }
+import models.units.{ EnterpriseObj }
 import models.units.attributes.Matches
 import play.api.libs.ws.WSClient
 
@@ -45,7 +45,6 @@ class SearchController @Inject() (ws: WSClient) extends ControllerUtils {
             logger.debug(s"No record found for id: ${id}")
             NotFound(errAsJson(404, "not found", s"Could not find value ${id}")).future
           case x => Ok(s"""${EnterpriseObj.toString(EnterpriseObj.toMap, x)}""").as(JSON).future
-          //          case x => Ok(s"""${EnterpriseObj.toString[Enterprise](EnterpriseObj.toMap, x)}""").as(JSON).future
         }
         case _ => BadRequest(errAsJson(400, "missing parameter", "No query string found")).future
       }
@@ -53,11 +52,8 @@ class SearchController @Inject() (ws: WSClient) extends ControllerUtils {
     }
   }
 
-  /**
-   *
-   * @todo   - change the id param as Long => String
-   * @note   - need to move ws under services to clean controller
-   */
+
+  //public api
   @ApiOperation(
     value = "Json Object of matching legal unit",
     notes = "Sends request to Business Index for legal units",

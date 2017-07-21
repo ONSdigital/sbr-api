@@ -9,10 +9,10 @@ import scala.util.parsing.json.JSONObject
  */
 
 /**
-  *
-  * @tparam T - SearchKeys object type
-  * @tparam Z - type of ds keys are stored
-  */
+ *
+ * @tparam T - SearchKeys object type
+ * @tparam Z - type of ds keys are stored
+ */
 trait Mapping[T, Z] {
 
   private val delim: String = ","
@@ -21,7 +21,7 @@ trait Mapping[T, Z] {
 
   def fromMap(b: Z): T
 
-  def filterChildren(x: Z): Any
+  def filter(x: Z): AnyRef
 
   /**
    *

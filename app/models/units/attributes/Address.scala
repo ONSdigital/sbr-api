@@ -1,7 +1,6 @@
 package models.units.attributes
 
 import io.swagger.annotations.ApiModelProperty
-import utils.Mapping
 
 import scala.util.parsing.json.JSONObject
 

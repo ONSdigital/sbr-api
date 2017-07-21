@@ -40,11 +40,11 @@ object EnterpriseObj extends Mapping[Enterprise, Array[String]] {
     v.turnover.map(v => "turnover" -> v)
 
   def fromMap(values: Array[String]): Enterprise =
-    Enterprise(values(0), values(1).toLong, filterChildren(values), Address(values(6), values(7), values(8), values(9),
+    Enterprise(values(0), values(1).toLong, filter(values), Address(values(6), values(7), values(8), values(9),
       values(10)), values(11), Option(values(12).toInt), Option(values(13).toInt), Option(values(14).toInt),
       Option(values(15).toInt), Option(values(16).toInt), Option(values(17).toLong))
 
-  def filterChildren(values: Array[String]): Seq[Option[Long]] = Seq(Option(values(2).toLong), Option(values(3).toLong),
+  def filter(values: Array[String]): Seq[Option[Long]] = Seq(Option(values(2).toLong), Option(values(3).toLong),
     Option(values(4).toLong), Option(values(5).toLong)).flatten.map(x => Option(x))
 
 }
