@@ -35,7 +35,7 @@ class RouteSpec extends TestUtils {
 
   "SearchController" should {
     "return some records" in {
-      val suggest = fakeRequest(s"/v1/suggest?id=")
+      val suggest = fakeRequest(s"/v1/search?id=")
       status(suggest) mustBe BAD_REQUEST
       contentType(suggest) mustBe Some("application/json")
       val err_code: String = getJsValue(contentAsJson(suggest) \ "code")
