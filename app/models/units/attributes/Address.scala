@@ -3,6 +3,8 @@ package models.units.attributes
 import io.swagger.annotations.ApiModelProperty
 import utils.Mapping
 
+import scala.util.parsing.json.JSONObject
+
 /**
  * Created by Ameen on 15/07/2017.
  */
@@ -22,6 +24,8 @@ object AddressObj {
     "line4" -> a.line4,
     "line5" -> a.line5
   )
+
+  def toJson(a: Address) = JSONObject(toMap(a))
 
 }
 

@@ -1,14 +1,18 @@
 package utils
 
-import models.units.{ Enterprise, EnterpriseObj }
-import models.units.attributes.{ Address, AddressObj }
-import utils.Utilities.{ errAsJson, getElement }
+import utils.Utilities.errAsJson
 
 import scala.util.parsing.json.JSONObject
 
 /**
  * Created by haqa on 18/07/2017.
  */
+
+/**
+  *
+  * @tparam T - SearchKeys object type
+  * @tparam Z - type of ds keys are stored
+  */
 trait Mapping[T, Z] {
 
   private val delim: String = ","
@@ -17,37 +21,23 @@ trait Mapping[T, Z] {
 
   def fromMap(b: Z): T
 
-  @deprecated("Moved to utils.toString", "feature/ubrn-search [Thu 20 July 2017 - 12:58]")
-  def toString(returned: List[Enterprise]): String = returned.map {
-    case z => s"""${EnterpriseObj.toMap(z).map(x => s""""${x._1}":${fetch(x._2)}""").mkString(delim)}"""
-    case _ => errAsJson(404, "missing field", "Cannot find data in field")
-  }.map(x => s"""{$x}""").mkString("[", delim, "]")
+  def filterChildren(x: Z): Any
 
   /**
    *
-   * @todo - deprecate getElement in this instance and remove fetch
-   *       function by adapting the toMap function => use ++ cmd
+   * @todo - simplify string
    */
   def toString(f: T => Map[String, Any], returned: List[T]): String = returned.map {
-    case z => s"""${f(z).map(x => s""""${x._1}":${fetch(x._2)}""").mkString(delim)}"""
+    case z => s"""${f(z).map(x => s""""${x._1}":${x._2}""").mkString(delim)}"""
     case _ => errAsJson(404, "missing field", "Cannot find data in field")
   }.map(x => s"""{$x}""").mkString("[", delim, "]")
 
   /**
    *
-   * @note -  K could in fact be T
+   * @note -  K could in fact be T such that K is not needed -> rep. T => K
    *       Address doe not extend Mapping -> thus no T,Z and declaration is needed.
    */
   def toJson[K](i: K, f: K => Map[String, String]) = JSONObject(f(i))
-  //  @SuppressWarnings(Array("unfinished"))
-  //  def toJson(i: T, f: T => Map[String, String]) = JSONObject(f(i))
-
-  def fetch(elem: Any) = elem match {
-    case (a: Address) => toJson[Address](a, AddressObj.toMap)
-    case _ => getElement(elem)
-  }
-
-  def filterChildren(x: Z): Any
 
   @SuppressWarnings(Array("unused"))
   def ccToMap(cc: AnyRef) =

@@ -1,7 +1,7 @@
 package models.units
 
 import io.swagger.annotations.ApiModelProperty
-import models.units.attributes.Address
+import models.units.attributes.{ Address, AddressObj }
 import utils.Mapping
 import utils.Utilities._
 
@@ -26,18 +26,18 @@ final case class Enterprise(
 object EnterpriseObj extends Mapping[Enterprise, Array[String]] {
 
   def toMap(v: Enterprise): Map[String, Any] = Map(
-    "name" -> v.name,
+    "name" -> getElement(v.name),
     "id" -> v.id,
-    "legalUnits" -> v.legalUnits.map(x => getElement(x)),
-    "address" -> v.address,
-    "postcode" -> v.postcode,
-    "legalStatus" -> v.legalStatus,
-    "sic" -> v.sic,
-    "employees" -> v.employees,
-    "workingGrouping" -> v.workingGroup,
-    "employment" -> v.employment,
-    "turnover" -> v.turnover
-  )
+    "legalUnits" -> getElement(v.legalUnits.map(x => getElement(x))),
+    "address" -> AddressObj.toJson(v.address),
+    "postcode" -> getElement(v.postcode)
+  ) ++
+    v.legalStatus.map(v => "legalStatus" -> v).toMap ++
+    v.sic.map(v => "sic" -> v).toMap ++
+    v.employees.map(v => "employees" -> v).toMap ++
+    v.workingGroup.map(v => "workingGroup" -> v).toMap ++
+    v.employment.map(v => "employment" -> v).toMap ++
+    v.turnover.map(v => "turnover" -> v)
 
   def fromMap(values: Array[String]): Enterprise =
     Enterprise(values(0), values(1).toLong, filterChildren(values), Address(values(6), values(7), values(8), values(9),

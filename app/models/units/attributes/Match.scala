@@ -6,7 +6,7 @@ import models.units.Searchkeys
 /**
  * Created by Ameen on 15/07/2017.
  */
-
+@deprecated("Unknown", "feature/ubrn-search [Fri 21 July 2017 - 09:02]")
 final case class Matches(
   @ApiModelProperty(value = "", example = "", required = false, hidden = false) name: String,
   id: String,

@@ -5,7 +5,7 @@ import utils.Mapping
 /**
  * Created by haqa on 19/07/2017.
  */
-
+@deprecated("Unknown", "feature/ubrn-search [Fri 21 July 2017 - 09:02]")
 final case class Link(
   current: Option[String],
   grandparent: Option[String],
@@ -14,6 +14,7 @@ final case class Link(
   grandchild: Option[String]
 )
 
+@deprecated("Unknown", "feature/ubrn-search [Fri 21 July 2017 - 09:02]")
 object LinksObj extends Mapping[Link, Array[String]] {
 
   def toMap(v: Link): Map[String, Any] = Map(
@@ -27,7 +28,6 @@ object LinksObj extends Mapping[Link, Array[String]] {
   def fromMap(values: Array[String]): Link =
     Link(Option(values(0).toString), Option(values(1).toString), Option(values(2).toString),
       Option(values(3).toString), Option(values(4).toString))
-
 
   def filterChildren(z: Array[String]): Any = ???
 
