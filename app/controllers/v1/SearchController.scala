@@ -52,7 +52,6 @@ class SearchController @Inject() (ws: WSClient) extends ControllerUtils {
     }
   }
 
-
   //public api
   @ApiOperation(
     value = "Json Object of matching legal unit",

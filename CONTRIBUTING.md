@@ -8,9 +8,10 @@ This project mainly follows the scala style guide documented in the official [Sc
 #### Naming Conventions
 For naming values, methods and objects in this project we follow the official naming convention declared by the [Scala docs](http://docs.scala-lang.org/style/naming-conventions.html). 
 
+### Swagger Documentation
+
 
 ### Scala Annotations
-
 
 ### Git Workflow
 
