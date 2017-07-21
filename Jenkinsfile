@@ -1,7 +1,5 @@
 #!groovy
-//@Library('jenkins-pipeline-shared@email-sbr') _
 @Library('jenkins-pipeline-shared@temporary') _
-//@Library('jenkins-pipeline-shared@feature/cloud-foundry-deploy') _
 
 pipeline {
     agent any
