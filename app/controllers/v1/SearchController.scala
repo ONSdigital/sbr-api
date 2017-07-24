@@ -6,7 +6,7 @@ import io.swagger.annotations._
 import play.api.mvc.{ Action, AnyContent, Result }
 import utils.Utilities.errAsJson
 import com.outworkers.util.play._
-import models.units.{ EnterpriseObj }
+import models.units.{ Enterprise, EnterpriseObj }
 import models.units.attributes.Matches
 import play.api.libs.ws.WSClient
 
@@ -29,7 +29,7 @@ class SearchController @Inject() (ws: WSClient) extends ControllerUtils {
     httpMethod = "GET"
   )
   @ApiResponses(Array(
-    new ApiResponse(code = 200, response = classOf[Matches], responseContainer = "JSONObject", message = "Success -> Record(s) found for id."),
+    new ApiResponse(code = 200, response = classOf[Enterprise], responseContainer = "JSONObject", message = "Success -> Record(s) found for id."),
     new ApiResponse(code = 400, responseContainer = "JSONObject", message = "Client Side Error -> Required parameter was not found."),
     new ApiResponse(code = 404, responseContainer = "JSONObject", message = "Client Side Error -> Id not found."),
     new ApiResponse(code = 500, responseContainer = "JSONObject", message = "Server Side Error -> Request could not be completed.")

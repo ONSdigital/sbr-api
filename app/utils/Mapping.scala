@@ -1,7 +1,5 @@
 package utils
 
-import utils.Utilities.errAsJson
-
 import scala.util.parsing.json.JSONObject
 
 /**
@@ -23,14 +21,14 @@ trait Mapping[T, Z] {
 
   def filter(x: Z): AnyRef
 
-  @deprecated("Moved to new toString", "devops/jenkins [Mon 24 July 2017 - 10:15]")
-  def toString2(f: T => Map[String, Any], returned: List[T]): String = returned.map {
-    case z => JSONObject(f(z))
-    case _ => errAsJson(404, "missing rec", "Cannot find data in rec").toString
-  }.map(x => s"""$x""").mkString("[", delim, "]")
-
-  def toString(f: T => Map[String, Any], returned: List[T]): String =
-    returned.map(z => JSONObject(f(z))).mkString("[", delim, "]")
+  /**
+   *
+   * @note replace r with gen. dt
+   *       won't always use List type => gen.
+   *       array => map
+   */
+  def toString(f: T => Map[String, Any], r: List[T]): String =
+    r.map(z => JSONObject(f(z))).mkString("[", delim, "]")
 
   /**
    *
@@ -38,16 +36,5 @@ trait Mapping[T, Z] {
    *       Address doe not extend Mapping -> thus no T,Z and declaration is needed.
    */
   def toJson[K](i: K, f: K => Map[String, String]) = JSONObject(f(i))
-
-  @SuppressWarnings(Array("unused"))
-  def ccToMap(cc: AnyRef) =
-    (Map[String, Any]() /: cc.getClass.getDeclaredFields) {
-      (a, f) =>
-        f.setAccessible(true)
-        a + (f.getName -> f.get(cc))
-    }
-
-  @SuppressWarnings(Array("unused"))
-  def createCC(values: Array[String], x: AnyRef) = ???
 
 }
