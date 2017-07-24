@@ -86,7 +86,8 @@ lazy val api = (project in file("."))
       "com.outworkers"               %%    "util-testing"        %    Versions.util     % Test,
       "org.scalatestplus.play"       %%    "scalatestplus-play"  %    "2.0.0"           % Test,
       "io.swagger"                   %%    "swagger-play2"       %    "1.5.3",
-      "org.webjars"                  %     "swagger-ui"          %    "2.2.10-1"
+      "org.webjars"                  %     "swagger-ui"          %    "2.2.10-1",
+      "com.typesafe"                 %     "config"              %    "1.3.1"
     ),
     assemblyJarName in assembly := "sbr-api.jar",
     assemblyMergeStrategy in assembly := {

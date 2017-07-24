@@ -6,8 +6,8 @@ import io.swagger.annotations._
 import play.api.mvc.{ Action, AnyContent, Result }
 import utils.Utilities.errAsJson
 import com.outworkers.util.play._
+import com.typesafe.config.Config
 import models.units.{ Enterprise, EnterpriseObj }
-import models.units.attributes.Matches
 import play.api.libs.ws.WSClient
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -18,7 +18,9 @@ import scala.concurrent.duration._
  * Created by haqa on 04/07/2017.
  */
 @Api("Search")
-class SearchController @Inject() (ws: WSClient) extends ControllerUtils {
+class SearchController @Inject() (ws: WSClient)(implicit config: Config) extends ControllerUtils {
+
+  protected val host: String = config.getString("legal.units.source.host")
 
   //public api
   @ApiOperation(
@@ -69,7 +71,6 @@ class SearchController @Inject() (ws: WSClient) extends ControllerUtils {
     @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
   ): Action[AnyContent] = Action.async { implicit request =>
     logger.info(s"Sending request to Business Index for legal unit: ${id}")
-    val host = "http://localhost:9000"
     val url = s"${host}/v1/search?query=_id:${id}"
     val res = sendRequest(url)
     //    ws.close()

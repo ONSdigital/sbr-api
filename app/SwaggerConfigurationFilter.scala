@@ -10,6 +10,10 @@ import io.swagger.models.properties.Property
  */
 class SwaggerConfigurationFilter extends SwaggerSpecFilter {
 
+  private val parametersNotAllowed: List[String] = List("none", "none")
+  private val propertiesNotAllowed: List[String] = List("none")
+  private val opertaionsNotAllowed: List[String] = List()
+
   def isParamAllowed(
     parameter: Parameter,
     operation: Operation,
@@ -17,7 +21,7 @@ class SwaggerConfigurationFilter extends SwaggerSpecFilter {
     params: util.Map[String, util.List[String]],
     cookies: util.Map[String, String],
     headers: util.Map[String, util.List[String]]
-  ): Boolean = filter(List("none", "none"), parameter.getName)
+  ): Boolean = filter(parametersNotAllowed, parameter.getName)
 
   def isPropertyAllowed(
     model: Model,
@@ -26,7 +30,7 @@ class SwaggerConfigurationFilter extends SwaggerSpecFilter {
     params: util.Map[String, util.List[String]],
     cookies: util.Map[String, String],
     headers: util.Map[String, util.List[String]]
-  ): Boolean = display("none", property.getName)
+  ): Boolean = filter(propertiesNotAllowed, property.getName)
 
   def isOperationAllowed(
     operation: Operation,
@@ -35,10 +39,6 @@ class SwaggerConfigurationFilter extends SwaggerSpecFilter {
     cookies: util.Map[String, String],
     headers: util.Map[String, util.List[String]]
   ): Boolean = true
-
-  @deprecated("Moved to SwaggerConfigurationFilter.filter", "devops/jenkins [Mon 24 July 2017 - 11:30]")
-  def display(term: String, f: => String): Boolean =
-    if (f == term) false else true
 
   def filter(terms: List[String], f: => String): Boolean =
     !terms.map(x => if (f == x) false else true).contains(false)

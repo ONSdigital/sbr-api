@@ -17,4 +17,8 @@ For naming values, methods and objects in this project we follow the official na
 
 #### Branching and Merges
 
+#### Pull Requests
+
 #### Versioning
+
+#### Releases
