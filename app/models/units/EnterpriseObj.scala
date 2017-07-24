@@ -26,11 +26,11 @@ final case class Enterprise(
 object EnterpriseObj extends Mapping[Enterprise, Array[String]] {
 
   def toMap(v: Enterprise): Map[String, Any] = Map(
-    "name" -> getElement(v.name),
+    "name" -> v.name,
     "id" -> v.id,
     "legalUnits" -> getElement(v.legalUnits.map(x => getElement(x))),
     "address" -> AddressObj.toJson(v.address),
-    "postcode" -> getElement(v.postcode)
+    "postcode" -> v.postcode
   ) ++
     v.legalStatus.map(v => "legalStatus" -> v).toMap ++
     v.sic.map(v => "sic" -> v).toMap ++

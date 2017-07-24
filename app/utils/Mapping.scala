@@ -23,14 +23,14 @@ trait Mapping[T, Z] {
 
   def filter(x: Z): AnyRef
 
-  /**
-   *
-   * @todo - simplify string
-   */
-  def toString(f: T => Map[String, Any], returned: List[T]): String = returned.map {
-    case z => s"""${f(z).map(x => s""""${x._1}":${x._2}""").mkString(delim)}"""
-    case _ => errAsJson(404, "missing field", "Cannot find data in field")
-  }.map(x => s"""{$x}""").mkString("[", delim, "]")
+  @deprecated("Moved to new toString", "devops/jenkins [Mon 24 July 2017 - 10:15]")
+  def toString2(f: T => Map[String, Any], returned: List[T]): String = returned.map {
+    case z => JSONObject(f(z))
+    case _ => errAsJson(404, "missing rec", "Cannot find data in rec").toString
+  }.map(x => s"""$x""").mkString("[", delim, "]")
+
+  def toString(f: T => Map[String, Any], returned: List[T]): String =
+    returned.map(z => JSONObject(f(z))).mkString("[", delim, "]")
 
   /**
    *

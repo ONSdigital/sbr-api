@@ -24,7 +24,7 @@ object Utilities {
       case Some(i: Int) => i
       case Some(l: Long) => l
       case Some(z) => s""""${z}""""
-      case x => s""""${x.toString}""""
+      case x => s"${x.toString}"
       case None => ""
     }
     res
