@@ -88,16 +88,28 @@ lazy val api = (project in file("."))
       "io.swagger"                   %%    "swagger-play2"       %    "1.5.3",
       "org.webjars"                  %     "swagger-ui"          %    "2.2.10-1",
       "com.typesafe"                 %     "config"              %    "1.3.1"
+      excludeAll(
+        ExclusionRule("commons-logging", "commons-logging")
+        )
     ),
-    assemblyJarName in assembly := "sbr-api.jar",
+    // assembly
+    assemblyJarName in assembly := s"sbr-api-${Versions.version}.jar",
+//    assemblyMergeStrategy in assembly := {
+//      case PathList("META-INF", xs @ _*) => MergeStrategy.discard
+//      case x => MergeStrategy.first
+////        val oldStrategy = (assemblyMergeStrategy in assembly).value
+////        oldStrategy(x)
+//    },
     assemblyMergeStrategy in assembly := {
-      case PathList("META-INF", xs @ _*) => MergeStrategy.discard
-      case x => MergeStrategy.first
-//        val oldStrategy = (assemblyMergeStrategy in assembly).value
-//        oldStrategy(x)
+      case PathList("META-INF", "io.netty.versions.properties", xs @ _*) => MergeStrategy.last
+      case PathList("org", "slf4j", xs @ _*) => MergeStrategy.first
+      case "application.conf" => MergeStrategy.first
+      case x =>
+        val oldStrategy = (assemblyMergeStrategy in assembly).value
+        oldStrategy(x)
     },
     mainClass in assembly := Some("play.core.server.ProdServerStart"),
     fullClasspath in assembly += Attributed.blank(PlayKeys.playPackageAssets.value),
-    /// TEST STUFF ////
-      testForkedParallel in Test := true
+    //test
+    parallelExecution in Test := false
   )
