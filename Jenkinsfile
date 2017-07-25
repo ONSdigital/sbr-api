@@ -58,43 +58,43 @@ pipeline {
 
 
         stage('Static Analysis') {
-          agent any
-          steps {
-            parallel (
-              "Unit" :  {
-                colourText("info","Running unit tests")
-                sh "$SBT test"
-              },
-              "Style" : {
-                colourText("info","Running style tests")
-                sh '''
+            agent any
+            steps {
+                parallel (
+                        "Unit" :  {
+                            colourText("info","Running unit tests")
+                            sh "$SBT test"
+                        },
+                        "Style" : {
+                            colourText("info","Running style tests")
+                            sh '''
                 $SBT scalastyleGenerateConfig
                 $SBT scalastyle
                 '''
-              },
-              "Additional" : {
-                colourText("info","Running additional tests")
-                sh "$SBT scapegoat"
-              }
-            )
-          }
-          post {
-            always {
-              script {
-                  env.NODE_STAGE = "Static Analysis"
-              }
+                        },
+                        "Additional" : {
+                            colourText("info","Running additional tests")
+                            sh "$SBT scapegoat"
+                        }
+                )
             }
-            success {
-              colourText("info","Generating reports for tests")
-            //   junit '**/target/test-reports/*.xml'
-            
-              step([$class: 'CoberturaPublisher', coberturaReportFile: '**/target/scala-2.11/coverage-report/*.xml'])
-              step([$class: 'CheckStylePublisher', pattern: 'target/scalastyle-result.xml, target/scala-2.11/scapegoat-report/scapegoat-scalastyle.xml'])
+            post {
+                always {
+                    script {
+                        env.NODE_STAGE = "Static Analysis"
+                    }
+                }
+                success {
+                    colourText("info","Generating reports for tests")
+                    //   junit '**/target/test-reports/*.xml'
+
+                    step([$class: 'CoberturaPublisher', coberturaReportFile: '**/target/scala-2.11/coverage-report/*.xml'])
+                    step([$class: 'CheckStylePublisher', pattern: 'target/scalastyle-result.xml, target/scala-2.11/scapegoat-report/scapegoat-scalastyle.xml'])
+                }
+                failure {
+                    colourText("warn","Failed to retrieve reports.")
+                }
             }
-            failure {
-              colourText("warn","Failed to retrieve reports.")
-            }
-          }
         }
 
 
@@ -106,7 +106,7 @@ pipeline {
             // }
             steps {
                 script {
-                  env.NODE_STAGE = "Bundle"
+                    env.NODE_STAGE = "Bundle"
                 }
                 colourText("info", "Bundling....")
                 dir('conf') {
@@ -115,7 +115,7 @@ pipeline {
                 }
                 // packageApp('dev')
                 // packageApp('test')
-            // stash name: "zip"
+                // stash name: "zip"
             }
         }
 
@@ -125,16 +125,20 @@ pipeline {
             // when {
             //     branch "develop"
             // }
+            environment {
+                env = "dev"
+            }
             steps {
                 colourText("success", 'Deploy Dev.')
                 script {
-                  env.NODE_STAGE = "Deploy - Dev"
+                    env.NODE_STAGE = "Deploy - Dev"
                 }
                 milestone(1)
                 lock('Deployment Initiated') {
                     colourText("info", 'deployment in progress')
+                    deploy()
                     // unstash zip
-                    deployToCloudFoundry('cloud-foundry-sbr-dev-user', 'sbr', 'dev', 'dev-sbr-api', 'dev-ons-sbr-api.zip', 'conf/dev/manifest.yml')
+                    // deployToCloudFoundry('cloud-foundry-sbr-dev-user', 'sbr', 'dev', 'dev-sbr-api', 'dev-ons-sbr-api.zip', 'conf/dev/manifest.yml')
                 }
             }
         }
@@ -274,3 +278,12 @@ pipeline {
 //     '''
 //   }
 // }
+
+def deploy () {
+    echo "Deploying Api app to $ENV"
+    withCredentials([string(credentialsId: "sbr-api-$ENV-secret-key", variable: 'APPLICATION_SECRET')]) {
+        deployToCloudFoundry('cloud-foundry-sbr-$ENV-user', 'sbr', '$ENV', '$ENV-sbr-api', '$ENV-ons-sbr-api.zip', 'conf/$ENV/manifest.yml')
+    }
+}
+
+

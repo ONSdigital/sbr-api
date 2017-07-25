@@ -87,25 +87,17 @@ lazy val api = (project in file("."))
       "org.scalatestplus.play"       %%    "scalatestplus-play"  %    "2.0.0"           % Test,
       "io.swagger"                   %%    "swagger-play2"       %    "1.5.3",
       "org.webjars"                  %     "swagger-ui"          %    "2.2.10-1"
-      excludeAll(
-        ExclusionRule("commons-logging", "commons-logging")
-      )
+      excludeAll ExclusionRule("commons-logging", "commons-logging")
     ),
     // assembly
     assemblyJarName in assembly := s"sbr-api-${Versions.version}.jar",
-//    assemblyMergeStrategy in assembly := {
-//      case PathList("META-INF", xs @ _*) => MergeStrategy.discard
-//      case x => MergeStrategy.first
-////        val oldStrategy = (assemblyMergeStrategy in assembly).value
-////        oldStrategy(x)
-//    },
     assemblyMergeStrategy in assembly := {
-      case PathList("javax", "servlet", xs@_*) => MergeStrategy.last
-      case PathList("org", "apache", xs@_*) => MergeStrategy.last
-      case PathList("org", "slf4j", xs@_*) => MergeStrategy.first
+      case PathList("javax", "servlet", xs@_*)                           => MergeStrategy.last
+      case PathList("org", "apache", xs@_*)                              => MergeStrategy.last
+      case PathList("org", "slf4j", xs@_*)                               => MergeStrategy.first
       case PathList("META-INF", "io.netty.versions.properties", xs @ _*) => MergeStrategy.last
-      case PathList("org", "slf4j", xs @ _*) => MergeStrategy.first
-      case "application.conf" => MergeStrategy.first
+      case PathList("org", "slf4j", xs @ _*)                             => MergeStrategy.first
+      case "application.conf"                                            => MergeStrategy.first
       case x =>
         val oldStrategy = (assemblyMergeStrategy in assembly).value
         oldStrategy(x)
