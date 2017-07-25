@@ -86,11 +86,10 @@ lazy val api = (project in file("."))
       "com.outworkers"               %%    "util-testing"        %    Versions.util     % Test,
       "org.scalatestplus.play"       %%    "scalatestplus-play"  %    "2.0.0"           % Test,
       "io.swagger"                   %%    "swagger-play2"       %    "1.5.3",
-      "org.webjars"                  %     "swagger-ui"          %    "2.2.10-1",
-      "com.typesafe"                 %     "config"              %    "1.3.1"
+      "org.webjars"                  %     "swagger-ui"          %    "2.2.10-1"
       excludeAll(
         ExclusionRule("commons-logging", "commons-logging")
-        )
+      )
     ),
     // assembly
     assemblyJarName in assembly := s"sbr-api-${Versions.version}.jar",
@@ -101,6 +100,9 @@ lazy val api = (project in file("."))
 ////        oldStrategy(x)
 //    },
     assemblyMergeStrategy in assembly := {
+      case PathList("javax", "servlet", xs@_*) => MergeStrategy.last
+      case PathList("org", "apache", xs@_*) => MergeStrategy.last
+      case PathList("org", "slf4j", xs@_*) => MergeStrategy.first
       case PathList("META-INF", "io.netty.versions.properties", xs @ _*) => MergeStrategy.last
       case PathList("org", "slf4j", xs @ _*) => MergeStrategy.first
       case "application.conf" => MergeStrategy.first
