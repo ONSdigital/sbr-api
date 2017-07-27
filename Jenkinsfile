@@ -40,23 +40,6 @@ pipeline {
             }
         }
 
-        // stage('Patch Release') {
-        //   agent { label 'adrianharristesting' }
-        //   when {
-        //     expression  {
-        //         env.BRANCH_NAME =~ patch//.*|fix//.*
-        //     }
-        //     // branch (patch\/.*|fix\/.*)
-        //   }
-        //   steps {
-        //         script{
-        //             env.NODE_STAGE = "Reports"
-        //         }
-        //         colourText("info", "release version would be increased!")
-        //   }
-        // }
-
-
         stage('Static Analysis') {
             agent any
             steps {
@@ -101,13 +84,13 @@ pipeline {
         // bundle all libs and dependencies
         stage ('Bundle') {
             agent any
-            when {
-                anyOf {
-                    branch "develop"
-                    branch "release"
-                    branch "master"
-                }
-            }
+            // when {
+            //     anyOf {
+            //         branch "develop"
+            //         branch "release"
+            //         branch "master"
+            //     }
+            // }
             steps {
                 script {
                     env.NODE_STAGE = "Bundle"
@@ -123,80 +106,21 @@ pipeline {
         }
 
 
-        stage('Deploy Dev'){
-            agent any
-             when {
-                 branch "develop"
-             }
-            environment {
-                env = "dev"
-            }
-            steps {
-                colourText("success", 'Deploy Dev.')
-                script {
-                    env.NODE_STAGE = "Deploy - Dev"
-                }
-                milestone(1)
-                lock('Deployment Initiated') {
-                    colourText("info", 'deployment in progress')
-                    deploy()
-                    // unstash zip
-                }
-            }
-        }
-
-        stage('Integration Tests - Dev') {
-            agent { label 'adrianharristesting' }
-            when {
-                branch "develop"
-            }
-            steps {
-                colourText("success", 'Integration Tests - Dev.')
-            }
-        }
-
-
-        stage('Deploy to Test'){
-            agent any
-            environment {
-                env = "release"
-            }
-            when {
-                branch "release"
-            }
-            steps {
-                colourText("success", 'Deploy Test.')
-                milestone(1)
-                lock('Deployment Initiated') {
-                    colourText("info", 'deployment in progress')
-                    deploy()
-                }
-            }
-
-        }
-
-        stage('Integration Tests - Test') {
-            agent { label 'adrianharristesting' }
-            when {
-                branch "release"
-            }
-            steps {
-                colourText("success", 'Integration Tests - Test.')
-            }
-        }
-
-
         stage ('Approve') {
             agent { label 'adrianharristesting' }
-            when {
-                branch "master"
-            }
+            // when {
+            //     anyOf {
+            //         branch "develop"
+            //         branch "release"
+            //         branch "master"
+            //     }
+            // }
             steps {
                 script {
                     env.NODE_STAGE = "Approve"
                 }
                 timeout(time: 2, unit: 'MINUTES') {
-                    input message: 'Do you wish to deploy the build?'
+                    input message: 'Do you wish to deploy the build to ${env.BRANCH_NAME} (Note: Live deployment will create an artifact)?'
                 }
             }
         }
@@ -212,7 +136,7 @@ pipeline {
             }
         }
 
-        stage ('Package') {
+        stage ('Package and Push Artifact') {
             agent any
             when {
                 branch "master"
@@ -223,35 +147,55 @@ pipeline {
 
         }
 
-        stage ('Make Artifact') {
+        stage('Deploy'){
             agent any
-            when {
-                branch "master"
-            }
+            // when {
+            //     anyOf {
+            //         branch "develop"
+            //         branch "release"
+            //         branch "master"
+            //     }
+            // }
             steps {
-                colourText("success", 'Store.')
-            }
-
-        }
-
-        stage ('Deploy Live') {
-            agent any
-            environment {
-                env = "beta"
-            }
-            when {
-                branch "master"
-            }
-            steps {
-                colourText("success", 'Deploy Live.')
+                colourText("success", 'Deploy.')
+                script {
+                    env.NODE_STAGE = "Deploy"
+                    if (BRANCH_NAME == "develop") {
+                        env.DEPLOY_NAME = "dev"
+                    }
+                    else if  (BRANCH_NAME == "release") {
+                        env.DEPLOY_NAME = "test"
+                    }
+                    else if (BRANCH_NAME == "master") {
+                        env.DEPLOY_NAME = "prod"
+                    }
+                    else {
+                        env.DEPLOY_NAME = "dev"
+                    }
+                }
                 milestone(1)
                 lock('Deployment Initiated') {
                     colourText("info", 'deployment in progress')
                     deploy()
+                    // unstash zip
                 }
             }
-
         }
+
+        stage('Integration Tests') {
+            agent { label 'adrianharristesting' }
+            when {
+                anyOf {
+                    branch "develop"
+                    branch "release"
+                }
+            }
+            steps {
+                colourText("success", 'Integration Tests - For Release or Dev environment.')
+            }
+        }
+
+
     }
     post {
         always {
@@ -288,8 +232,10 @@ pipeline {
 // }
 
 def deploy () {
-    echo "Deploying Api app to $ENV"
-    withCredentials([string(credentialsId: "sbr-api-$ENV-secret-key", variable: 'APPLICATION_SECRET')]) {
-        deployToCloudFoundry("cloud-foundry-sbr-$ENV-user", 'sbr', "$ENV", "$ENV-sbr-api", "$ENV-ons-sbr-api.zip", "conf/$ENV/manifest.yml")
+    echo "Deploying Api app to ${env.DEPLOY_NAME}"
+    withCredentials([string(credentialsId: "sbr-api-dev-secret-key", variable: 'APPLICATION_SECRET')]) {
+        deployToCloudFoundry("cloud-foundry-sbr-${env.DEPLOY_NAME}-user", 'sbr', "${env.DEPLOY_NAME}", "${env.DEPLOY_NAME}-sbr-api", "${env.DEPLOY_NAME}-ons-sbr-api.zip", "conf/${env.DEPLOY_NAME}/manifest.yml")
     }
 }
+
+​
