@@ -7,7 +7,7 @@ import play.api.mvc.{ Action, AnyContent, Result }
 import utils.Utilities.errAsJson
 import com.outworkers.util.play._
 import play.api.Environment
-//import com.typesafe.config.Config
+import scala.util.Try
 import models.units.{ Enterprise, EnterpriseObj }
 import play.api.libs.ws.WSClient
 
@@ -21,7 +21,6 @@ import scala.concurrent.duration._
 @Api("Search")
 class SearchController @Inject() (ws: WSClient) extends ControllerUtils {
   // (implicit config: Config)
-  //  protected val host: String = config.getString("legal.units.source.host")
 
   //public api
   @ApiOperation(
@@ -42,7 +41,7 @@ class SearchController @Inject() (ws: WSClient) extends ControllerUtils {
     @ApiParam(value = "term to categories the id source", required = false) origin: Option[String]
   ): Action[AnyContent] = {
     Action.async { implicit request =>
-      val key = id.getOrElse(getQueryString(request).head.toString)
+      val key = Try(id.getOrElse(getQueryString(request).head.toString)).getOrElse("")
       val res = key match {
         case key if key.length > minLengthKey => findRecord(key, "/sample/enterprise.csv") match {
           case Nil =>
@@ -73,12 +72,15 @@ class SearchController @Inject() (ws: WSClient) extends ControllerUtils {
     @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
   ): Action[AnyContent] = Action.async { implicit request =>
     logger.info(s"Sending request to Business Index for legal unit: ${id}")
-    val host = "http://localhost:9000"
-    val ubrn = id.orElse(getQueryString(request).head.toString)
-    val url = s"${host}/v1/search?query=_id:${ubrn}"
-    // error control
-    val res = sendRequest(url)
-    //    ws.close()
+    /**
+     * @todo - move url and host val to app.conf
+     */
+    val req = Try(id.orElse(getQueryString(request).head.toString)).getOrElse("")
+    println(s"HOSTTT: ${host}")
+    val res = req match {
+      case i => sendRequest(s"${host}:${i}")
+      case _ => BadRequest(errAsJson(400, "missing parameter", "No query string found")).future
+    }
     res
   }
 

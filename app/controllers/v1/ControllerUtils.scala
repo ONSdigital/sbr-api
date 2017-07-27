@@ -1,10 +1,9 @@
 package controllers.v1
 
+import com.typesafe.config._
 import play.api.mvc.{ AnyContent, Controller, Request, Result }
 import com.typesafe.scalalogging.StrictLogging
 import models.units.{ Enterprise, EnterpriseObj }
-import play.api.Play
-import play.api.Play.getFile
 import utils.CsvProcessor.readFile
 
 import scala.concurrent.Future
@@ -15,8 +14,11 @@ import scala.util.{ Failure, Success, Try }
  */
 trait ControllerUtils extends Controller with StrictLogging {
 
-  protected val minLengthKey = 8
-  //  protected def config: Config
+  private val config: Config = ConfigFactory.load
+
+  protected val host: String = config.getString("legal.units.source.host")
+  protected val minLengthKey = 7
+
   protected def getQueryString(request: Request[AnyContent]) = request.queryString.map { case v => v._2.mkString }
 
   protected[this] def errAsResponse(f: => Future[Result]): Future[Result] = Try(f) match {
