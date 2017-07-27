@@ -75,9 +75,9 @@ class SearchController @Inject() (ws: WSClient) extends ControllerUtils {
     /**
      * @todo - move url and host val to app.conf
      */
-    val req : String = Try(id.orElse(getQueryString(request).head).toString).getOrElse("")
+    val req: String = Try(getQueryString(request).head.toString).getOrElse("")
     val res = req match {
-      case id if id.length > 0 =>
+      case id if id.length > minLengthKey =>
         logger.info(s"Sending request to Business Index for legal unit id: ${id}")
         sendRequest(s"${host}:${id}")
       case _ => BadRequest(errAsJson(400, "missing parameter", "No query string found")).future
@@ -94,7 +94,7 @@ class SearchController @Inject() (ws: WSClient) extends ControllerUtils {
         RequestTimeout(errAsJson(408, "request_timeout", "This may be due to connection being blocked."))
       case e =>
         ServiceUnavailable(errAsJson(503, "service_unavailable", "Cannot Connect to host. Please verify the address is correct."))
-      case x =>
+      case _ =>
         BadRequest(errAsJson(404, "bad_request", "Cannot find specified id."))
     }
     res
