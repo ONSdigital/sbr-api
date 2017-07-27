@@ -6,6 +6,7 @@ import io.swagger.annotations._
 import play.api.mvc.{ Action, AnyContent, Result }
 import utils.Utilities.errAsJson
 import com.outworkers.util.play._
+import play.api.Environment
 //import com.typesafe.config.Config
 import models.units.{ Enterprise, EnterpriseObj }
 import play.api.libs.ws.WSClient
@@ -43,7 +44,7 @@ class SearchController @Inject() (ws: WSClient) extends ControllerUtils {
     Action.async { implicit request =>
       val key = id.getOrElse(getQueryString(request).head.toString)
       val res = key match {
-        case key if key.length > minLengthKey => findRecord(key, "conf/sample/enterprise.csv") match {
+        case key if key.length > minLengthKey => findRecord(key, "/sample/enterprise.csv") match {
           case Nil =>
             logger.debug(s"No record found for id: ${id}")
             NotFound(errAsJson(404, "not found", s"Could not find value ${id}")).future
