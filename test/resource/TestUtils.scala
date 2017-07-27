@@ -2,7 +2,7 @@ package resource
 
 import org.scalatestplus.play.PlaySpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.libs.json.{JsDefined, JsLookupResult}
+import play.api.libs.json.{ JsDefined, JsLookupResult }
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 

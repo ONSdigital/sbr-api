@@ -45,8 +45,8 @@ class SearchController @Inject() (ws: WSClient) extends ControllerUtils {
       val res = key match {
         case key if key.length > minLengthKey => findRecord(key, "/sample/enterprise.csv") match {
           case Nil =>
-            logger.debug(s"No record found for id: ${id}")
-            NotFound(errAsJson(404, "not found", s"Could not find value ${id}")).future
+            logger.debug(s"No record found for id: ${key}")
+            NotFound(errAsJson(404, "not found", s"Could not find value ${key}")).future
           case x => Ok(s"""${EnterpriseObj.toString(EnterpriseObj.toMap, x)}""").as(JSON).future
         }
         case _ => BadRequest(errAsJson(400, "missing parameter", "No query string found")).future
@@ -75,10 +75,11 @@ class SearchController @Inject() (ws: WSClient) extends ControllerUtils {
     /**
      * @todo - move url and host val to app.conf
      */
-    val req = Try(id.orElse(getQueryString(request).head.toString)).getOrElse("")
-    println(s"HOSTTT: ${host}")
+    val req : String = Try(id.orElse(getQueryString(request).head).toString).getOrElse("")
     val res = req match {
-      case i => sendRequest(s"${host}:${i}")
+      case id if id.length > 0 =>
+        logger.info(s"Sending request to Business Index for legal unit id: ${id}")
+        sendRequest(s"${host}:${id}")
       case _ => BadRequest(errAsJson(400, "missing parameter", "No query string found")).future
     }
     res
