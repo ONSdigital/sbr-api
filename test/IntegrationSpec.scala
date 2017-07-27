@@ -1,6 +1,7 @@
 package test
 
 import play.api.test.Helpers._
+import resource.TestUtils
 
 /**
  * Created by haqa on 14/07/2017.

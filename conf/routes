@@ -3,7 +3,7 @@
 # ~~~~
 
 # Searching Feature
-GET     /v1/search                 controllers.v1.SearchController.searchById(id: Option[String] ?= None, origin: Option[String] ?= None)
+GET     /v1/search                controllers.v1.SearchController.searchById(id: Option[String] ?= None, origin: Option[String] ?= None)
 #GET     /v1/suggest/:id<[a-zA-Z]+>              controllers.v1.SearchController.searchById(id: String)
 GET     /v1/ubrn                    controllers.v1.SearchController.searchByUBRN(id)
 

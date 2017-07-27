@@ -92,9 +92,9 @@ lazy val api = (project in file("."))
     // assembly
     assemblyJarName in assembly := s"sbr-api-${Versions.version}.jar",
     assemblyMergeStrategy in assembly := {
-      case PathList("javax", "servlet", xs@_*)                           => MergeStrategy.last
-      case PathList("org", "apache", xs@_*)                              => MergeStrategy.last
-      case PathList("org", "slf4j", xs@_*)                               => MergeStrategy.first
+      case PathList("javax", "servlet", xs @ _*)                         => MergeStrategy.last
+      case PathList("org", "apache", xs @ _*)                            => MergeStrategy.last
+      case PathList("org", "slf4j", xs @ _*)                             => MergeStrategy.first
       case PathList("META-INF", "io.netty.versions.properties", xs @ _*) => MergeStrategy.last
       case PathList("org", "slf4j", xs @ _*)                             => MergeStrategy.first
       case "application.conf"                                            => MergeStrategy.first
@@ -104,6 +104,6 @@ lazy val api = (project in file("."))
     },
     mainClass in assembly := Some("play.core.server.ProdServerStart"),
     fullClasspath in assembly += Attributed.blank(PlayKeys.playPackageAssets.value),
-    //test
+    // test
     parallelExecution in Test := false
   )

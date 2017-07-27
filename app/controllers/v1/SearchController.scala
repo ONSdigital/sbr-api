@@ -41,8 +41,9 @@ class SearchController @Inject() (ws: WSClient) extends ControllerUtils {
     @ApiParam(value = "term to categories the id source", required = false) origin: Option[String]
   ): Action[AnyContent] = {
     Action.async { implicit request =>
-      val res = id match {
-        case Some(id) if id.length > 0 => findRecord(id, "conf/sample/enterprise.csv") match {
+      val key = id.getOrElse(getQueryString(request).head.toString)
+      val res = key match {
+        case key if key.length > minLengthKey => findRecord(key, "conf/sample/enterprise.csv") match {
           case Nil =>
             logger.debug(s"No record found for id: ${id}")
             NotFound(errAsJson(404, "not found", s"Could not find value ${id}")).future
@@ -72,7 +73,9 @@ class SearchController @Inject() (ws: WSClient) extends ControllerUtils {
   ): Action[AnyContent] = Action.async { implicit request =>
     logger.info(s"Sending request to Business Index for legal unit: ${id}")
     val host = "http://localhost:9000"
-    val url = s"${host}/v1/search?query=_id:${id}"
+    val ubrn = id.orElse(getQueryString(request).head.toString)
+    val url = s"${host}/v1/search?query=_id:${ubrn}"
+    // error control
     val res = sendRequest(url)
     //    ws.close()
     res
@@ -87,6 +90,8 @@ class SearchController @Inject() (ws: WSClient) extends ControllerUtils {
         RequestTimeout(errAsJson(408, "request_timeout", "This may be due to connection being blocked."))
       case e =>
         ServiceUnavailable(errAsJson(503, "service_unavailable", "Cannot Connect to host. Please verify the address is correct."))
+      case x =>
+        BadRequest(errAsJson(404, "bad_request", "Cannot find specified id."))
     }
     res
   }

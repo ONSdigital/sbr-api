@@ -2,6 +2,7 @@ package test
 
 import play.api.test.Helpers._
 import play.api.test._
+import resource.TestUtils
 
 /**
  * Test application routes operate
