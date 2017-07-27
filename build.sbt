@@ -83,20 +83,27 @@ lazy val api = (project in file("."))
       "com.typesafe.scala-logging"   %%    "scala-logging"       %    "3.5.0",
       "com.outworkers"               %%    "util-parsers-cats"   %    Versions.util,
       "com.outworkers"               %%    "util-play"           %    Versions.util,
-      "com.outworkers"               %%    "util-testing"        %    Versions.util     % Test,
       "org.scalatestplus.play"       %%    "scalatestplus-play"  %    "2.0.0"           % Test,
       "io.swagger"                   %%    "swagger-play2"       %    "1.5.3",
-      "org.webjars"                  %     "swagger-ui"          %    "2.2.10-1"
+      "org.webjars"                  %     "swagger-ui"          %    "2.2.10-1",
+      "com.typesafe"                 %      "config"             %    "1.3.1"
+      excludeAll ExclusionRule("commons-logging", "commons-logging")
     ),
-    assemblyJarName in assembly := "sbr-api.jar",
+    // assembly
+    assemblyJarName in assembly := s"sbr-api-${Versions.version}.jar",
     assemblyMergeStrategy in assembly := {
-      case PathList("META-INF", xs @ _*) => MergeStrategy.discard
-      case x => MergeStrategy.first
-//        val oldStrategy = (assemblyMergeStrategy in assembly).value
-//        oldStrategy(x)
+      case PathList("javax", "servlet", xs @ _*)                         => MergeStrategy.last
+      case PathList("org", "apache", xs @ _*)                            => MergeStrategy.last
+      case PathList("org", "slf4j", xs @ _*)                             => MergeStrategy.first
+      case PathList("META-INF", "io.netty.versions.properties", xs @ _*) => MergeStrategy.last
+      case PathList("org", "slf4j", xs @ _*)                             => MergeStrategy.first
+      case "application.conf"                                            => MergeStrategy.first
+      case x =>
+        val oldStrategy = (assemblyMergeStrategy in assembly).value
+        oldStrategy(x)
     },
     mainClass in assembly := Some("play.core.server.ProdServerStart"),
     fullClasspath in assembly += Attributed.blank(PlayKeys.playPackageAssets.value),
-    /// TEST STUFF ////
-      testForkedParallel in Test := true
+    // test
+    parallelExecution in Test := false
   )

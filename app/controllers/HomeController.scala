@@ -1,9 +1,7 @@
 package controllers
 
 import io.swagger.annotations.{ Api, ApiOperation, ApiResponse, ApiResponses }
-import org.joda.time.DateTime
 import play.api.mvc.{ Controller, _ }
-//import io.swagger.annotations._
 
 @Api("Utils")
 class HomeController extends Controller {

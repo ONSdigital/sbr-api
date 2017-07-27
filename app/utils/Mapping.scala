@@ -1,41 +1,40 @@
 package utils
 
-import models.units.{ Enterprise, EnterpriseObj }
-import models.units.attributes.{ Address, AddressObj }
-import utils.Utilities.{ errAsJson, getElement }
-
 import scala.util.parsing.json.JSONObject
 
 /**
  * Created by haqa on 18/07/2017.
  */
+
+/**
+ *
+ * @tparam T - SearchKeys object type
+ * @tparam Z - type of ds keys are stored
+ */
 trait Mapping[T, Z] {
 
   private val delim: String = ","
 
-  def toMap(t: T): Map[String, Any]
+  def toMap(m: T): Map[String, Any]
+
   def fromMap(b: Z): T
 
-  def toString(returned: List[Enterprise]): String = returned.map {
-    case z => s"""${EnterpriseObj.toMap(z).map(x => s""""${x._1}":${fetch(x._2)}""").mkString(delim)}"""
-    case _ => errAsJson(404, "missing field", "Cannot find data in field")
-  }.map(x => s"""{$x}""").mkString("[", delim, "]")
+  def filter(x: Z): AnyRef
 
-  def fetch(elem: Any) = elem match {
-    case (a: Address) => JSONObject(AddressObj.toMap(a))
-    //    case (l: Seq[Option[Long]]) => s"""${l.map(x => s""""${x.toString}":${getElement(x)}""").mkString("{", delim, "}")}"""
-    case _ => getElement(elem)
-  }
+  /**
+   *
+   * @note replace r with gen. dt
+   *       won't always use List type => gen.
+   *       array => map
+   */
+  def toString(f: T => Map[String, Any], r: List[T]): String =
+    r.map(z => JSONObject(f(z))).mkString("[", delim, "]")
 
-  @SuppressWarnings(Array("unused"))
-  def ccToMap(cc: AnyRef) =
-    (Map[String, Any]() /: cc.getClass.getDeclaredFields) {
-      (a, f) =>
-        f.setAccessible(true)
-        a + (f.getName -> f.get(cc))
-    }
-
-  @SuppressWarnings(Array("unused"))
-  def createCC(values: Array[String], x: AnyRef) = ???
+  /**
+   *
+   * @note -  K could in fact be T such that K is not needed -> rep. T => K
+   *       Address doe not extend Mapping -> thus no T,Z and declaration is needed.
+   */
+  def toJson[K](i: K, f: K => Map[String, String]) = JSONObject(f(i))
 
 }

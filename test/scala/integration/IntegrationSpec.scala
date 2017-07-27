@@ -1,6 +1,7 @@
-package test
+package scala.integration
 
 import play.api.test.Helpers._
+import resource.TestUtils
 
 /**
  * Created by haqa on 14/07/2017.
@@ -9,9 +10,9 @@ class IntegrationSpec extends TestUtils {
 
   "Query Response" should {
 
-    "get by anonymous vatref" in {
-      val vat = 175956654000L
-      val res = fakeRequest(s"/v1/suggest?id=${vat}")
+    "get by anonymous Enterprise id" in {
+      val vat = 9900223267L
+      val res = fakeRequest(s"/v1/search?id=${vat}")
       status(res) mustBe OK
       contentType(res) mustBe Some("application/json")
       //      val found = getJsValue(contentAsJson(res) \ "vatref")
@@ -21,8 +22,8 @@ class IntegrationSpec extends TestUtils {
     }
 
     "check if multiple records return" ignore {
-      val id = 825039145000L
-      val res = fakeRequest(s"/v1/suggest?id=${id}")
+      val id = 9900156115L
+      val res = fakeRequest(s"/v1/search?id=${id}")
       status(res) mustBe OK
       contentType(res) mustBe Some("application/json")
       val found = getJsValue(contentAsJson(res) \ "vatref")

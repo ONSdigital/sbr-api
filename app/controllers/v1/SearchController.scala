@@ -1,17 +1,26 @@
 package controllers.v1
 
+import javax.inject.Inject
+
 import io.swagger.annotations._
-import play.api.mvc.{ Action, AnyContent }
-import utils.Utilities.{ errAsJson }
+import play.api.mvc.{ Action, AnyContent, Result }
+import utils.Utilities.errAsJson
 import com.outworkers.util.play._
-import models.units.EnterpriseObj
-import models.units.attributes.Matches
+import play.api.Environment
+import scala.util.Try
+import models.units.{ Enterprise, EnterpriseObj }
+import play.api.libs.ws.WSClient
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{ Future, TimeoutException }
+import scala.concurrent.duration._
 
 /**
  * Created by haqa on 04/07/2017.
  */
 @Api("Search")
-class SearchController extends ControllerUtils {
+class SearchController @Inject() (ws: WSClient) extends ControllerUtils {
+  // (implicit config: Config)
 
   //public api
   @ApiOperation(
@@ -22,7 +31,7 @@ class SearchController extends ControllerUtils {
     httpMethod = "GET"
   )
   @ApiResponses(Array(
-    new ApiResponse(code = 200, response = classOf[Matches], responseContainer = "JSONObject", message = "Success -> Record(s) found for id."),
+    new ApiResponse(code = 200, response = classOf[Enterprise], responseContainer = "JSONObject", message = "Success -> Record(s) found for id."),
     new ApiResponse(code = 400, responseContainer = "JSONObject", message = "Client Side Error -> Required parameter was not found."),
     new ApiResponse(code = 404, responseContainer = "JSONObject", message = "Client Side Error -> Id not found."),
     new ApiResponse(code = 500, responseContainer = "JSONObject", message = "Server Side Error -> Request could not be completed.")
@@ -32,10 +41,13 @@ class SearchController extends ControllerUtils {
     @ApiParam(value = "term to categories the id source", required = false) origin: Option[String]
   ): Action[AnyContent] = {
     Action.async { implicit request =>
-      val res = id match {
-        case Some(id) if id.length > 0 => findRecord(id, "conf/sample/enterprise.csv") match {
-          case Nil => NotFound(errAsJson(404, "not found", s"Could not find value ${id}")).future
-          case x => Ok(s"""${EnterpriseObj.toString(x)}""").as(JSON).future
+      val key = Try(id.getOrElse(getQueryString(request).head.toString)).getOrElse("")
+      val res = key match {
+        case key if key.length > minLengthKey => findRecord(key, "/sample/enterprise.csv") match {
+          case Nil =>
+            logger.debug(s"No record found for id: ${key}")
+            NotFound(errAsJson(404, "not found", s"Could not find value ${key}")).future
+          case x => Ok(s"""${EnterpriseObj.toString(EnterpriseObj.toMap, x)}""").as(JSON).future
         }
         case _ => BadRequest(errAsJson(400, "missing parameter", "No query string found")).future
       }
@@ -43,6 +55,49 @@ class SearchController extends ControllerUtils {
     }
   }
 
-  def searchByUBRN() = ???
+  //public api
+  @ApiOperation(
+    value = "Json Object of matching legal unit",
+    notes = "Sends request to Business Index for legal units",
+    responseContainer = "JSONObject",
+    code = 200,
+    httpMethod = "GET"
+  )
+  @ApiResponses(Array(
+    new ApiResponse(code = 200, message = "Success - Displays json list of dates for official development."),
+    new ApiResponse(code = 500, responseContainer = "Json", message = "Internal Server Error - Request timed-out."),
+    new ApiResponse(code = 500, responseContainer = "Json", message = "Internal Server Error - Failed to connection or timeout with endpoint.")
+  ))
+  def searchByUBRN(
+    @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
+  ): Action[AnyContent] = Action.async { implicit request =>
+    logger.info(s"Sending request to Business Index for legal unit: ${id}")
+    /**
+     * @todo - move url and host val to app.conf
+     */
+    val req: String = Try(getQueryString(request).head.toString).getOrElse("")
+    val res = req match {
+      case id if id.length > minLengthKey =>
+        logger.info(s"Sending request to Business Index for legal unit id: ${id}")
+        sendRequest(s"${host}:${id}")
+      case _ => BadRequest(errAsJson(400, "missing parameter", "No query string found")).future
+    }
+    res
+  }
+
+  def sendRequest(url: String): Future[Result] = {
+    val res = ws.url(url).withRequestTimeout(5000.millis).get().map {
+      response =>
+        Ok(response.body).as(JSON)
+    } recover {
+      case t: TimeoutException =>
+        RequestTimeout(errAsJson(408, "request_timeout", "This may be due to connection being blocked."))
+      case e =>
+        ServiceUnavailable(errAsJson(503, "service_unavailable", "Cannot Connect to host. Please verify the address is correct."))
+      case _ =>
+        BadRequest(errAsJson(404, "bad_request", "Cannot find specified id."))
+    }
+    res
+  }
 
 }

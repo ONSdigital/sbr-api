@@ -13,21 +13,19 @@ object CsvProcessor {
 
   private[this] val logger = LoggerFactory.getLogger(getClass)
 
+  /**
+   * @todo replace relative file finder
+   */
+  val sampleFile = "/sample/enterprise.csv"
+
   def readFile(filename: String): Iterator[String] = {
-    logger.info(s"Reading csv with filename: ${filename.substring(filename.lastIndexOf("/") + 1)} -> at path ${currentDirectory}${filename}")
-    val lines = Try(Source.fromFile(filename).getLines) match {
+    logger.info(s"Reading csv with filename: ${filename.substring(filename.lastIndexOf("/") + 1)} " +
+      s"-> at path ${currentDirectory}${filename}")
+    val lines = Try(Source.fromInputStream(getClass.getResourceAsStream(filename)).getLines()) match {
       case Success(s) => s
       case Failure(ex) => throw new RuntimeException(s"Can't read file $filename", ex)
     }
     lines
-  }
-
-  //unused - maintain
-  protected def getResource(file: String): Iterator[String] = {
-    Try(Source.fromInputStream(getClass.getResourceAsStream(file)).getLines()) match {
-      case Success(s) => s
-      case Failure(e) => throw new RuntimeException(s"Can't get resource $file", e)
-    }
   }
 
   def printAll(data: Iterator[String]) = {

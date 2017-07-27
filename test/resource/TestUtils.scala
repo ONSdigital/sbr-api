@@ -1,4 +1,4 @@
-package test
+package resource
 
 import org.scalatestplus.play.PlaySpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
