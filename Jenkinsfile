@@ -84,13 +84,13 @@ pipeline {
         // bundle all libs and dependencies
         stage ('Bundle') {
             agent any
-            // when {
-            //     anyOf {
-            //         branch "develop"
-            //         branch "release"
-            //         branch "master"
-            //     }
-            // }
+             when {
+                 anyOf {
+                     branch "develop"
+                     branch "release"
+                     branch "master"
+                 }
+             }
             steps {
                 script {
                     env.NODE_STAGE = "Bundle"
@@ -108,13 +108,13 @@ pipeline {
 
         stage ('Approve') {
             agent { label 'adrianharristesting' }
-            // when {
-            //     anyOf {
-            //         branch "develop"
-            //         branch "release"
-            //         branch "master"
-            //     }
-            // }
+             when {
+                 anyOf {
+                     branch "develop"
+                     branch "release"
+                     branch "master"
+                 }
+             }
             steps {
                 script {
                     env.NODE_STAGE = "Approve"
@@ -149,13 +149,13 @@ pipeline {
 
         stage('Deploy'){
             agent any
-            // when {
-            //     anyOf {
-            //         branch "develop"
-            //         branch "release"
-            //         branch "master"
-            //     }
-            // }
+             when {
+                 anyOf {
+                     branch "develop"
+                     branch "release"
+                     branch "master"
+                 }
+             }
             steps {
                 colourText("success", 'Deploy.')
                 script {
@@ -168,9 +168,6 @@ pipeline {
                     }
                     else if (BRANCH_NAME == "master") {
                         env.DEPLOY_NAME = "prod"
-                    }
-                    else {
-                        env.DEPLOY_NAME = "dev"
                     }
                 }
                 milestone(1)
