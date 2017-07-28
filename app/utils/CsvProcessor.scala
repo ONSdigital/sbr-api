@@ -13,6 +13,8 @@ object CsvProcessor {
 
   private[this] val logger = LoggerFactory.getLogger(getClass)
 
+  private val headerIndex = 1
+
   /**
    * @todo replace relative file finder
    */
@@ -33,5 +35,8 @@ object CsvProcessor {
       println(data.next())
     }
   }
+
+  def headerToSeq(file: String): Seq[String] =
+    readFile(file).take(headerIndex).next().toLowerCase.split(",").map(_.trim)
 
 }

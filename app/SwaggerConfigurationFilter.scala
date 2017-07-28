@@ -41,6 +41,6 @@ class SwaggerConfigurationFilter extends SwaggerSpecFilter {
   ): Boolean = true
 
   def filter(terms: List[String], f: => String): Boolean =
-    !terms.map(x => if (f == x) false else true).contains(false)
-
+    //    !terms.map(x => if (f == x) false else true).contains(false)
+    !terms.map(x => !(f == x)).contains(false)
 }

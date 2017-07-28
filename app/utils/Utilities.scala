@@ -19,6 +19,7 @@ object Utilities {
     )
   }
 
+  // ret: AnyVal
   def getElement(value: Any) = {
     val res = value match {
       case None => ""

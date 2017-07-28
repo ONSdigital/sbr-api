@@ -15,19 +15,21 @@ final case class Link(
 )
 
 @deprecated("Unknown", "feature/ubrn-search [Fri 21 July 2017 - 09:02]")
-object LinksObj extends Mapping[Link, Array[String]] {
+object Link extends Mapping[Link, Array[String]] {
 
-  def toMap(v: Link): Map[String, Any] = Map(
-    "current" -> v.current,
-    "grandparent" -> v.grandparent,
-    "parent" -> v.parent,
-    "child" -> v.child,
-    "grandchild" -> v.grandchild
+  def toJson(x: List[Link]) = ???
+
+  private val relationshipMap: Map[String, Int] = Map(
+    "CURRENT" -> 0,
+    "GRANDPARENT" -> 1,
+    "PARENT" -> 2,
+    "CHILD" -> 3,
+    "GRANDCHILD" -> 4
   )
 
   def fromMap(values: Array[String]): Link =
-    Link(Option(values(0).toString), Option(values(1).toString), Option(values(2).toString),
-      Option(values(3).toString), Option(values(4).toString))
+    Link(Option(values(relationshipMap("CURRENT"))), Option(values(relationshipMap("GRANDPARENT"))), Option(values(relationshipMap("PARENT"))),
+      Option(values(relationshipMap("CHILD"))), Option(values(relationshipMap("GRANDCHILD"))))
 
   def filter(z: Array[String]): AnyRef = ???
 

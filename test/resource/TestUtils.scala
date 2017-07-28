@@ -15,8 +15,14 @@ trait TestUtils extends PlaySpec with GuiceOneAppPerSuite {
   protected[this] def fakeRequest(url: String, method: String = GET) =
     route(app, FakeRequest(method, url)).getOrElse(sys.error(s"Route $url does not exist"))
 
-  def getValue(json: Option[String]): String = json match { case Some(x: String) => s"${x}" }
+  def getValue(json: Option[String]): String = json match {
+    case Some(x: String) => s"${x}"
+    case _ => sys.error("No Value failed. Forcing test failure")
+  }
 
-  def getJsValue(elem: JsLookupResult) = elem match { case JsDefined(y) => s"${y}" }
+  def getJsValue(elem: JsLookupResult) = elem match {
+    case JsDefined(y) => s"${y}"
+    case _ => sys.error("No JsValue found. Forcing test failure")
+  }
 
 }

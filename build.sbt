@@ -57,11 +57,11 @@ lazy val api = (project in file("."))
   .enablePlugins(BuildInfoPlugin, GitVersioning, GitBranchPrompt, PlayScala)
   .settings(commonSettings: _*)
   .settings(
-    scalaVersion := Versions.scala,
     name := Constant.appName,
     moduleName := "ons-sbr-api",
     version := Versions.version,
     buildInfoPackage := "controllers",
+    // LastUpdateController - gives us last compile time and tagging info
     buildInfoKeys := Seq[BuildInfoKey](
       organization,
       name,
@@ -76,7 +76,6 @@ lazy val api = (project in file("."))
     buildInfoOptions += BuildInfoOption.ToMap,
     buildInfoOptions += BuildInfoOption.ToJson,
     buildInfoOptions += BuildInfoOption.BuildTime,
-    buildInfoPackage := "controllers",
     libraryDependencies ++= Seq (
       filters,
       "org.webjars"                  %%    "webjars-play"        %    "2.5.0-3",

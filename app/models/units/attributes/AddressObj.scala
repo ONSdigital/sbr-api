@@ -1,8 +1,7 @@
 package models.units.attributes
 
 import io.swagger.annotations.ApiModelProperty
-
-import scala.util.parsing.json.JSONObject
+import play.api.libs.json.{ Json, OFormat }
 
 /**
  * Created by Ameen on 15/07/2017.
@@ -15,7 +14,7 @@ case class Address(
   @ApiModelProperty(value = "County of address", example = "Gtr Manchester") line5: String
 )
 
-object AddressObj {
+object Address {
   def toMap(a: Address): Map[String, String] = Map(
     "line1" -> a.line1,
     "line2" -> a.line2,
@@ -24,7 +23,7 @@ object AddressObj {
     "line5" -> a.line5
   )
 
-  def toJson(a: Address) = JSONObject(toMap(a))
+  implicit val address: OFormat[Address] = Json.format[Address]
 
 }
 

@@ -3,24 +3,19 @@ package controllers.v1
 import javax.inject.Inject
 
 import io.swagger.annotations._
-import play.api.mvc.{ Action, AnyContent, Result }
+import play.api.mvc.{ Action, AnyContent }
 import utils.Utilities.errAsJson
 import com.outworkers.util.play._
-import play.api.Environment
+
 import scala.util.Try
-import models.units.{ Enterprise, EnterpriseObj }
+import models.units.{ Enterprise }
+import utils.Properties._
 import play.api.libs.ws.WSClient
-
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{ Future, TimeoutException }
-import scala.concurrent.duration._
-
 /**
  * Created by haqa on 04/07/2017.
  */
 @Api("Search")
 class SearchController @Inject() (ws: WSClient) extends ControllerUtils {
-  // (implicit config: Config)
 
   //public api
   @ApiOperation(
@@ -41,15 +36,16 @@ class SearchController @Inject() (ws: WSClient) extends ControllerUtils {
     @ApiParam(value = "term to categories the id source", required = false) origin: Option[String]
   ): Action[AnyContent] = {
     Action.async { implicit request =>
-      val key = Try(id.getOrElse(getQueryString(request).head.toString)).getOrElse("")
+      // Either -> comment
+      val key = Try(id.getOrElse(getQueryString(request).head)).getOrElse("")
       val res = key match {
-        case key if key.length > minLengthKey => findRecord(key, "/sample/enterprise.csv") match {
+        case key if key.length >= minKeyLength => findRecord(key, "/sample/enterprise.csv") match {
           case Nil =>
             logger.debug(s"No record found for id: ${key}")
-            NotFound(errAsJson(404, "not found", s"Could not find value ${key}")).future
-          case x => Ok(s"""${EnterpriseObj.toString(EnterpriseObj.toMap, x)}""").as(JSON).future
+            NotFound(errAsJson(NOT_FOUND, "not found", s"Could not find value ${key}")).future
+          case x => Ok(Enterprise.toJson(x)).as(JSON).future
         }
-        case _ => BadRequest(errAsJson(400, "missing parameter", "No query string found")).future
+        case _ => BadRequest(errAsJson(BAD_REQUEST, "missing parameter", "No query string found")).future
       }
       res
     }
@@ -72,30 +68,12 @@ class SearchController @Inject() (ws: WSClient) extends ControllerUtils {
     @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
   ): Action[AnyContent] = Action.async { implicit request =>
     logger.info(s"Sending request to Business Index for legal unit: ${id}")
-    /**
-     * @todo - move url and host val to app.conf
-     */
-    val req: String = Try(getQueryString(request).head.toString).getOrElse("")
+    val req: String = Try(getQueryString(request).head).getOrElse("")
     val res = req match {
-      case id if id.length > minLengthKey =>
+      case id if id.length >= minKeyLength =>
         logger.info(s"Sending request to Business Index for legal unit id: ${id}")
-        sendRequest(s"${host}:${id}")
-      case _ => BadRequest(errAsJson(400, "missing parameter", "No query string found")).future
-    }
-    res
-  }
-
-  def sendRequest(url: String): Future[Result] = {
-    val res = ws.url(url).withRequestTimeout(5000.millis).get().map {
-      response =>
-        Ok(response.body).as(JSON)
-    } recover {
-      case t: TimeoutException =>
-        RequestTimeout(errAsJson(408, "request_timeout", "This may be due to connection being blocked."))
-      case e =>
-        ServiceUnavailable(errAsJson(503, "service_unavailable", "Cannot Connect to host. Please verify the address is correct."))
-      case _ =>
-        BadRequest(errAsJson(404, "bad_request", "Cannot find specified id."))
+        sendRequest(ws, s"${host}:${id}")
+      case _ => BadRequest(errAsJson(BAD_REQUEST, "missing parameter", "No query string found")).future
     }
     res
   }
