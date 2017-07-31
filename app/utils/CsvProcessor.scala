@@ -18,7 +18,9 @@ object CsvProcessor {
   /**
    * @todo replace relative file finder
    */
-  val sampleFile = "/sample/enterprise.csv"
+  val enterpriseFile = "/sample/enterprise.csv"
+
+  val sampleFile = "/sample/data.csv"
 
   def readFile(filename: String): Iterator[String] = {
     logger.info(s"Reading csv with filename: ${filename.substring(filename.lastIndexOf("/") + 1)} " +

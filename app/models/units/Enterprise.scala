@@ -12,7 +12,7 @@ import play.api.libs.json._
 case class Enterprise(
   @ApiModelProperty(value = "", example = "", required = false, hidden = false) name: String,
   @ApiModelProperty(value = "", example = "", dataType = "java.lang.Long") id: Long,
-  @ApiModelProperty(value = "", example = "", dataType = "java.lang.String") legalUnits: Seq[Long],
+  @ApiModelProperty(value = "", example = "") legalUnits: Seq[Long],
   @ApiModelProperty(dataType = "Address") address: Address,
   postcode: String,
   @ApiModelProperty(value = "", example = "", dataType = "java.lang.Integer") legalStatus: Option[Int],
@@ -26,8 +26,7 @@ case class Enterprise(
 
 object Enterprise extends Mapping[Enterprise, Map[String, String]] {
 
-  implicit val enterpriseReads = Json.reads[Enterprise]
-  implicit val enterpriseWrites = Json.writes[Enterprise]
+  implicit val unitFormat: OFormat[Enterprise] = Json.format[Enterprise]
 
   def fromMap(values: Map[String, String]): Enterprise =
     Enterprise(values("name"), values("enterprise").toLong, filter(values),
