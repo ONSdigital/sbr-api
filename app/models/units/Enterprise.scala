@@ -43,6 +43,6 @@ object Enterprise extends Mapping[Enterprise, Map[String, String]] {
     res.flatten
   }
 
-  def toJson(e: List[Enterprise]): JsValue = Json.toJson(e.head)
+  def toJson(e: List[Enterprise]): JsValue = Json.toJson(e)
 
 }
