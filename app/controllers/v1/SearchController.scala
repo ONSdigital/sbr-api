@@ -8,10 +8,11 @@ import utils.Utilities.errAsJson
 import com.outworkers.util.play._
 
 import scala.util.Try
-import models.units.{ Enterprise }
+import models.units.Enterprise
+import play.api.libs.json.JsObject
 import utils.Properties._
 import play.api.libs.ws.WSClient
-import utils.CsvProcessor.{ enterpriseFile }
+import utils.CsvProcessor.enterpriseFile
 /**
  * Created by haqa on 04/07/2017.
  */
@@ -40,7 +41,7 @@ class SearchController @Inject() (ws: WSClient) extends ControllerUtils {
       val key = Try(id.getOrElse(getQueryString(request, "id"))).getOrElse("")
       val host = request.host
       val res = key match {
-        case key if key.startsWith("990") => Redirect(url = s"http://${host}/v1/enterprise?id=${key}").future
+        case k if k.startsWith("990") => Redirect(url = s"http://${host}/v1/enterprise?id=${k}").future
         case k if !k.startsWith("990") && k.length == 12 => Redirect(url = s"http://${host}/v1/ubrn?id=${k}").future
         case _ => BadRequest(errAsJson(BAD_REQUEST, "invalid_id", "No matching query string found")).future
       }

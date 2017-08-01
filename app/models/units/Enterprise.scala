@@ -20,7 +20,7 @@ case class Enterprise(
   @ApiModelProperty(value = "", example = "", dataType = "java.lang.Integer") workingGroup: Option[Int],
   @ApiModelProperty(value = "", example = "", dataType = "java.lang.Integer") employment: Option[Int],
   @ApiModelProperty(value = "", example = "", dataType = "java.lang.Long") turnover: Option[Long],
-  source: String = "Enterprise"
+  source: String
 ) extends Searchkeys[Long]
 
 object Enterprise extends Mapping[Enterprise, Map[String, String]] {
@@ -33,7 +33,7 @@ object Enterprise extends Mapping[Enterprise, Map[String, String]] {
         values("address4"), values("address5"), values("postcode")),
       Option(values("legalstatus").toInt), Option(values("sic").toInt),
       Option(values("employees").toInt), Option(values("workinggroup").toInt),
-      Option(values("employment").toInt), Option(values("turnover").toLong))
+      Option(values("employment").toInt), Option(values("turnover").toLong), values("source"))
 
   def filter(values: Map[String, String]): Seq[Long] = {
     val res = Seq(values("legalunit1"), values("legalunit2"), values("legalunit3"), values("legalunit4")).map {
@@ -43,6 +43,6 @@ object Enterprise extends Mapping[Enterprise, Map[String, String]] {
     res.flatten
   }
 
-  def toJson(e: List[Enterprise]): JsValue = Json.toJson(e.head)
+  def toJson(e: List[Enterprise]): JsValue = Json.toJson(e)
 
 }
