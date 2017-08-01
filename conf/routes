@@ -3,8 +3,8 @@
 # ~~~~
 
 # Searching Features
-#GET     /v1/search                controllers.v1.SearchController.searchById(id: Option[String] ?= None, origin: Option[String] ?= None)
-GET     /v1/enterprise            controllers.v1.SearchController.searchByEnterprise(id: Option[String] ?= None, origin: Option[String] ?= None)
+GET     /v1/search                controllers.v1.SearchController.searchById(id: Option[String] ?= None, origin: Option[String] ?= None)
+GET     /v1/enterprise            controllers.v1.SearchController.searchByEnterprise(id: Long)
 GET     /v1/ubrn                  controllers.v1.SearchController.searchByUBRN(id: Long)
 GET     /v1/vat                   controllers.v1.SearchController.searchByVat(id: Long)
 GET     /v1/paye                  controllers.v1.SearchController.searchByPaye(id: String)

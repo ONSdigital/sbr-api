@@ -12,6 +12,10 @@ case class VatRef(
   id: Long,
   @ApiModelProperty(dataType = "Address") address: Address,
   postcode: String,
+  sic: Int,
+  turnover: Long,
+  legalStatus: Int,
+  crn: String,
   source: String = "VatRef"
 ) extends Searchkeys[Long]
 

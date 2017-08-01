@@ -32,13 +32,13 @@ class SearchController @Inject() (ws: WSClient) extends ControllerUtils {
     new ApiResponse(code = 404, responseContainer = "JSONObject", message = "Client Side Error -> Id not found."),
     new ApiResponse(code = 500, responseContainer = "JSONObject", message = "Server Side Error -> Request could not be completed.")
   ))
-  def searchByEnterprise(
+  def searchById(
     @ApiParam(value = "An identifier of any type", example = "825039145000", required = true) id: Option[String],
     @ApiParam(value = "term to categories the id source", required = false) origin: Option[String]
   ): Action[AnyContent] = {
     Action.async { implicit request =>
       val key = Try(id.getOrElse(getQueryString(request).head)).getOrElse("")
-      retrieveRecord[Enterprise](key, enterpriseFile, Enterprise.fromMap, Enterprise.toJson)
+      retrieveRecord[Enterprise](key, sampleFile, Enterprise.fromMap, Enterprise.toJson)
     }
   }
 
@@ -69,25 +69,39 @@ class SearchController @Inject() (ws: WSClient) extends ControllerUtils {
     res
   }
 
+  /**
+    * @note - key or id
+    */
+  def searchByEnterprise(
+    @ApiParam(value = "An identifier of any type", example = "825039145000", required = true) id: Long
+  ): Action[AnyContent] = {
+    Action.async { implicit request =>
+      val key = getQueryString(request).head
+      retrieveRecord[Enterprise](key, enterpriseFile, Enterprise.fromMap, Enterprise.toJson)
+    }
+  }
+
+
+
   def searchByVat(
     @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: Long
   ): Action[AnyContent] = Action.async { implicit request =>
     val key: String = getQueryString(request).head
-    retrieveRecord(key, sampleFile)
+    Ok("").future
   }
 
   def searchByPaye(
     @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
   ): Action[AnyContent] = Action.async { implicit request =>
     val key: String = getQueryString(request).head
-    retrieveRecord(key, sampleFile)
+    Ok("").future
   }
 
   def searchByCrn(
     @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
   ): Action[AnyContent] = Action.async { implicit request =>
     val key: String = getQueryString(request).head
-    retrieveRecord(key, sampleFile)
+    Ok("").future
   }
 
 }
