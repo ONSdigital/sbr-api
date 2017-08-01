@@ -11,7 +11,7 @@ import scala.util.Try
 import models.units.{ Enterprise }
 import utils.Properties._
 import play.api.libs.ws.WSClient
-import utils.CsvProcessor.{ sampleFile, enterpriseFile }
+import utils.CsvProcessor.{ enterpriseFile }
 /**
  * Created by haqa on 04/07/2017.
  */
@@ -37,8 +37,14 @@ class SearchController @Inject() (ws: WSClient) extends ControllerUtils {
     @ApiParam(value = "term to categories the id source", required = false) origin: Option[String]
   ): Action[AnyContent] = {
     Action.async { implicit request =>
-      val key = Try(id.getOrElse(getQueryString(request).head)).getOrElse("")
-      retrieveRecord[Enterprise](key, sampleFile, Enterprise.fromMap, Enterprise.toJson)
+      val key = Try(id.getOrElse(getQueryString(request, "id"))).getOrElse("")
+      val host = request.host
+      val res = key match {
+        case key if key.startsWith("990") => Redirect(url = s"http://${host}/v1/enterprise?id=${key}").future
+        case k if !k.startsWith("990") && k.length == 12 => Redirect(url = s"http://${host}/v1/ubrn?id=${k}").future
+        case _ => BadRequest(errAsJson(BAD_REQUEST, "invalid_id", "No matching query string found")).future
+      }
+      res
     }
   }
 
@@ -59,48 +65,46 @@ class SearchController @Inject() (ws: WSClient) extends ControllerUtils {
     @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: Long
   ): Action[AnyContent] = Action.async { implicit request =>
     logger.info(s"Sending request to Business Index for legal unit: $id")
-    val req: String = Try(getQueryString(request).head).getOrElse("")
+    val req: String = Try(getQueryString(request, "id")).getOrElse("")
     val res = req match {
       case id if id.length >= minKeyLength =>
         logger.info(s"Sending request to Business Index for legal unit id: $id")
         sendRequest(ws, s"$host:$id")
-      case _ => BadRequest(errAsJson(BAD_REQUEST, "missing parameter", "No query string found")).future
+      case _ => BadRequest(errAsJson(BAD_REQUEST, "missing_parameter", "No query string found")).future
     }
     res
   }
 
   /**
-    * @note - key or id
-    */
+   * @note - key or id
+   */
   def searchByEnterprise(
     @ApiParam(value = "An identifier of any type", example = "825039145000", required = true) id: Long
   ): Action[AnyContent] = {
     Action.async { implicit request =>
-      val key = getQueryString(request).head
+      val key = getQueryString(request, "id")
       retrieveRecord[Enterprise](key, enterpriseFile, Enterprise.fromMap, Enterprise.toJson)
     }
   }
 
-
-
   def searchByVat(
     @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: Long
   ): Action[AnyContent] = Action.async { implicit request =>
-    val key: String = getQueryString(request).head
+    val key: String = getQueryString(request, "id")
     Ok("").future
   }
 
   def searchByPaye(
     @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
   ): Action[AnyContent] = Action.async { implicit request =>
-    val key: String = getQueryString(request).head
+    val key: String = getQueryString(request, "id")
     Ok("").future
   }
 
   def searchByCrn(
     @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
   ): Action[AnyContent] = Action.async { implicit request =>
-    val key: String = getQueryString(request).head
+    val key: String = getQueryString(request, "id")
     Ok("").future
   }
 

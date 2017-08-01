@@ -36,7 +36,8 @@ trait ControllerUtils extends Controller with StrictLogging {
     res
   }
 
-  protected def getQueryString(request: Request[AnyContent]) = request.queryString.map { case v => v._2.mkString }
+  //  @deprecated("Encapsulated in searchById", "demo/basic-search [Tue 1 Aug 2017 - 11:07]")
+  protected def getQueryString(request: Request[AnyContent], elem: String): String = request.getQueryString(elem).getOrElse("")
 
   protected[this] def errAsResponse(f: => Future[Result]): Future[Result] = Try(f) match {
     case Success(g) => g
