@@ -21,7 +21,7 @@ class XResponseTimeHeader @Inject() (implicit val mat: Materializer) extends Fil
       // Use env var 'environment' to decide when to add CORS headers
       val env = sys.props.get("environment").getOrElse("default")
 
-      // CORS headers are added to every request, can use env to only add them on certain environments
+      // CORS headers are added to every request, can use env variable to only add them on certain environments
       result.withHeaders(
         "X-Response-Time" -> responseTime.toString,
         "Server" -> (BuildInfo.name + "/" + BuildInfo.version),
