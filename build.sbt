@@ -60,6 +60,9 @@ lazy val api = (project in file("."))
     name := Constant.appName,
     moduleName := "ons-sbr-api",
     version := Versions.version,
+//    scalaSource in Compile := baseDirectory.value / "app",
+//    scalaSource in Test := baseDirectory.value / "test" / "scala",
+    testOptions in Test := Seq(Tests.Filter(s => s.endsWith("Test"))),
     buildInfoPackage := "controllers",
     // LastUpdateController - gives us last compile time and tagging info
     buildInfoKeys := Seq[BuildInfoKey](
@@ -71,6 +74,12 @@ lazy val api = (project in file("."))
       BuildInfoKey.action("gitVersion") {
       git.formattedShaVersion.?.value.getOrElse(Some("Unknown")).getOrElse("Unknown") +"@"+ git.formattedDateVersion.?.value.getOrElse("")
     }),
+    // git-versioning
+    git.gitTagToVersionNumber := { tag: String =>
+      if(tag matches "[0-9]+\\..*") Some(tag)
+      else None
+    },
+    //
     // di router -> swagger
     routesGenerator := InjectedRoutesGenerator,
     buildInfoOptions += BuildInfoOption.ToMap,

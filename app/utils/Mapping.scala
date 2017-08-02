@@ -1,6 +1,6 @@
 package utils
 
-import play.api.libs.json.JsValue
+import play.api.libs.json._
 
 /**
  * Created by haqa on 18/07/2017.
@@ -12,11 +12,12 @@ import play.api.libs.json.JsValue
  */
 trait Mapping[T, Z] {
 
+  implicit val unitFormat: OFormat[T]
+
   def fromMap(b: Z): T
 
   def filter(x: Z): AnyRef
 
   def toJson(x: List[T]): JsValue
-
 
 }

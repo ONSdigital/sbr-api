@@ -8,9 +8,11 @@ import utils.Utilities.errAsJson
 import com.outworkers.util.play._
 
 import scala.util.Try
-import models.units.{ Enterprise }
+import models.units.Enterprise
+import play.api.libs.json.JsObject
 import utils.Properties._
 import play.api.libs.ws.WSClient
+import utils.CsvProcessor.enterpriseFile
 /**
  * Created by haqa on 04/07/2017.
  */
@@ -36,16 +38,12 @@ class SearchController @Inject() (ws: WSClient) extends ControllerUtils {
     @ApiParam(value = "term to categories the id source", required = false) origin: Option[String]
   ): Action[AnyContent] = {
     Action.async { implicit request =>
-      // Either -> comment
-      val key = Try(id.getOrElse(getQueryString(request).head)).getOrElse("")
+      val key = Try(id.getOrElse(getQueryString(request, "id"))).getOrElse("")
+      val host = request.host
       val res = key match {
-        case key if key.length >= minKeyLength => findRecord(key, "/sample/enterprise.csv") match {
-          case Nil =>
-            logger.debug(s"No record found for id: ${key}")
-            NotFound(errAsJson(NOT_FOUND, "not found", s"Could not find value ${key}")).future
-          case x => Ok(Enterprise.toJson(x)).as(JSON).future
-        }
-        case _ => BadRequest(errAsJson(BAD_REQUEST, "missing parameter", "No query string found")).future
+        case k if k.startsWith("990") => Redirect(url = s"http://${host}/v1/enterprise?id=${k}").future
+        case k if !k.startsWith("990") && k.length == 12 => Redirect(url = s"http://${host}/v1/ubrn?id=${k}").future
+        case _ => BadRequest(errAsJson(BAD_REQUEST, "invalid_id", "No matching query string found")).future
       }
       res
     }
@@ -65,17 +63,50 @@ class SearchController @Inject() (ws: WSClient) extends ControllerUtils {
     new ApiResponse(code = 500, responseContainer = "Json", message = "Internal Server Error - Failed to connection or timeout with endpoint.")
   ))
   def searchByUBRN(
-    @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
+    @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: Long
   ): Action[AnyContent] = Action.async { implicit request =>
-    logger.info(s"Sending request to Business Index for legal unit: ${id}")
-    val req: String = Try(getQueryString(request).head).getOrElse("")
+    logger.info(s"Sending request to Business Index for legal unit: $id")
+    val req: String = Try(getQueryString(request, "id")).getOrElse("")
     val res = req match {
       case id if id.length >= minKeyLength =>
-        logger.info(s"Sending request to Business Index for legal unit id: ${id}")
-        sendRequest(ws, s"${host}:${id}")
-      case _ => BadRequest(errAsJson(BAD_REQUEST, "missing parameter", "No query string found")).future
+        logger.info(s"Sending request to Business Index for legal unit id: $id")
+        sendRequest(ws, s"$host:$id")
+      case _ => BadRequest(errAsJson(BAD_REQUEST, "missing_parameter", "No query string found")).future
     }
     res
+  }
+
+  /**
+   * @note - key or id
+   */
+  def searchByEnterprise(
+    @ApiParam(value = "An identifier of any type", example = "825039145000", required = true) id: Long
+  ): Action[AnyContent] = {
+    Action.async { implicit request =>
+      val key = getQueryString(request, "id")
+      retrieveRecord[Enterprise](key, enterpriseFile, Enterprise.fromMap, Enterprise.toJson)
+    }
+  }
+
+  def searchByVat(
+    @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: Long
+  ): Action[AnyContent] = Action.async { implicit request =>
+    val key: String = getQueryString(request, "id")
+    Ok("").future
+  }
+
+  def searchByPaye(
+    @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
+  ): Action[AnyContent] = Action.async { implicit request =>
+    val key: String = getQueryString(request, "id")
+    Ok("").future
+  }
+
+  def searchByCrn(
+    @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
+  ): Action[AnyContent] = Action.async { implicit request =>
+    val key: String = getQueryString(request, "id")
+    Ok("").future
   }
 
 }

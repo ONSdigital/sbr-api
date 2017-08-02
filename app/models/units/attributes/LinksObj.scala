@@ -17,6 +17,8 @@ final case class Link(
 @deprecated("Unknown", "feature/ubrn-search [Fri 21 July 2017 - 09:02]")
 object Link extends Mapping[Link, Array[String]] {
 
+  implicit val unitFormat = ???
+
   def toJson(x: List[Link]) = ???
 
   private val relationshipMap: Map[String, Int] = Map(

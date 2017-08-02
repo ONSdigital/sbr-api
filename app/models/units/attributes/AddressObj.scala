@@ -11,7 +11,9 @@ case class Address(
   @ApiModelProperty(value = "Optional field for building or apartment name", example = "Little Winsor") line2: String,
   @ApiModelProperty(value = "Town of address", example = "Bury") line3: String,
   @ApiModelProperty(value = "City of address", example = "Manchester") line4: String,
-  @ApiModelProperty(value = "County of address", example = "Gtr Manchester") line5: String
+  @ApiModelProperty(value = "County of address", example = "Gtr Manchester") line5: String,
+  @ApiModelProperty(value = "A post specific to the address of entity") postcode: String
+
 )
 
 object Address {
@@ -20,7 +22,8 @@ object Address {
     "line2" -> a.line2,
     "line3" -> a.line3,
     "line4" -> a.line4,
-    "line5" -> a.line5
+    "line5" -> a.line5,
+    "postcode" -> a.postcode
   )
 
   implicit val address: OFormat[Address] = Json.format[Address]

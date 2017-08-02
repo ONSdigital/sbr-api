@@ -12,7 +12,7 @@ class SwaggerConfigurationFilter extends SwaggerSpecFilter {
 
   private val parametersNotAllowed: List[String] = List("none", "none")
   private val propertiesNotAllowed: List[String] = List("none")
-  private val opertaionsNotAllowed: List[String] = List()
+  private val opertionsNotAllowed: List[String] = List()
 
   def isParamAllowed(
     parameter: Parameter,

@@ -4,25 +4,40 @@ import javax.naming.ServiceUnavailableException
 
 import play.api.mvc.{ AnyContent, Controller, Request, Result }
 import com.typesafe.scalalogging.StrictLogging
-import models.units.Enterprise
 import play.api.libs.ws.WSClient
-import utils.CsvProcessor.{ headerToSeq, readFile, sampleFile }
+import utils.CsvProcessor.{ headerToSeq, readFile }
 import utils.Utilities.errAsJson
-
+import com.outworkers.util.play._
+import play.api.libs.json.JsValue
 import utils.Properties.requestTimeout
+
 import scala.util.{ Failure, Success, Try }
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ Future, TimeoutException }
 import scala.concurrent.duration._
+import utils.Properties._
 
 /**
  * Created by haqa on 10/07/2017.
  */
 trait ControllerUtils extends Controller with StrictLogging {
 
-  private val idIndex = 1
+  protected def retrieveRecord[T](key: String, filePath: String, fromMap: Map[String, String] => T,
+    toJson: List[T] => JsValue): Future[Result] = {
+    val res = key match {
+      case key if key.length >= minKeyLength => findRecord[T](key, filePath, fromMap) match {
+        case Nil =>
+          logger.debug(s"No record found for id: $key")
+          NotFound(errAsJson(NOT_FOUND, "not found", s"Could not find value $key")).future
+        case x => Ok(toJson(x)).as(JSON).future
+      }
+      case _ => BadRequest(errAsJson(BAD_REQUEST, "missing parameter", "Not a valid key length")).future
+    }
+    res
+  }
 
-  protected def getQueryString(request: Request[AnyContent]) = request.queryString.map { case v => v._2.mkString }
+  //  @deprecated("Encapsulated in searchById", "demo/basic-search [Tue 1 Aug 2017 - 11:07]")
+  protected def getQueryString(request: Request[AnyContent], elem: String): String = request.getQueryString(elem).getOrElse("")
 
   protected[this] def errAsResponse(f: => Future[Result]): Future[Result] = Try(f) match {
     case Success(g) => g
@@ -33,16 +48,15 @@ trait ControllerUtils extends Controller with StrictLogging {
       }
   }
 
-  def findRecord(element: String, filename: String): List[Enterprise] = {
-    val headers = headerToSeq(sampleFile)
+  def findRecord[T](element: String, filename: String, f: Map[String, String] => T): List[T] = {
+    val headers = headerToSeq(filename)
     val records = for {
       data <- readFile(filename)
       cols = data.split(",").map(_.trim)
-      res: Option[Enterprise] = if (cols(idIndex).matches(element)) {
+      res: Option[T] = if (cols.contains(element)) {
         logger.info(s"Found matching record with ${element} " +
           s"as data[${cols(cols.indexOf(element))}] identified as ${cols(cols.indexOf(element))} type")
-        val rec = (headers zip cols).toMap
-        Some(Enterprise.fromMap(rec))
+        Some(f((headers zip cols).toMap))
       } else {
         None
       }
@@ -53,11 +67,10 @@ trait ControllerUtils extends Controller with StrictLogging {
   def sendRequest(ws: WSClient, url: String): Future[Result] = {
     val res = ws.url(url).withRequestTimeout(requestTimeout.millis).get().map {
       response => Ok(response.body).as(JSON)
-    }
-    res.recover {
-      case (t: TimeoutException) =>
+    }.recover {
+      case t: TimeoutException =>
         RequestTimeout(errAsJson(REQUEST_TIMEOUT, "request_timeout", "This may be due to connection being blocked."))
-      case (e: ServiceUnavailableException) =>
+      case e: ServiceUnavailableException =>
         ServiceUnavailable(errAsJson(SERVICE_UNAVAILABLE, "service_unavailable", "Cannot Connect to host. Please verify the address is correct."))
       case _ =>
         BadRequest(errAsJson(NOT_FOUND, "bad_request", "Cannot find specified id."))
