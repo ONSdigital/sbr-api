@@ -8,7 +8,7 @@ import utils.Utilities.errAsJson
 import com.outworkers.util.play._
 
 import scala.util.Try
-import models.units.Enterprise
+import models.units.{ Enterprise, LegalUnit }
 import play.api.libs.json.JsObject
 import utils.Properties._
 import play.api.libs.ws.WSClient
@@ -42,7 +42,7 @@ class SearchController @Inject() (ws: WSClient) extends ControllerUtils {
       val host = request.host
       val res = key match {
         case k if k.startsWith("990") => Redirect(url = s"http://${host}/v1/enterprise?id=${k}").future
-        case k if !k.startsWith("990") && k.length == 12 => Redirect(url = s"http://${host}/v1/ubrn?id=${k}").future
+        case k if !k.startsWith("990") => Redirect(url = s"http://${host}/v1/ubrn?id=${k}").future
         case _ => BadRequest(errAsJson(BAD_REQUEST, "invalid_id", "No matching query string found")).future
       }
       res
@@ -70,7 +70,7 @@ class SearchController @Inject() (ws: WSClient) extends ControllerUtils {
     val res = req match {
       case id if id.length >= minKeyLength =>
         logger.info(s"Sending request to Business Index for legal unit id: $id")
-        sendRequest(ws, s"$host:$id")
+        sendRequest(ws, s"$host:$id", LegalUnit.toJson)
       case _ => BadRequest(errAsJson(BAD_REQUEST, "missing_parameter", "No query string found")).future
     }
     res

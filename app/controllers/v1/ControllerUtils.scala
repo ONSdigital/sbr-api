@@ -8,7 +8,7 @@ import play.api.libs.ws.WSClient
 import utils.CsvProcessor.{ headerToSeq, readFile }
 import utils.Utilities.errAsJson
 import com.outworkers.util.play._
-import play.api.libs.json.JsValue
+import play.api.libs.json.{ JsObject, JsString, JsValue }
 import utils.Properties.requestTimeout
 
 import scala.util.{ Failure, Success, Try }
@@ -64,16 +64,28 @@ trait ControllerUtils extends Controller with StrictLogging {
     records.flatten.toList
   }
 
-  def sendRequest(ws: WSClient, url: String): Future[Result] = {
+  /**
+   *
+   * @todo - add error control for try[parse, mapping]
+   *       - modulate ws func
+   *       - result - future?
+   *       - new type -> unitName
+   */
+  def sendRequest(ws: WSClient, url: String, toJson: String => JsValue): Future[Result] = {
     val res = ws.url(url).withRequestTimeout(requestTimeout.millis).get().map {
-      response => Ok(response.body).as(JSON)
+      response =>
+        val js = toJson(response.json.as[Seq[JsValue]].map(x => x).mkString);
+        val vat = js.as[JsObject] + ("source" -> JsString("VAT"));
+        Ok(s"[${js},${vat}]").as(JSON)
     }.recover {
       case t: TimeoutException =>
         RequestTimeout(errAsJson(REQUEST_TIMEOUT, "request_timeout", "This may be due to connection being blocked."))
       case e: ServiceUnavailableException =>
-        ServiceUnavailable(errAsJson(SERVICE_UNAVAILABLE, "service_unavailable", "Cannot Connect to host. Please verify the address is correct."))
-      case _ =>
-        BadRequest(errAsJson(NOT_FOUND, "bad_request", "Cannot find specified id."))
+        ServiceUnavailable(errAsJson(
+          SERVICE_UNAVAILABLE, "service_unavailable", "Cannot Connect to host. Please verify the address is correct."
+        ))
+      //      case _ =>
+      //        BadRequest(errAsJson(NOT_FOUND, "bad_request", "Cannot find specified id."))
     }
     res
   }
