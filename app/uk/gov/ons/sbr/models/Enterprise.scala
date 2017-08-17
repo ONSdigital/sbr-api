@@ -1,10 +1,10 @@
-package models.units
+package uk.gov.ons.sbr.models
 
 import io.swagger.annotations.ApiModelProperty
-import models.units.attributes.{ Address }
 import utils.Mapping
-import utils.Properties.{ minKeyLength }
+import config.Properties.{ minKeyLength, controlEndpoint, host }
 import play.api.libs.json._
+import uk.gov.ons.sbr.models.attributes.Address
 
 /**
  * Created by Ameen on 15/07/2017.
@@ -20,7 +20,7 @@ case class Enterprise(
   @ApiModelProperty(value = "", example = "", dataType = "java.lang.Integer") workingGroup: Option[Int],
   @ApiModelProperty(value = "", example = "", dataType = "java.lang.Integer") employment: Option[Int],
   @ApiModelProperty(value = "", example = "", dataType = "java.lang.Long") turnover: Option[Long],
-  source: String
+  unitType: String
 ) extends Searchkeys[Long]
 
 object Enterprise extends Mapping[Enterprise, Map[String, String]] {
@@ -29,8 +29,8 @@ object Enterprise extends Mapping[Enterprise, Map[String, String]] {
 
   def fromMap(values: Map[String, String]): Enterprise =
     Enterprise(values("name"), values("enterprise").toLong, filter(values),
-      Address(values("address1"), values("address2"), values("address3"),
-        values("address4"), values("address5"), values("postcode")),
+      Address(Option(values("address1")), Option(values("address2")), Option(values("address3")),
+        Option(values("address4")), Option(values("address5")), Option(values("postcode"))),
       Option(values("legalstatus").toInt), Option(values("sic").toInt),
       Option(values("employees").toInt), Option(values("workinggroup").toInt),
       Option(values("employment").toInt), Option(values("turnover").toLong), values("source"))

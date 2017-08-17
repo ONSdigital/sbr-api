@@ -26,10 +26,12 @@ object Utilities {
       case JsDefined(v) => v
       case Some(i: Int) => i
       case Some(l: Long) => l
-      case Some(z) => s""""${z}""""
+      case Some(z) => s""""$z""""
       case x => s"${x.toString}"
     }
     res
   }
+
+  def unquote(s: String) = s.replace("\"", "")
 
 }

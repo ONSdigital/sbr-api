@@ -17,7 +17,7 @@ class HomeController extends Controller {
   ))
   def swagger = Action { request =>
     val host = request.host
-    Redirect(url = s"http://${host}/assets/lib/swagger-ui/index.html", queryString = Map("url" -> Seq(s"http://${host}/swagger.json")))
+    Redirect(url = s"http://$host/assets/lib/swagger-ui/index.html", queryString = Map("url" -> Seq(s"http://$host/swagger.json")))
   }
 
   //public api
@@ -31,7 +31,7 @@ class HomeController extends Controller {
   ))
   def status = Action { request =>
     val host = request.host
-    Redirect(url = s"http://${host}/health").flashing("redirect" -> "You are being redirected to health status", "status" -> "ok")
+    Redirect(url = s"http://$host/health").flashing("redirect" -> "You are being redirected to health status", "status" -> "ok")
   }
 
   //public api

@@ -3,21 +3,26 @@ package controllers.v1
 import javax.inject.Inject
 
 import io.swagger.annotations._
-import play.api.mvc.{ Action, AnyContent }
+import play.api.mvc.{ Action, AnyContent, Result }
 import utils.Utilities.errAsJson
-import com.outworkers.util.play._
+import utils.FutureResponse._
 
 import scala.util.Try
-import models.units.{ Enterprise, LegalUnit }
-import play.api.libs.json.JsObject
-import utils.Properties._
-import play.api.libs.ws.WSClient
+import config.Properties.{ controlEndpoint, minKeyLength }
+import play.api.libs.json.JsValue
+import play.api.libs.ws.WSResponse
+import uk.gov.ons.sbr.models.{ Enterprise, LegalUnit }
 import utils.CsvProcessor.enterpriseFile
-/**
- * Created by haqa on 04/07/2017.
- */
+import services.WSRequest.RequestGenerator
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{ Await, Future }
+import config.Properties.businessIndexRoute
+
+import scala.concurrent.duration.Duration
+
 @Api("Search")
-class SearchController @Inject() (ws: WSClient) extends ControllerUtils {
+class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils {
 
   //public api
   @ApiOperation(
@@ -35,15 +40,22 @@ class SearchController @Inject() (ws: WSClient) extends ControllerUtils {
   ))
   def searchById(
     @ApiParam(value = "An identifier of any type", example = "825039145000", required = true) id: Option[String],
-    @ApiParam(value = "term to categories the id source", required = false) origin: Option[String]
+    @ApiParam(value = "term to categories the id source", required = false) origin: Option[String] = None
   ): Action[AnyContent] = {
     Action.async { implicit request =>
-      val key = Try(id.getOrElse(getQueryString(request, "id"))).getOrElse("")
-      val host = request.host
-      val res = key match {
-        case k if k.startsWith("990") => Redirect(url = s"http://${host}/v1/enterprise?id=${k}").future
-        case k if !k.startsWith("990") => Redirect(url = s"http://${host}/v1/ubrn?id=${k}").future
-        case _ => BadRequest(errAsJson(BAD_REQUEST, "invalid_id", "No matching query string found")).future
+      val key = id.orElse(request.getQueryString("id"))
+      //      val date = period.orElse(request.getQueryString("period"))
+      val res: Future[Result] = key match {
+        case Some(k) if k.length >= minKeyLength =>
+          ws.singleRequest(k) map { response =>
+            if (response.status == 200) {
+              val unitMap = response.json.as[Seq[JsValue]].map(x =>
+                (x \ "unitType").as[String] -> (x \ "id").as[String]).toMap
+              val j = ws.multiRequest(unitMap)
+              Ok(s" ${response.body},$j").as(JSON)
+            } else NotFound(response.body).as(JSON)
+          } recover responseException
+        case _ => BadRequest(errAsJson(BAD_REQUEST, "invalid_key_size", s"missing key or key is too short [$minKeyLength]")).future
       }
       res
     }
@@ -62,15 +74,19 @@ class SearchController @Inject() (ws: WSClient) extends ControllerUtils {
     new ApiResponse(code = 500, responseContainer = "Json", message = "Internal Server Error - Request timed-out."),
     new ApiResponse(code = 500, responseContainer = "Json", message = "Internal Server Error - Failed to connection or timeout with endpoint.")
   ))
-  def searchByUBRN(
-    @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: Long
-  ): Action[AnyContent] = Action.async { implicit request =>
+  def searchByLeU(
+    @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
+  ): Action[AnyContent] = Action.async { request =>
     logger.info(s"Sending request to Business Index for legal unit: $id")
-    val req: String = Try(getQueryString(request, "id")).getOrElse("")
-    val res = req match {
+    val res = id match {
       case id if id.length >= minKeyLength =>
         logger.info(s"Sending request to Business Index for legal unit id: $id")
-        sendRequest(ws, s"$host:$id", LegalUnit.toJson)
+        val resp = ws.singleRequestNoTimeout(s"$businessIndexRoute$id") map { response =>
+          if (response.status == 200) {
+            Ok(response.body).as(JSON)
+          } else NotFound(response.body).as(JSON)
+        } recover responseException
+        resp
       case _ => BadRequest(errAsJson(BAD_REQUEST, "missing_parameter", "No query string found")).future
     }
     res
@@ -82,7 +98,7 @@ class SearchController @Inject() (ws: WSClient) extends ControllerUtils {
   def searchByEnterprise(
     @ApiParam(value = "An identifier of any type", example = "825039145000", required = true) id: Long
   ): Action[AnyContent] = {
-    Action.async { implicit request =>
+    Action.async { request =>
       val key = getQueryString(request, "id")
       retrieveRecord[Enterprise](key, enterpriseFile, Enterprise.fromMap, Enterprise.toJson)
     }
@@ -90,21 +106,21 @@ class SearchController @Inject() (ws: WSClient) extends ControllerUtils {
 
   def searchByVat(
     @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: Long
-  ): Action[AnyContent] = Action.async { implicit request =>
+  ): Action[AnyContent] = Action.async { request =>
     val key: String = getQueryString(request, "id")
     Ok("").future
   }
 
   def searchByPaye(
     @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
-  ): Action[AnyContent] = Action.async { implicit request =>
+  ): Action[AnyContent] = Action.async { request =>
     val key: String = getQueryString(request, "id")
     Ok("").future
   }
 
   def searchByCrn(
     @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
-  ): Action[AnyContent] = Action.async { implicit request =>
+  ): Action[AnyContent] = Action.async { request =>
     val key: String = getQueryString(request, "id")
     Ok("").future
   }

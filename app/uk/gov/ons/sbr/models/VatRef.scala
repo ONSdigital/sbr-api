@@ -1,8 +1,8 @@
-package models.units
+package uk.gov.ons.sbr.models
 
 import io.swagger.annotations.ApiModelProperty
-import models.units.attributes.Address
 import play.api.libs.json._
+import uk.gov.ons.sbr.models.attributes.Address
 import utils.Mapping
 
 /**
@@ -16,7 +16,7 @@ case class VatRef(
   turnover: Long,
   legalStatus: Int,
   crn: String,
-  source: String = "VatRef"
+  unitType: String = "VatRef"
 ) extends Searchkeys[Long]
 
 object VatRef extends Mapping[VatRef, Map[String, String]] {

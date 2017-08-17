@@ -1,4 +1,4 @@
-package models.units.attributes
+package uk.gov.ons.sbr.models.attributes
 
 import utils.Mapping
 
