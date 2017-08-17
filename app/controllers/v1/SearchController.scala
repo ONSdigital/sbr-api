@@ -3,20 +3,20 @@ package controllers.v1
 import javax.inject.Inject
 
 import io.swagger.annotations._
-import play.api.mvc.{ Action, AnyContent, Result }
+import play.api.mvc.{Action, AnyContent, Result}
 import utils.Utilities.errAsJson
 import utils.FutureResponse._
 
 import scala.util.Try
-import config.Properties.{ controlEndpoint, minKeyLength }
-import play.api.libs.json.JsValue
+import config.Properties.{controlEndpoint, minKeyLength}
+import play.api.libs.json.{JsObject, JsValue, Json}
 import play.api.libs.ws.WSResponse
-import uk.gov.ons.sbr.models.{ Enterprise, LegalUnit }
+import uk.gov.ons.sbr.models.{Enterprise, LegalUnit, UnitMatch}
 import utils.CsvProcessor.enterpriseFile
 import services.WSRequest.RequestGenerator
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{ Await, Future }
+import scala.concurrent.{Await, Future}
 import config.Properties.businessIndexRoute
 
 import scala.concurrent.duration.Duration
@@ -51,8 +51,13 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
             if (response.status == 200) {
               val unitMap = response.json.as[Seq[JsValue]].map(x =>
                 (x \ "unitType").as[String] -> (x \ "id").as[String]).toMap
+              /**
+                * @todo filter if list is one than one
+                 */
               val j = ws.multiRequest(unitMap)
-              Ok(s" ${response.body},$j").as(JSON)
+//              UnitMatch(, j )
+//              Ok(h.toString).as(JSON)
+                            Ok(s" ${response.body},$j").as(JSON)
             } else NotFound(response.body).as(JSON)
           } recover responseException
         case _ => BadRequest(errAsJson(BAD_REQUEST, "invalid_key_size", s"missing key or key is too short [$minKeyLength]")).future
@@ -60,6 +65,7 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
       res
     }
   }
+
 
   //public api
   @ApiOperation(
