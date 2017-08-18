@@ -45,8 +45,8 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
             if (response.status == 200) {
               val unitResp = response.json.as[Seq[JsValue]]
               /**
-                * @todo - Seq size match > cappedDisplayNumber
-                 */
+               * @todo - Seq size match > cappedDisplayNumber
+               */
               val mapOfRecordKeys = unitResp.map(x =>
                 (x \ "unitType").as[String] -> (x \ "id").as[String]).toMap
               val respRecords: List[JsValue] = ws.multiRequest(mapOfRecordKeys)
@@ -73,47 +73,14 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
     new ApiResponse(code = 500, responseContainer = "Json", message = "Internal Server Error - Request timed-out."),
     new ApiResponse(code = 500, responseContainer = "Json", message = "Internal Server Error - Failed to connection or timeout with endpoint.")
   ))
-  def searchByLeU(
-     @ApiParam(value = "Identifier creation date", example = "2017/07", required = true) date: String,
-     @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
+  def searchLeU(
+    @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
   ): Action[AnyContent] = Action.async { request =>
     logger.info(s"Sending request to Business Index for legal unit: $id")
     search(id, businessIndexRoute)
   }
 
-  def searchByEnterprise(
-      @ApiParam(value = "Identifier creation date", example = "2017/07", required = true) date: String,
-      @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
-    ): Action[AnyContent] = Action.async { request =>
-    logger.info(s"Sending request to Control Api to retrieve enterprise with $id and $date")
-    search(id, controlEnterpriseSearchWithPeriod.replace(placeholderPeriod, date))
-  }
-
-  def searchByVat(
-       @ApiParam(value = "Identifier creation date", example = "2017/07", required = true) date: String,
-       @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
-     ): Action[AnyContent] = Action.async { request =>
-    logger.info(s"Sending request to Admin Api to retrieve VAT reference with $id and $date")
-    search(id, adminVATsSearchWithPeriod.replace(placeholderPeriod, date))
-  }
-
-  def searchByPaye(
-      @ApiParam(value = "Identifier creation date", example = "2017/07", required = true) date: String,
-      @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
-    ): Action[AnyContent] = Action.async { request =>
-    logger.info(s"Sending request to Admin Api to retrieve PAYE record with $id and $date")
-    search(id, adminPAYEsSearchWithPeriod.replace(placeholderPeriod, date))
-  }
-
-  def searchByCrn(
-     @ApiParam(value = "Identifier creation date", example = "2017/07", required = true) date: String,
-     @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
-   ): Action[AnyContent] = Action.async { request =>
-    logger.info(s"Sending request to Admin Api to retrieve Companies House Number with $id and $date")
-    search(id, adminCompaniesSearchWithPeriod.replace(placeholderPeriod, date))
-  }
-
-  def searchByEnterpriseById(
+  def searchEnterprise(
     @ApiParam(value = "An identifier of any type", example = "825039145000", required = true) id: String
   ): Action[AnyContent] = {
     Action.async { request =>
@@ -122,32 +89,71 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
     }
   }
 
-  def searchByVatById(
+  def searchVat(
     @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
   ): Action[AnyContent] = Action.async { request =>
     logger.info(s"Sending request to Admin Api to retrieve VAT reference with $id")
     search(id, adminVATsSearch)
   }
 
-  def searchByPayeById(
+  def searchPaye(
     @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
   ): Action[AnyContent] = Action.async { request =>
     logger.info(s"Sending request to Admin Api to retrieve PAYE record with $id")
     search(id, adminPAYEsSearch)
   }
 
-  def searchByCrnById(
+  def searchCrn(
     @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
   ): Action[AnyContent] = Action.async { request =>
     logger.info(s"Sending request to Admin Api to retrieve Companies House Number with $id")
     search(id, adminCompaniesSearch)
   }
 
-  protected def search(id: String, url: String) = {
+  def searchEnterpriseWithPeriod(
+    @ApiParam(value = "Identifier creation date", example = "2017/07", required = true) date: String,
+    @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
+  ): Action[AnyContent] = Action.async { request =>
+    logger.info(s"Sending request to Control Api to retrieve enterprise with $id and $date")
+    search(id, controlEntsSearchWithPeriod, date)
+  }
+
+  def searchVatWithPeriod(
+    @ApiParam(value = "Identifier creation date", example = "2017/07", required = true) date: String,
+    @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
+  ): Action[AnyContent] = Action.async { request =>
+    logger.info(s"Sending request to Admin Api to retrieve VAT reference with $id and $date")
+    search(id, adminVATsSearchWithPeriod, date)
+  }
+
+  def searchPayeWithPeriod(
+    @ApiParam(value = "Identifier creation date", example = "2017/07", required = true) date: String,
+    @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
+  ): Action[AnyContent] = Action.async { request =>
+    logger.info(s"Sending request to Admin Api to retrieve PAYE record with $id and $date")
+    search(id, adminPAYEsSearchWithPeriod, date)
+  }
+
+  def searchCrnWithPeriod(
+    @ApiParam(value = "Identifier creation date", example = "2017/07", required = true) date: String,
+    @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
+  ): Action[AnyContent] = Action.async { request =>
+    logger.info(s"Sending request to Admin Api to retrieve Companies House Number with $id and $date")
+    search(id, adminCompaniesSearchWithPeriod, date)
+  }
+
+  /**
+   *
+   * @todo - fix => remove the replace statement
+   */
+  protected def search(id: String, url: String, date: String = "") = {
+    println(url)
+
     val res = id match {
       case id if id.length >= minKeyLength =>
         logger.info(s"Sending request to Business Index for legal unit id: $id")
-        val resp = ws.singleRequestNoTimeout(s"$url$id") map { response =>
+        println(s"$url$id")
+        val resp = ws.singleRequestNoTimeout(s"${url}$id") map { response =>
           if (response.status == 200) {
             Ok(response.body).as(JSON)
           } else NotFound(response.body).as(JSON)

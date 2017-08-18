@@ -50,5 +50,4 @@ trait ControllerUtils extends Controller with StrictLogging {
     case ex => InternalServerError(errAsJson(INTERNAL_SERVER_ERROR, "internal_server_error", s"$ex"))
   }
 
-
 }
