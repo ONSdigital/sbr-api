@@ -21,5 +21,16 @@ object Properties {
   lazy val controlEndpoint: String = config.getString("sbr.control.api")
   lazy val baseSearchRoute: String = config.getString("sbr.api.base.search")
   lazy val businessIndexRoute: String = config.getString("bi.api")
+  lazy val controlEnterpriseSearch: String = config.getString("sbr.api.control.enterprise.search")
+  lazy val adminCompaniesSearch: String = config.getString("sbr.admin.data.api.crn")
+  lazy val adminVATsSearch: String = config.getString("sbr.admin.data.api.vat")
+  lazy val adminPAYEsSearch: String = config.getString("sbr.admin.data.api.paye")
+  lazy val controlEnterpriseSearchWithPeriod: String = config.getString("sbr.api.control.enterprise.search.with.period")
+  lazy val adminVATsSearchWithPeriod: String = config.getString("sbr.admin.data.api.vat.with.period")
+  lazy val adminPAYEsSearchWithPeriod: String =config.getString("sbr.admin.data.api.paye.with.period")
+  lazy val adminCompaniesSearchWithPeriod: String =config.getString("sbr.admin.data.api.crn.with.period")
+
+
+
 
 }

@@ -2,7 +2,7 @@ package uk.gov.ons.sbr.models
 
 import io.swagger.annotations.ApiModelProperty
 import utils.Mapping
-import config.Properties.{ minKeyLength, controlEndpoint, host }
+import config.Properties.minKeyLength
 import play.api.libs.json._
 import uk.gov.ons.sbr.models.attributes.Address
 
