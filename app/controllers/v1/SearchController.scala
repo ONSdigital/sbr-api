@@ -9,7 +9,7 @@ import utils.FutureResponse._
 
 import config.Properties.minKeyLength
 import play.api.libs.json.JsValue
-import uk.gov.ons.sbr.models.{ Enterprise, UnitMatch }
+import uk.gov.ons.sbr.models.UnitMatch
 import services.WSRequest.RequestGenerator
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -28,7 +28,7 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
     httpMethod = "GET"
   )
   @ApiResponses(Array(
-    new ApiResponse(code = 200, response = classOf[Enterprise], responseContainer = "JSONObject", message = "Success -> Record(s) found for id."),
+    new ApiResponse(code = 200, response = classOf[UnitMatch], responseContainer = "JSONObject", message = "Success -> Record(s) found for id."),
     new ApiResponse(code = 400, responseContainer = "JSONObject", message = "Client Side Error -> Required parameter was not found."),
     new ApiResponse(code = 404, responseContainer = "JSONObject", message = "Client Side Error -> Id not found."),
     new ApiResponse(code = 500, responseContainer = "JSONObject", message = "Server Side Error -> Request could not be completed.")
