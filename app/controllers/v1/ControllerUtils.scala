@@ -17,6 +17,8 @@ import scala.concurrent.{ Future, TimeoutException }
 trait ControllerUtils extends Controller with StrictLogging {
 
   protected val placeholderPeriod = "date"
+  // number of units displayable
+  protected val cappedDisplayNumber = 1
 
   @deprecated("Embedded into individual search methods", "feature/config-port [Fri 18 Aug 2017 - 11:07]")
   protected def getQueryString(request: Request[AnyContent], elem: String): String = request.getQueryString(elem).getOrElse("")

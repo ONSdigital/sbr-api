@@ -39,12 +39,14 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
   ): Action[AnyContent] = {
     Action.async { implicit request =>
       val key = id.orElse(request.getQueryString("id"))
-      //      val date = period.orElse(request.getQueryString("period"))
       val res: Future[Result] = key match {
         case Some(k) if k.length >= minKeyLength =>
           ws.singleRequest(k) map { response =>
             if (response.status == 200) {
               val unitResp = response.json.as[Seq[JsValue]]
+              /**
+                * @todo - Seq size match > cappedDisplayNumber
+                 */
               val mapOfRecordKeys = unitResp.map(x =>
                 (x \ "unitType").as[String] -> (x \ "id").as[String]).toMap
               val respRecords: List[JsValue] = ws.multiRequest(mapOfRecordKeys)
