@@ -3,13 +3,11 @@ package controllers.v1
 import javax.inject.Inject
 
 import io.swagger.annotations._
-import play.api.mvc.{ Action, AnyContent, Result }
+import play.api.mvc.{Action, AnyContent, Result}
 import utils.Utilities.errAsJson
 import utils.FutureResponse._
-
-import config.Properties.minKeyLength
 import play.api.libs.json.JsValue
-import uk.gov.ons.sbr.models.UnitMatch
+import uk.gov.ons.sbr.models.{MultipleUnitsMatch, ResponseMatch, UnitMatch}
 import services.WSRequest.RequestGenerator
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -41,20 +39,25 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
       val key = id.orElse(request.getQueryString("id"))
       val res: Future[Result] = key match {
         case Some(k) if k.length >= minKeyLength =>
-          ws.singleRequest(k) map { response =>
-            if (response.status == 200) {
+          ws.singleRequest(k) map {
+            case response if response.status == 200 => {
               val unitResp = response.json.as[Seq[JsValue]]
-              /**
-               * @todo - Seq size match > cappedDisplayNumber
-               */
-              val mapOfRecordKeys = unitResp.map(x =>
-                (x \ "unitType").as[String] -> (x \ "id").as[String]).toMap
-              val respRecords: List[JsValue] = ws.multiRequest(mapOfRecordKeys)
-              val json = (unitResp zip respRecords).map { case (u, e) => UnitMatch(u, e) }.toJson
-              Ok(json).as(JSON)
-            } else NotFound(response.body).as(JSON)
+              if (unitResp.length == 1 ) {
+                val mapOfRecordKeys = unitResp.map(x =>
+                  (x \ "unitType").as[String] -> (x \ "id").as[String]).toMap
+                val respRecords: List[JsValue] = ws.multiRequest(mapOfRecordKeys)
+                val json = (unitResp zip respRecords).map { case (u, e) => UnitMatch(u, e) }.toJson
+//                val json = (unitResp zip respRecords).map { case (u, e) => UnitMatch(u, e) }.toJson
+                Ok(json).as(JSON)
+              } else Ok(unitResp).as(JSON)
+              // Ok(unitResp.map(x => MultipleUnitsMatch(x)).toJson).as(JSON)
+            }
+            case response if response.status == 404 => NotFound(response.body).as(JSON)
+              // fix err control _
+            case _ => BadRequest(errAsJson(BAD_REQUEST, "bad_request", "unknown error"))
           } recover responseException
-        case _ => BadRequest(errAsJson(BAD_REQUEST, "invalid_key_size", s"missing key or key is too short [$minKeyLength]")).future
+        case _ =>
+          BadRequest(errAsJson(BAD_REQUEST, "invalid_key_size", s"missing key or key is too short [$minKeyLength]")).future
       }
       res
     }

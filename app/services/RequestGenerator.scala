@@ -53,11 +53,12 @@ class RequestGenerator @Inject() (ws: WSClient) extends Results with Status with
   /**
    * @note searchList - change param type
    */
-  def multiRequest(searchList: Map[String, String], prefix: String = baseSearchRoute, suffix: String = "s/"): List[JsValue] = {
+  def multiRequest(searchList: Map[String, String], prefix: String = baseSearchRoute,
+                   suffix: String = "s/"): List[JsValue] = {
     searchList.map { s =>
       val id = s._2
       val path = s._1.toLowerCase
-      val resp = Await.result(singleRequestNoTimeout(s"$prefix$path$suffix$id"), Duration.Inf)
+      val resp = Await.result( singleRequestNoTimeout(s"$prefix$path$suffix$id"), Duration.Inf)
       resp.json
     }.toList
   }
