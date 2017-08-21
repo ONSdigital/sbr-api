@@ -34,15 +34,15 @@ class RouteSpec extends TestUtils {
     }
   }
 
-  "SearchController" should {
-    "return some records" in {
-      val suggest = fakeRequest(s"/v1/search?id=")
-      status(suggest) mustBe BAD_REQUEST
-      contentType(suggest) mustBe Some("application/json")
-      val err_code: String = getJsValue(contentAsJson(suggest) \ "code")
-      err_code mustBe s""""missing parameter""""
-    }
-  }
+//  "SearchController" should {
+//    "return some records" in {
+//      val suggest = fakeRequest(s"/v1/search?id=")
+//      status(suggest) mustBe BAD_REQUEST
+//      contentType(suggest) mustBe Some("application/json")
+//      val err_code: String = getJsValue(contentAsJson(suggest) \ "code")
+//      err_code mustBe s""""missing parameter""""
+//    }
+//  }
 
   "VersionController" should {
     "display list of versions" in {

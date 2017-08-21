@@ -20,7 +20,7 @@ object Utilities {
     )
   }
 
-  // ret: AnyVal
+  // @todo - ret: AnyVal
   def getElement(value: Any) = {
     val res = value match {
       case None => ""

@@ -10,13 +10,13 @@ class IntegrationSpec extends TestUtils {
 
   "Query Response" should {
 
-    "get by anonymous Enterprise id" in {
-      val id = 1244
-      val res = fakeRequest(s"/v1/enterpriseById?id=$id")
-      status(res) mustBe OK
-      contentType(res) mustBe Some("application/json")
-
-    }
+//    "get by anonymous Enterprise id" in {
+//      val id = 1244
+//      val res = fakeRequest(s"/v1/enterpriseById?id=$id")
+//      status(res) mustBe OK
+//      contentType(res) mustBe Some("application/json")
+//
+//    }
 
   }
 
