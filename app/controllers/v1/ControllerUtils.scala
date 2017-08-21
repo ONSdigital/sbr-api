@@ -3,14 +3,14 @@ package controllers.v1
 import java.time.format.DateTimeParseException
 import javax.naming.ServiceUnavailableException
 
-import play.api.mvc.{AnyContent, Controller, Request, Result}
+import play.api.mvc.{ AnyContent, Controller, Request, Result }
 import com.typesafe.scalalogging.StrictLogging
 import utils.Utilities.errAsJson
 import play.api.libs.json.JsValue
 
 import scala.annotation.tailrec
-import scala.util.{Failure, Success, Try}
-import scala.concurrent.{Future, TimeoutException}
+import scala.util.{ Failure, Success, Try }
+import scala.concurrent.{ Future, TimeoutException }
 
 /**
  * Created by haqa on 10/07/2017.
@@ -21,14 +21,13 @@ trait ControllerUtils extends Controller with StrictLogging {
   // number of units displayable
   protected val cappedDisplayNumber = 1
 
-
-//  @tailrec
-//  protected def getRootCause ()
-//
-//  @tailrec
-//  protected def errLogBuilder (x: Throwable, msgSeq: Vector[String] = Nil)  = {
-//
-//  }
+  //  @tailrec
+  //  protected def getRootCause ()
+  //
+  //  @tailrec
+  //  protected def errLogBuilder (x: Throwable, msgSeq: Vector[String] = Nil)  = {
+  //
+  //  }
 
   // @todo - add getCause -> root
   protected def responseException: PartialFunction[Throwable, Result] = {

@@ -3,11 +3,11 @@ package controllers.v1
 import javax.inject.Inject
 
 import io.swagger.annotations._
-import play.api.mvc.{Action, AnyContent, Result}
+import play.api.mvc.{ Action, AnyContent, Result }
 import utils.Utilities.errAsJson
 import utils.FutureResponse._
 import play.api.libs.json.JsValue
-import uk.gov.ons.sbr.models.{MultipleUnitsMatch, ResponseMatch, UnitMatch}
+import uk.gov.ons.sbr.models.{ MultipleUnitsMatch, ResponseMatch, UnitMatch }
 import services.WSRequest.RequestGenerator
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -17,6 +17,10 @@ import config.Properties._
 @Api("Search")
 class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils {
 
+  /**
+   *
+   * @todo - error control -> line 49 if not result and empty list
+   */
   //public api
   @ApiOperation(
     value = "Json list of id matches",
@@ -42,18 +46,20 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
           ws.singleRequest(k) map {
             case response if response.status == 200 => {
               val unitResp = response.json.as[Seq[JsValue]]
-              if (unitResp.length == 1 ) {
+              if (unitResp.length == 1) {
                 val mapOfRecordKeys = unitResp.map(x =>
                   (x \ "unitType").as[String] -> (x \ "id").as[String]).toMap
                 val respRecords: List[JsValue] = ws.multiRequest(mapOfRecordKeys)
+                //                val json = (unitResp zip respRecords).map { case (u, e) => UnitMatch(u, e) }.toJson
                 val json = (unitResp zip respRecords).map { case (u, e) => UnitMatch(u, e) }.toJson
-//                val json = (unitResp zip respRecords).map { case (u, e) => UnitMatch(u, e) }.toJson
                 Ok(json).as(JSON)
-              } else Ok(unitResp).as(JSON)
-              // Ok(unitResp.map(x => MultipleUnitsMatch(x)).toJson).as(JSON)
+              } else
+              //@note - may want to use ResponseMatch trait
+                Ok(unitResp.toString).as(JSON)
+              //Ok(unitResp.map(x => MultipleUnitsMatch(x)).toJson).as(JSON)
             }
             case response if response.status == 404 => NotFound(response.body).as(JSON)
-              // fix err control _
+            //@todo - fix err control _
             case _ => BadRequest(errAsJson(BAD_REQUEST, "bad_request", "unknown error"))
           } recover responseException
         case _ =>
@@ -113,6 +119,7 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
     search(id, adminCompaniesSearch)
   }
 
+  // @todo - fix period config value
   def searchEnterpriseWithPeriod(
     @ApiParam(value = "Identifier creation date", example = "2017/07", required = true) date: String,
     @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
@@ -150,13 +157,10 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
    * @todo - fix => remove the replace statement
    */
   protected def search(id: String, url: String, date: String = "") = {
-    println(url)
-
     val res = id match {
       case id if id.length >= minKeyLength =>
-        logger.info(s"Sending request to Business Index for legal unit id: $id")
-        println(s"$url$id")
-        val resp = ws.singleRequestNoTimeout(s"${url}$id") map { response =>
+        logger.info(s"Checking id length: $id")
+        val resp = ws.singleRequestNoTimeout(s"$url$id") map { response =>
           if (response.status == 200) {
             Ok(response.body).as(JSON)
           } else NotFound(response.body).as(JSON)

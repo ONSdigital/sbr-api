@@ -25,17 +25,6 @@ class RequestGenerator @Inject() (ws: WSClient) extends Results with Status with
 
   protected def status(response: WSResponse) = response.status
 
-  @deprecated("Migrated to singleRequest", "feature/config-port [Thu 17 Aug 2017 - 14:30]")
-  protected def sendRequest(url: String): Future[Result] = {
-    val res = ws.url(url).withRequestTimeout(requestTimeout.millis).get().map {
-      response =>
-        if (response.status == 200) Ok(response.body).as(JSON)
-        else NotFound(response.body).as(JSON)
-    }
-    //    ws.close()
-    res
-  }
-
   def singleRequest(id: String, prefix: String = controlEndpoint): Future[WSResponse] = {
     val res = ws.url(s"$prefix$id").withRequestTimeout(requestTimeout.millis).get()
     res
@@ -43,6 +32,7 @@ class RequestGenerator @Inject() (ws: WSClient) extends Results with Status with
 
   def singleRequestNoTimeout(url: String): Future[WSResponse] = ws.url(url).get()
 
+  // @todo - use in HomeController
   def reroute(host: String, route: String) = {
     logger.debug(s"rerouting to search route $route")
     Redirect(url = s"http://$host/v1/searchBy$route").flashing(
@@ -51,14 +41,14 @@ class RequestGenerator @Inject() (ws: WSClient) extends Results with Status with
   }
 
   /**
-   * @note searchList - change param type
+   * @todo duration.inf - place cap
    */
   def multiRequest(searchList: Map[String, String], prefix: String = baseSearchRoute,
-                   suffix: String = "s/"): List[JsValue] = {
+    suffix: String = "s/"): List[JsValue] = {
     searchList.map { s =>
       val id = s._2
       val path = s._1.toLowerCase
-      val resp = Await.result( singleRequestNoTimeout(s"$prefix$path$suffix$id"), Duration.Inf)
+      val resp = Await.result(singleRequestNoTimeout(s"$prefix$path$suffix$id"), Duration.Inf)
       resp.json
     }.toList
   }
