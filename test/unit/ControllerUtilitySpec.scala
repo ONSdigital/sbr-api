@@ -10,9 +10,6 @@ import resource.TestUtils
  */
 class ControllerUtilitySpec extends TestUtils with ControllerUtils {
 
-
-
-
   def toJsonTest(s: String) = JsNumber(s.toInt)
 
 }

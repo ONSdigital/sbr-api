@@ -54,7 +54,7 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
                 val json = (unitResp zip respRecords).map { case (u, e) => UnitMatch(u, e) }.toJson
                 Ok(json).as(JSON)
               } else
-              //@note - may want to use ResponseMatch trait
+                //@note - may want to use ResponseMatch trait
                 Ok(unitResp.toString).as(JSON)
               //Ok(unitResp.map(x => MultipleUnitsMatch(x)).toJson).as(JSON)
             }
@@ -63,7 +63,7 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
             case _ => BadRequest(errAsJson(BAD_REQUEST, "bad_request", "unknown error"))
           } recover responseException
         case _ =>
-          BadRequest(errAsJson(BAD_REQUEST, "invalid_key_size", s"missing key or key is too short [$minKeyLength]")).future
+          BadRequest(errAsJson(BAD_REQUEST, "missing_param", s"missing key or key is too short [$minKeyLength]")).future
       }
       res
     }
