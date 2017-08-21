@@ -54,7 +54,7 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
                 val json = (unitResp zip respRecords).map { case (u, e) => UnitMatch(u, e) }.toJson
                 Ok(json).as(JSON)
               } else
-                //@note - may want to use ResponseMatch trait
+                //@todo - may want to use ResponseMatch trait
                 Ok(unitResp.toString).as(JSON)
               //Ok(unitResp.map(x => MultipleUnitsMatch(x)).toJson).as(JSON)
             }
@@ -119,13 +119,13 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
     search(id, adminCompaniesSearch)
   }
 
-  // @todo - fix period config value
+  // @todo - use better approach to add period param in url => remove replace
   def searchEnterpriseWithPeriod(
     @ApiParam(value = "Identifier creation date", example = "2017/07", required = true) date: String,
     @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
   ): Action[AnyContent] = Action.async { request =>
     logger.info(s"Sending request to Control Api to retrieve enterprise with $id and $date")
-    search(id, controlEntsSearchWithPeriod, date)
+    search(id, enterpriseSearchWithPeriod.replace(placeholderPeriod, date))
   }
 
   def searchVatWithPeriod(
@@ -133,7 +133,7 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
     @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
   ): Action[AnyContent] = Action.async { request =>
     logger.info(s"Sending request to Admin Api to retrieve VAT reference with $id and $date")
-    search(id, adminVATsSearchWithPeriod, date)
+    search(id, adminVATsSearchWithPeriod.replace(placeholderPeriod, date))
   }
 
   def searchPayeWithPeriod(
@@ -141,7 +141,7 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
     @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
   ): Action[AnyContent] = Action.async { request =>
     logger.info(s"Sending request to Admin Api to retrieve PAYE record with $id and $date")
-    search(id, adminPAYEsSearchWithPeriod, date)
+    search(id, adminPAYEsSearchWithPeriod.replace(placeholderPeriod, date))
   }
 
   def searchCrnWithPeriod(
@@ -149,14 +149,11 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
     @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
   ): Action[AnyContent] = Action.async { request =>
     logger.info(s"Sending request to Admin Api to retrieve Companies House Number with $id and $date")
-    search(id, adminCompaniesSearchWithPeriod, date)
+    search(id, adminCompaniesSearchWithPeriod.replace(placeholderPeriod, date))
   }
 
-  /**
-   *
-   * @todo - fix => remove the replace statement
-   */
-  protected def search(id: String, url: String, date: String = "") = {
+
+  protected def search(id: String, url: String) = {
     val res = id match {
       case id if id.length >= minKeyLength =>
         logger.info(s"Checking id length: $id")

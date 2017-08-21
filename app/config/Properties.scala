@@ -25,7 +25,7 @@ object Properties {
   lazy val adminCompaniesSearch: String = config.getString("sbr.admin.data.api.crn")
   lazy val adminVATsSearch: String = config.getString("sbr.admin.data.api.vat")
   lazy val adminPAYEsSearch: String = config.getString("sbr.admin.data.api.paye")
-  lazy val controlEntsSearchWithPeriod: String = config.getString("sbr.control.api.ent.with.period")
+  lazy val enterpriseSearchWithPeriod: String = config.getString("sbr.api.control.ent.search.with.period")
   lazy val adminVATsSearchWithPeriod: String = config.getString("sbr.admin.data.api.vat.with.period")
   lazy val adminPAYEsSearchWithPeriod: String = config.getString("sbr.admin.data.api.paye.with.period")
   lazy val adminCompaniesSearchWithPeriod: String = config.getString("sbr.admin.data.api.crn.with.period")

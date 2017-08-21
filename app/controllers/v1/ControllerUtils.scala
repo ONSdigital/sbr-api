@@ -3,14 +3,11 @@ package controllers.v1
 import java.time.format.DateTimeParseException
 import javax.naming.ServiceUnavailableException
 
-import play.api.mvc.{ AnyContent, Controller, Request, Result }
+import play.api.mvc.{ Controller, Result }
 import com.typesafe.scalalogging.StrictLogging
 import utils.Utilities.errAsJson
-import play.api.libs.json.JsValue
 
-import scala.annotation.tailrec
-import scala.util.{ Failure, Success, Try }
-import scala.concurrent.{ Future, TimeoutException }
+import scala.concurrent.TimeoutException
 
 /**
  * Created by haqa on 10/07/2017.
