@@ -152,7 +152,6 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
     search(id, adminCompaniesSearchWithPeriod.replace(placeholderPeriod, date))
   }
 
-
   protected def search(id: String, url: String) = {
     val res = id match {
       case id if id.length >= minKeyLength =>
