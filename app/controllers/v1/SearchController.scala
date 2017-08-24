@@ -6,13 +6,14 @@ import io.swagger.annotations._
 import play.api.mvc.{ Action, AnyContent, Result }
 import utils.Utilities.errAsJson
 import utils.FutureResponse._
-import play.api.libs.json.JsValue
+import play.api.libs.json.{ JsValue, Json }
 import uk.gov.ons.sbr.models.{ MultipleUnitsMatch, ResponseMatch, UnitMatch }
 import services.WSRequest.RequestGenerator
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import config.Properties._
+import play.api.Logger
 
 @Api("Search")
 class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils {
@@ -49,9 +50,9 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
               if (unitResp.length == 1) {
                 val mapOfRecordKeys = unitResp.map(x =>
                   (x \ "unitType").as[String] -> (x \ "id").as[String]).toMap
+                val t = ws.multiRequest(mapOfRecordKeys)
                 val respRecords: List[JsValue] = ws.multiRequest(mapOfRecordKeys)
-                //                val json = (unitResp zip respRecords).map { case (u, e) => UnitMatch(u, e) }.toJson
-                val json = (unitResp zip respRecords).map { case (u, e) => UnitMatch(u, e) }.toJson
+                val json = UnitMatch.toJson(respRecords(0), unitResp(0))
                 Ok(json).as(JSON)
               } else
                 //@todo - may want to use ResponseMatch trait

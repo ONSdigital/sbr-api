@@ -14,6 +14,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ Await, Future }
 import scala.concurrent.duration._
 import org.slf4j.LoggerFactory
+import play.api.Logger
 
 /**
  * Created by haqa on 20/07/2017.
@@ -47,8 +48,12 @@ class RequestGenerator @Inject() (ws: WSClient) extends Results with Status with
     suffix: String = "s/"): List[JsValue] = {
     searchList.map { s =>
       val id = s._2
-      val path = s._1.toLowerCase
-      val resp = Await.result(singleRequestNoTimeout(s"$prefix$path$suffix$id"), Duration.Inf)
+      val path = s._1.toLowerCase match {
+        case "ch" => "crn"
+        case a => a
+      }
+      val newPath = s"$prefix$path$suffix$id"
+      val resp = Await.result(singleRequestNoTimeout(newPath), Duration.Inf)
       resp.json
     }.toList
   }
