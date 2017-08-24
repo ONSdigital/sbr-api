@@ -52,7 +52,7 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
                   (x \ "unitType").as[String] -> (x \ "id").as[String]).toMap
                 val t = ws.multiRequest(mapOfRecordKeys)
                 val respRecords: List[JsValue] = ws.multiRequest(mapOfRecordKeys)
-                val json = UnitMatch.toJson(respRecords(0), unitResp(0))
+                val json = UnitMatch.toJson(respRecords, unitResp)
                 Ok(json).as(JSON)
               } else
                 //@todo - may want to use ResponseMatch trait
