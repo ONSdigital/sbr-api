@@ -2,11 +2,14 @@ import play.sbt.PlayScala
 import sbtbuildinfo.BuildInfoPlugin.autoImport._
 import sbtassembly.AssemblyPlugin.autoImport._
 
-licenses := Seq("MIT-License" -> url("https://opensource.org/licenses/MIT"))
+licenses := Seq("MIT-License" -> url("https://github.com/ONSdigital/sbr-control-api/blob/master/LICENSE"))
+
+// key-bindings
+lazy val ITest = config("it") extend Test
 
 lazy val Versions = new {
   val scala = "2.11.11"
-  val version = "0.1"
+  val appVersion = "0.1"
   val scapegoatVersion = "1.1.0"
   val util = "0.27.8"
 }
@@ -14,10 +17,23 @@ lazy val Versions = new {
 
 lazy val Constant = new {
   val appName = "ons-sbr-api"
-  val detail = Versions.version
+  val projectStage = "alpha"
   val organisation = "ons"
   val team = "sbr"
 }
+
+lazy val testSettings = Seq(
+  sourceDirectory in ITest := baseDirectory.value / "/test/it",
+  resourceDirectory in ITest := baseDirectory.value / "/test/resources",
+  scalaSource in ITest := baseDirectory.value / "test/it",
+  // test setup
+  parallelExecution in Test := false
+)
+
+lazy val Resolvers = Seq(
+  Resolver.typesafeRepo("releases"),
+  "Hadoop Releases" at "https://repository.cloudera.com/content/repositories/releases/"
+)
 
 lazy val commonSettings = Seq (
   scalaVersion := Versions.scala,
@@ -44,10 +60,7 @@ lazy val commonSettings = Seq (
     "-Ywarn-unused-import", //  Warn when imports are unused (don't want IntelliJ to do it automatically)
     "-Ywarn-numeric-widen" // Warn when numerics are widened
   ),
-  resolvers ++= Seq(
-    Resolver.typesafeRepo("releases"),
-    Resolver.bintrayRepo("outworkers", "oss-releases")
-  ),
+  resolvers ++= Resolvers,
   coverageExcludedPackages := ".*Routes.*;.*ReverseRoutes.*;.*javascript.*"
 )
 
@@ -55,16 +68,16 @@ lazy val commonSettings = Seq (
 
 lazy val api = (project in file("."))
   .enablePlugins(BuildInfoPlugin, GitVersioning, GitBranchPrompt, PlayScala)
+  .configs(ITest)
+  .settings(inConfig(ITest)(Defaults.testSettings) : _*)
   .settings(commonSettings: _*)
+  .settings(testSettings:_*)
   .settings(
     name := Constant.appName,
-    moduleName := "ons-sbr-api",
-    version := Versions.version,
-//    scalaSource in Compile := baseDirectory.value / "app",
-//    scalaSource in Test := baseDirectory.value / "test" / "scala",
-    testOptions in Test := Seq(Tests.Filter(s => s.endsWith("Test"))),
+    moduleName := "control-api",
+    version := Versions.appVersion,
     buildInfoPackage := "controllers",
-    // LastUpdateController - gives us last compile time and tagging info
+    // gives us last compile time and tagging info
     buildInfoKeys := Seq[BuildInfoKey](
       organization,
       name,
@@ -72,14 +85,8 @@ lazy val api = (project in file("."))
       scalaVersion,
       sbtVersion,
       BuildInfoKey.action("gitVersion") {
-      git.formattedShaVersion.?.value.getOrElse(Some("Unknown")).getOrElse("Unknown") +"@"+ git.formattedDateVersion.?.value.getOrElse("")
+        git.gitTagToVersionNumber.?.value.getOrElse(Some(Constant.projectStage))+"@"+ git.formattedDateVersion.?.value.getOrElse("")
     }),
-    // git-versioning
-    git.gitTagToVersionNumber := { tag: String =>
-      if(tag matches "[0-9]+\\..*") Some(tag)
-      else None
-    },
-    //
     // di router -> swagger
     routesGenerator := InjectedRoutesGenerator,
     buildInfoOptions += BuildInfoOption.ToMap,
@@ -98,7 +105,7 @@ lazy val api = (project in file("."))
       excludeAll ExclusionRule("commons-logging", "commons-logging")
     ),
     // assembly
-    assemblyJarName in assembly := s"sbr-api-${Versions.version}.jar",
+    assemblyJarName in assembly := s"${Constant.appName}-${Versions.appVersion}.jar",
     assemblyMergeStrategy in assembly := {
       case PathList("javax", "servlet", xs @ _*)                         => MergeStrategy.last
       case PathList("org", "apache", xs @ _*)                            => MergeStrategy.last
@@ -111,7 +118,5 @@ lazy val api = (project in file("."))
         oldStrategy(x)
     },
     mainClass in assembly := Some("play.core.server.ProdServerStart"),
-    fullClasspath in assembly += Attributed.blank(PlayKeys.playPackageAssets.value),
-    // test
-    parallelExecution in Test := false
+    fullClasspath in assembly += Attributed.blank(PlayKeys.playPackageAssets.value)
   )

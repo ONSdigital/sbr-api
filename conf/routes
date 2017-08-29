@@ -3,30 +3,38 @@
 # ~~~~
 
 # Searching Features
-GET     /v1/search                controllers.v1.SearchController.searchById(id: Option[String] ?= None, origin: Option[String] ?= None)
-GET     /v1/enterprise            controllers.v1.SearchController.searchByEnterprise(id: Long)
-GET     /v1/ubrn                  controllers.v1.SearchController.searchByUBRN(id: Long)
-GET     /v1/vat                   controllers.v1.SearchController.searchByVat(id: Long)
-GET     /v1/paye                  controllers.v1.SearchController.searchByPaye(id: String)
-GET     /v1/crn                   controllers.v1.SearchController.searchByCrn(id: String)
+
+GET     /v1/search                      controllers.v1.SearchController.searchById(id: Option[String] ?= None, origin: Option[String] ?= None)
+
+GET     /v1/leus/:id                    controllers.v1.SearchController.searchLeU(id)
+
+GET     /v1/ents/:id                    controllers.v1.SearchController.searchEnterprise(id)
+GET     /v1/vats/:id                    controllers.v1.SearchController.searchVat(id)
+GET     /v1/payes/:id                   controllers.v1.SearchController.searchPaye(id)
+GET     /v1/crns/:id                    controllers.v1.SearchController.searchCrn(id)
+
+GET     /v1/periods/:date/ents/:id      controllers.v1.SearchController.searchEnterpriseWithPeriod(date, id)
+GET     /v1/periods/:date/vats/:id      controllers.v1.SearchController.searchVatWithPeriod(date, id)
+GET     /v1/periods/:date/payes/:id     controllers.v1.SearchController.searchPayeWithPeriod(date, id)
+GET     /v1/periods/:date/crns/:id      controllers.v1.SearchController.searchCrnWithPeriod(date, id)
 
 # Home
-GET     /                         controllers.HomeController.status
-OPTIONS /*all                     controllers.HomeController.preflight(all: String)
+GET     /                               controllers.HomeController.status
+OPTIONS /*all                           controllers.HomeController.preflight(all: String)
 
 # Route for deployed version information (in JSON).
-GET     /version                  controllers.VersionController.version
+GET     /version                        controllers.VersionController.version
 
 # build dates
-# GET   /latest                   controllers.v1.LastUpdateController.latestListings
+# GET   /latest                         controllers.v1.LastUpdateController.latestListings
 
 # Route for health check information (in JSON).
-GET     /health                   controllers.HealthController.health
+GET     /health                         controllers.HealthController.health
 
 # api documentation
-GET     /swagger.json             controllers.ApiHelpController.getResources
-GET     /docs                     controllers.HomeController.swagger
+GET     /swagger.json                   controllers.ApiHelpController.getResources
+GET     /docs                           controllers.HomeController.swagger
 
 
 # Map static resources from the /public folder to the /assets URL path
-GET     /assets/*file             controllers.Assets.versioned(path="/public", file: Asset)
+GET     /assets/*file                   controllers.Assets.versioned(path="/public", file: Asset)

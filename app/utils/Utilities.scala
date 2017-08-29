@@ -11,25 +11,28 @@ object Utilities {
 
   def currentDirectory = new File(".").getCanonicalPath
 
-  def errAsJson(status: Int, code: String, msg: String): JsObject = {
+  def errAsJson(status: Int, code: String, msg: String, cause: String = "Not traced"): JsObject = {
     Json.obj(
       "status" -> status,
       "code" -> code,
+      "route_with_cause" -> cause,
       "message_en" -> msg
     )
   }
 
-  // ret: AnyVal
+  // @todo - ret: AnyVal
   def getElement(value: Any) = {
     val res = value match {
       case None => ""
       case JsDefined(v) => v
       case Some(i: Int) => i
       case Some(l: Long) => l
-      case Some(z) => s""""${z}""""
+      case Some(z) => s""""$z""""
       case x => s"${x.toString}"
     }
     res
   }
+
+  def unquote(s: String) = s.replace("\"", "")
 
 }

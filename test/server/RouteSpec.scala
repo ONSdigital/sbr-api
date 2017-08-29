@@ -35,14 +35,25 @@ class RouteSpec extends TestUtils {
   }
 
   "SearchController" should {
-    "return some records" in {
-      val suggest = fakeRequest(s"/v1/search?id=")
-      status(suggest) mustBe BAD_REQUEST
-      contentType(suggest) mustBe Some("application/json")
-      val err_code: String = getJsValue(contentAsJson(suggest) \ "code")
-      err_code mustBe s""""missing parameter""""
+    "return BadRequest as json error stating no expected param found" in {
+      val search = fakeRequest("/v1/search?id=")
+      status(search) mustBe BAD_REQUEST
+      contentType(search) mustBe Some("application/json")
+      val err_code: String = getJsValue(contentAsJson(search) \ "code")
+      err_code mustBe s""""missing_param""""
+    }
+
+    // @todo - make badrequest route (short key size)
+    "return Badrequest as json error 2with key size too small" ignore {
+      val shortId = "123"
+      val search = fakeRequest(s"/v1/search?id=$shortId")
+      status(search) mustBe BAD_REQUEST
+      contentType(search) mustBe Some("application/json")
+      val err_code: String = getJsValue(contentAsJson(search) \ "code")
+      err_code mustBe s""""invalid_key_size""""
     }
   }
+
 
   "VersionController" should {
     "display list of versions" in {
@@ -61,7 +72,7 @@ class RouteSpec extends TestUtils {
     }
   }
 
-  // note: in progress route
+  // @note - in progress route
   "LastUpdateController" should {
     "display last modification listing" ignore {
       val last = fakeRequest("/latest", GET)
