@@ -3,13 +3,12 @@ package config
 import com.typesafe.config.{ Config, ConfigFactory }
 
 /**
- * Created by haqa on 28/07/2017.
- */
+  * Created by haqa on 28/07/2017.
+  */
 
 /**
- * @todo - fix config vals based on environment
- *       unforced default issue
- */
+  * @todo - fix config vals based on environment unforced default issue
+  */
 
 object Properties {
 

@@ -5,16 +5,17 @@ import javax.naming.ServiceUnavailableException
 
 import play.api.mvc.{ Controller, Result }
 import com.typesafe.scalalogging.StrictLogging
-import utils.Utilities.errAsJson
+import play.api.libs.json.{ JsValue, Json }
+import utils.Utilities._
 
 import scala.concurrent.TimeoutException
 
 /**
- * Created by haqa on 10/07/2017.
- */
+  * Created by haqa on 10/07/2017.
+  */
 trait ControllerUtils extends Controller with StrictLogging {
 
-  protected val placeholderPeriod = "date"
+  protected val placeholderPeriod = "*date"
   // number of units displayable
   protected val cappedDisplayNumber = 1
 
@@ -25,6 +26,28 @@ trait ControllerUtils extends Controller with StrictLogging {
   //  protected def errLogBuilder (x: Throwable, msgSeq: Vector[String] = Nil)  = {
   //
   //  }
+
+  protected def toJson(record: Seq[JsValue], links: Seq[JsValue]): JsValue = {
+    val res = (links zip record).map(
+      z => {
+        // For BI, there is no "vars", just use the whole record
+        val vars = (z._2 \ "vars").getOrElse(z._2)
+        // BI does not have period, so use an empty string
+        val period = (z._2 \ "period").getOrNull
+
+        val js = Json.obj(
+          "id" -> (z._1 \ "id").getOrNull,
+          "parents" -> (z._1 \ "parents").getOrNull,
+          "children" -> (z._1 \ "children").getOrNull,
+          "unitType" -> (z._1 \ "unitType").getOrNull,
+          "period" -> period,
+          "vars" -> vars
+        )
+        js
+      }
+    )
+    Json.toJson(res)
+  }
 
   // @todo - add getCause -> root
   protected def responseException: PartialFunction[Throwable, Result] = {

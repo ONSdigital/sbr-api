@@ -33,8 +33,7 @@ class RequestGenerator @Inject() (ws: WSClient) extends Results with Status with
 
   def singleRequestNoTimeout(url: String): Future[WSResponse] = ws.url(url).get()
 
-  // @todo - use in HomeController
-  def reroute(host: String, route: String) = {
+  protected def reroute(host: String, route: String) = {
     logger.debug(s"rerouting to search route $route")
     Redirect(url = s"http://$host/v1/searchBy$route").flashing(
       "redirect" -> s"You are being redirected to $route route", "status" -> "ok"

@@ -1,7 +1,7 @@
 package controllers
 
 import io.swagger.annotations.{ Api, ApiOperation, ApiResponse, ApiResponses }
-import play.api.mvc.{ Controller, _ }
+import play.api.mvc.{ Controller, Action }
 
 @Api("Utils")
 class HomeController extends Controller {
@@ -38,7 +38,7 @@ class HomeController extends Controller {
   @ApiOperation(
     value = "Permissions method request",
     notes = "pre-flight is used for local OPTIONS requests that precede PUT/DELETE requests. " +
-    "An empty Ok() response allows the actual PUT/DELETE request to be sent.",
+      "An empty Ok() response allows the actual PUT/DELETE request to be sent.",
     httpMethod = "OPTIONS"
   )
   @ApiResponses(Array(
