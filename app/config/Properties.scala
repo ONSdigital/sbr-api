@@ -23,6 +23,7 @@ object Properties {
   lazy val adminCompaniesSearch: String = config.getString("sbrAdminCrn")
   lazy val adminVATsSearch: String = config.getString("sbrAdminVat")
   lazy val adminPAYEsSearch: String = config.getString("sbrAdminPaye")
+  lazy val controlEndpointWithPeriod: String = config.getString("sbrControlWithPeriodApi")
   lazy val enterpriseSearchWithPeriod: String = config.getString("sbrControlEntPeriod")
   lazy val adminVATsSearchWithPeriod: String = config.getString("sbrAdminVatPeriod")
   lazy val adminPAYEsSearchWithPeriod: String = config.getString("sbrAdminPayePeriod")

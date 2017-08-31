@@ -26,7 +26,7 @@ class RequestGenerator @Inject() (ws: WSClient) extends Results with Status with
 
   protected def status(response: WSResponse) = response.status
 
-  def singleRequest(id: String, prefix: String = controlEndpoint): Future[WSResponse] = {
+  def singleRequest(id: String, prefix: String): Future[WSResponse] = {
     val res = ws.url(s"$prefix$id").withRequestTimeout(requestTimeout.millis).get()
     res
   }
