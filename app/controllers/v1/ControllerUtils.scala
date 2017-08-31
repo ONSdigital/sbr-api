@@ -6,27 +6,19 @@ import javax.naming.ServiceUnavailableException
 import play.api.mvc.{ Controller, Result }
 import com.typesafe.scalalogging.StrictLogging
 import play.api.libs.json.{ JsValue, Json }
-import utils.Utilities._
+import utils.Utilities.{errAsJson, orElseNull}
 
 import scala.concurrent.TimeoutException
 
 /**
-  * Created by haqa on 10/07/2017.
-  */
+ * Created by haqa on 10/07/2017.
+ */
 trait ControllerUtils extends Controller with StrictLogging {
 
   protected val placeholderPeriod = "*date"
   // number of units displayable
   protected val cappedDisplayNumber = 1
   protected val fixedYeaMonthSize = 6
-
-  //  @tailrec
-  //  protected def getRootCause ()
-  //
-  //  @tailrec
-  //  protected def errLogBuilder (x: Throwable, msgSeq: Vector[String] = Nil)  = {
-  //
-  //  }
 
   protected def toJson(record: Seq[JsValue], links: Seq[JsValue]): JsValue = {
     val res = (links zip record).map(
@@ -50,11 +42,11 @@ trait ControllerUtils extends Controller with StrictLogging {
     Json.toJson(res)
   }
 
-  // @todo - add getCause -> root
   protected def responseException: PartialFunction[Throwable, Result] = {
     case ex: DateTimeParseException =>
       BadRequest(errAsJson(BAD_REQUEST, "invalid_date", s"cannot parse date exception found $ex"))
-    case ex: RuntimeException => InternalServerError(errAsJson(INTERNAL_SERVER_ERROR, "runtime_exception", s"$ex", s"${ex.getCause}"))
+    case ex: RuntimeException =>
+      InternalServerError(errAsJson(INTERNAL_SERVER_ERROR, "runtime_exception", s"$ex", s"${ex.getCause}"))
     case ex: ServiceUnavailableException =>
       ServiceUnavailable(errAsJson(SERVICE_UNAVAILABLE, "service_unavailable", s"$ex", s"${ex.getCause}"))
     case ex: TimeoutException =>

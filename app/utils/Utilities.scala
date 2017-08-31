@@ -2,12 +2,11 @@ package utils
 
 import java.io.File
 
-import play.api.libs.json.{Json, JsLookupResult, JsValue, JsObject, JsNull }
-
+import play.api.libs.json.{ Json, JsLookupResult, JsValue, JsObject, JsNull }
 
 /**
-  * Created by haqa on 05/07/2017.
-  */
+ * Created by haqa on 05/07/2017.
+ */
 object Utilities {
 
   def currentDirectory = new File(".").getCanonicalPath
