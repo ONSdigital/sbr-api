@@ -2,7 +2,7 @@ package controllers.v1
 
 import javax.inject.Inject
 
-import io.swagger.annotations.{Api, ApiOperation, ApiResponses, ApiResponse, ApiParam}
+import io.swagger.annotations.{ Api, ApiOperation, ApiResponses, ApiResponse, ApiParam }
 import play.api.mvc.{ Action, AnyContent, Result }
 import utils.Utilities.errAsJson
 import utils.FutureResponse.futureSuccess

@@ -6,7 +6,7 @@ import javax.naming.ServiceUnavailableException
 import play.api.mvc.{ Controller, Result }
 import com.typesafe.scalalogging.StrictLogging
 import play.api.libs.json.{ JsValue, Json }
-import utils.Utilities.{errAsJson, orElseNull}
+import utils.Utilities.{ errAsJson, orElseNull }
 
 import scala.concurrent.TimeoutException
 

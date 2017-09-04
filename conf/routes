@@ -4,8 +4,8 @@
 
 # Searching Features
 
-GET     /v1/search                      controllers.v1.SearchController.searchById(id: Option[String] ?= None, origin: Option[String] ?= None)
-GET     /v1/searchWithPeriod            controllers.v1.SearchController.searchByReferencePeriod(id: Option[String] ?= None, period: Option[String] ?= None)
+GET     /v1/search                              controllers.v1.SearchController.searchById(id: Option[String] ?= None, origin: Option[String] ?= None)
+GET     /v1/searchWithPeriod    controllers.v1.SearchController.searchByReferencePeriod(id: Option[String] ?= None, period: Option[String] ?= None)
 
 GET     /v1/leus/:id                    controllers.v1.SearchController.searchLeU(id)
 
