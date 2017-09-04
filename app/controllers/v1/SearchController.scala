@@ -90,6 +90,7 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
     @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
   ): Action[AnyContent] = Action.async {
     logger.info(s"Sending request to Business Index for legal unit: $id")
+    println(s"Help print -> id = $id")
     unitSearch(id, businessIndexRoute)
   }
 
@@ -98,6 +99,7 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
   ): Action[AnyContent] = {
     Action.async {
       logger.info(s"Sending request to Control Api to retrieve enterprise with $id")
+      println(s"Help print -> id = $id on route searchEnterprise")
       unitSearch(id, controlEnterpriseSearch)
     }
   }
