@@ -58,12 +58,12 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
     new ApiResponse(code = 500, responseContainer = "JSONObject", message = "Server Side Error -> Request could not be completed.")
   ))
   def searchByReferencePeriod(
-    @ApiParam(value = "An identifier of any type", example = "825039145000", required = true) id: Option[String],
-    @ApiParam(value = "Identifier creation date", example = "2017/07", required = true) period: Option[String]
+    @ApiParam(value = "Identifier creation date", example = "2017/07", required = true) period: Option[String],
+    @ApiParam(value = "An identifier of any type", example = "825039145000", required = true) id: Option[String]
   ): Action[AnyContent] = {
     Action.async { implicit request =>
       val key = id.orElse(request.getQueryString("id"))
-      val date = id.orElse(request.getQueryString("period")).getOrElse("")
+      val date = period.orElse(request.getQueryString("period")).getOrElse("")
       val res = date match {
         case x if x.length == fixedYeaMonthSize =>
           search(key, controlEndpointWithPeriod.replace(placeholderPeriod, date))
@@ -98,6 +98,7 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
   ): Action[AnyContent] = {
     Action.async {
       logger.info(s"Sending request to Control Api to retrieve enterprise with $id")
+
       unitSearch(id, controlEnterpriseSearch)
     }
   }
@@ -181,7 +182,7 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
           case _ => BadRequest(errAsJson(BAD_REQUEST, "bad_request", "unknown error"))
         } recover responseException
       case _ =>
-        BadRequest(errAsJson(BAD_REQUEST, "missing_param", s"missing key or key is too short [$minKeyLength]")).future
+        BadRequest(errAsJson(BAD_REQUEST, "missing_param", s"missing key or key [$key] is too short [$minKeyLength]")).future
     }
     res
   }
