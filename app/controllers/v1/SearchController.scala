@@ -36,6 +36,7 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
   ): Action[AnyContent] = {
     Action.async { implicit request =>
       val key = id.orElse(request.getQueryString("id"))
+      println(s"Option value = $key")
       search(key)
     }
   }
@@ -183,7 +184,7 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
           case _ => BadRequest(errAsJson(BAD_REQUEST, "bad_request", "unknown error"))
         } recover responseException
       case _ =>
-        BadRequest(errAsJson(BAD_REQUEST, "missing_param", s"missing key or key is too short [$minKeyLength]")).future
+        BadRequest(errAsJson(BAD_REQUEST, "missing_param", s"missing key or key [$key] is too short [$minKeyLength]")).future
     }
     res
   }
