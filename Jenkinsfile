@@ -235,5 +235,3 @@ def deploy () {
         deployToCloudFoundry("cloud-foundry-sbr-${env.DEPLOY_NAME}-user", 'sbr', "${env.DEPLOY_NAME}", "${env.DEPLOY_NAME}-sbr-api", "${env.DEPLOY_NAME}-ons-sbr-api.zip", "conf/${env.DEPLOY_NAME}/manifest.yml")
     }
 }
-
-​
