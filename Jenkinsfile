@@ -36,15 +36,15 @@ pipeline {
                     env.NODE_STAGE = "Build"
                     if (BRANCH_NAME == "develop") {
                         env.DEPLOY_NAME = "dev"
-                        sh 'cp target/universal/sbr-api-*.zip dev-ons-sbr-api.zip'
+                        sh 'cp target/universal/ons-sbr-api-*.zip dev-ons-sbr-api.zip'
                     }
                     else if  (BRANCH_NAME == "release") {
                         env.DEPLOY_NAME = "test"
-                        sh 'cp target/universal/sbr-api-*.zip test-ons-sbr-api.zip'
+                        sh 'cp target/universal/ons-sbr-api-*.zip test-ons-sbr-api.zip'
                     }
                     else if (BRANCH_NAME == "master") {
                         env.DEPLOY_NAME = "prod"
-                        sh 'cp target/universal/sbr-api-*.zip prod-ons-sbr-api.zip'
+                        sh 'cp target/universal/ons-sbr-api-*.zip prod-ons-sbr-api.zip'
                     }
                 }
             }
