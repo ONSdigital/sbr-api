@@ -2,36 +2,30 @@ package controllers.v1
 
 import javax.inject.Inject
 
-import io.swagger.annotations._
+import io.swagger.annotations.{ Api, ApiOperation, ApiResponses, ApiResponse, ApiParam }
 import play.api.mvc.{ Action, AnyContent, Result }
 import utils.Utilities.errAsJson
-import utils.FutureResponse._
-import play.api.libs.json.{ JsValue, Json }
-import uk.gov.ons.sbr.models.{ MultipleUnitsMatch, ResponseMatch, UnitMatch }
+import utils.FutureResponse.futureSuccess
+import play.api.libs.json.JsValue
 import services.WSRequest.RequestGenerator
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import config.Properties._
-import play.api.Logger
 
 @Api("Search")
 class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils {
 
-  /**
-   *
-   * @todo - error control -> line 49 if not result and empty list
-   */
   //public api
   @ApiOperation(
-    value = "Json list of id matches",
+    value = "Json id match or a list of unit conflicts",
     notes = "The matches can occur from any id field and multiple records can be matched",
     responseContainer = "JSONObject",
     code = 200,
     httpMethod = "GET"
   )
   @ApiResponses(Array(
-    new ApiResponse(code = 200, response = classOf[UnitMatch], responseContainer = "JSONObject", message = "Success -> Record(s) found for id."),
+    new ApiResponse(code = 200, responseContainer = "JSONObject", message = "Success -> Record(s) found for id."),
     new ApiResponse(code = 400, responseContainer = "JSONObject", message = "Client Side Error -> Required parameter was not found."),
     new ApiResponse(code = 404, responseContainer = "JSONObject", message = "Client Side Error -> Id not found."),
     new ApiResponse(code = 500, responseContainer = "JSONObject", message = "Server Side Error -> Request could not be completed.")
@@ -42,29 +36,38 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
   ): Action[AnyContent] = {
     Action.async { implicit request =>
       val key = id.orElse(request.getQueryString("id"))
-      val res: Future[Result] = key match {
-        case Some(k) if k.length >= minKeyLength =>
-          ws.singleRequest(k) map {
-            case response if response.status == 200 => {
-              val unitResp = response.json.as[Seq[JsValue]]
-              if (unitResp.length == 1) {
-                val mapOfRecordKeys = unitResp.map(x =>
-                  (x \ "unitType").as[String] -> (x \ "id").as[String]).toMap
-                val t = ws.multiRequest(mapOfRecordKeys)
-                val respRecords: List[JsValue] = ws.multiRequest(mapOfRecordKeys)
-                val json = UnitMatch.toJson(respRecords, unitResp)
-                Ok(json).as(JSON)
-              } else
-                //@todo - may want to use ResponseMatch trait
-                Ok(unitResp.toString).as(JSON)
-              //Ok(unitResp.map(x => MultipleUnitsMatch(x)).toJson).as(JSON)
-            }
-            case response if response.status == 404 => NotFound(response.body).as(JSON)
-            //@todo - fix err control _
-            case _ => BadRequest(errAsJson(BAD_REQUEST, "bad_request", "unknown error"))
-          } recover responseException
-        case _ =>
-          BadRequest(errAsJson(BAD_REQUEST, "missing_param", s"missing key or key is too short [$minKeyLength]")).future
+      search(key)
+    }
+  }
+
+  /**
+   * @note - rep. period param in url => remove replace
+   */
+  //public api
+  @ApiOperation(
+    value = "Json id and period match or a list of unit conflicts",
+    notes = "The matches can occur from any id field and multiple records can be matched",
+    responseContainer = "JSONObject",
+    code = 200,
+    httpMethod = "GET"
+  )
+  @ApiResponses(Array(
+    new ApiResponse(code = 200, responseContainer = "JSONObject", message = "Success -> Record(s) found for id."),
+    new ApiResponse(code = 400, responseContainer = "JSONObject", message = "Client Side Error -> Required parameter was not found."),
+    new ApiResponse(code = 404, responseContainer = "JSONObject", message = "Client Side Error -> Id not found."),
+    new ApiResponse(code = 500, responseContainer = "JSONObject", message = "Server Side Error -> Request could not be completed.")
+  ))
+  def searchByReferencePeriod(
+    @ApiParam(value = "Identifier creation date", example = "2017/07", required = true) period: Option[String],
+    @ApiParam(value = "An identifier of any type", example = "825039145000", required = true) id: Option[String]
+  ): Action[AnyContent] = {
+    Action.async { implicit request =>
+      val key = id.orElse(request.getQueryString("id"))
+      val date = period.orElse(request.getQueryString("period")).getOrElse("")
+      val res = date match {
+        case x if x.length == fixedYeaMonthSize =>
+          search(key, controlEndpointWithPeriod.replace(placeholderPeriod, date))
+        case _ => BadRequest(errAsJson(BAD_REQUEST, "bad_request", s"Invalid date, try checking the length of given date $date")).future
       }
       res
     }
@@ -85,80 +88,112 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
   ))
   def searchLeU(
     @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
-  ): Action[AnyContent] = Action.async { request =>
+  ): Action[AnyContent] = Action.async {
     logger.info(s"Sending request to Business Index for legal unit: $id")
-    search(id, businessIndexRoute)
+    unitSearch(id, businessIndexRoute)
   }
 
   def searchEnterprise(
     @ApiParam(value = "An identifier of any type", example = "825039145000", required = true) id: String
   ): Action[AnyContent] = {
-    Action.async { request =>
+    Action.async {
       logger.info(s"Sending request to Control Api to retrieve enterprise with $id")
-      search(id, controlEnterpriseSearch)
+
+      unitSearch(id, controlEnterpriseSearch)
     }
   }
 
   def searchVat(
     @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
-  ): Action[AnyContent] = Action.async { request =>
+  ): Action[AnyContent] = Action.async {
     logger.info(s"Sending request to Admin Api to retrieve VAT reference with $id")
-    search(id, adminVATsSearch)
+    unitSearch(id, adminVATsSearch)
   }
 
   def searchPaye(
     @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
-  ): Action[AnyContent] = Action.async { request =>
+  ): Action[AnyContent] = Action.async {
     logger.info(s"Sending request to Admin Api to retrieve PAYE record with $id")
-    search(id, adminPAYEsSearch)
+    unitSearch(id, adminPAYEsSearch)
   }
 
   def searchCrn(
     @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
-  ): Action[AnyContent] = Action.async { request =>
+  ): Action[AnyContent] = Action.async {
     logger.info(s"Sending request to Admin Api to retrieve Companies House Number with $id")
-    search(id, adminCompaniesSearch)
+    unitSearch(id, adminCompaniesSearch)
   }
 
-  // @todo - use better approach to add period param in url => remove replace
+  /**
+   * @note - rep. period param in url => remove replace
+   */
   def searchEnterpriseWithPeriod(
     @ApiParam(value = "Identifier creation date", example = "2017/07", required = true) date: String,
     @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
-  ): Action[AnyContent] = Action.async { request =>
+  ): Action[AnyContent] = Action.async {
     logger.info(s"Sending request to Control Api to retrieve enterprise with $id and $date")
-    search(id, enterpriseSearchWithPeriod.replace(placeholderPeriod, date))
+    unitSearch(id, enterpriseSearchWithPeriod.replace(placeholderPeriod, date))
   }
 
   def searchVatWithPeriod(
     @ApiParam(value = "Identifier creation date", example = "2017/07", required = true) date: String,
     @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
-  ): Action[AnyContent] = Action.async { request =>
+  ): Action[AnyContent] = Action.async {
     logger.info(s"Sending request to Admin Api to retrieve VAT reference with $id and $date")
-    search(id, adminVATsSearchWithPeriod.replace(placeholderPeriod, date))
+    unitSearch(id, adminVATsSearchWithPeriod.replace(placeholderPeriod, date))
   }
 
   def searchPayeWithPeriod(
     @ApiParam(value = "Identifier creation date", example = "2017/07", required = true) date: String,
     @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
-  ): Action[AnyContent] = Action.async { request =>
+  ): Action[AnyContent] = Action.async {
     logger.info(s"Sending request to Admin Api to retrieve PAYE record with $id and $date")
-    search(id, adminPAYEsSearchWithPeriod.replace(placeholderPeriod, date))
+    unitSearch(id, adminPAYEsSearchWithPeriod.replace(placeholderPeriod, date))
   }
 
   def searchCrnWithPeriod(
     @ApiParam(value = "Identifier creation date", example = "2017/07", required = true) date: String,
     @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
-  ): Action[AnyContent] = Action.async { request =>
+  ): Action[AnyContent] = Action.async {
     logger.info(s"Sending request to Admin Api to retrieve Companies House Number with $id and $date")
-    search(id, adminCompaniesSearchWithPeriod.replace(placeholderPeriod, date))
+    unitSearch(id, adminCompaniesSearchWithPeriod.replace(placeholderPeriod, date))
   }
 
-  protected def search(id: String, url: String) = {
+  /**
+   * @note - trait ResponseMatch - for conflict or single result operations
+   */
+  private def search(key: Option[String], baseUrl: String = controlEndpoint): Future[Result] = {
+    val res: Future[Result] = key match {
+      case Some(k) if k.length >= minKeyLength =>
+        ws.singleRequest(k, baseUrl) map {
+          case response if response.status == OK => {
+            val unitResp = response.json.as[Seq[JsValue]]
+            if (unitResp.length == cappedDisplayNumber) {
+              val mapOfRecordKeys = unitResp.map(x =>
+                (x \ "unitType").as[String] -> (x \ "id").as[String]).toMap
+              val respRecords: List[JsValue] = ws.multiRequest(mapOfRecordKeys)
+              val json = toJson(respRecords, unitResp)
+              Ok(json).as(JSON)
+            } else
+              PartialContent(unitResp.toString).as(JSON)
+          }
+          case response if response.status == NOT_FOUND => NotFound(response.body).as(JSON)
+          //@todo - fix err control _
+          case _ => BadRequest(errAsJson(BAD_REQUEST, "bad_request", "unknown error"))
+        } recover responseException
+      case _ =>
+        BadRequest(errAsJson(BAD_REQUEST, "missing_param", s"missing key or key [$key] is too short [$minKeyLength]")).future
+    }
+    res
+  }
+
+  // @todo - check NotFound flow
+  private def unitSearch(id: String, url: String): Future[Result] = {
     val res = id match {
       case id if id.length >= minKeyLength =>
         logger.info(s"Checking id length: $id")
         val resp = ws.singleRequestNoTimeout(s"$url$id") map { response =>
-          if (response.status == 200) {
+          if (response.status == OK) {
             Ok(response.body).as(JSON)
           } else NotFound(response.body).as(JSON)
         } recover responseException

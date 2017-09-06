@@ -1,5 +1,5 @@
 #!groovy
-@Library('jenkins-pipeline-shared@temporary') _
+@Library('jenkins-pipeline-shared@develop') _
 
 pipeline {
     agent any
@@ -29,14 +29,24 @@ pipeline {
             agent any
             steps {
                 colourText("info", "Building ${env.BUILD_ID} on ${env.JENKINS_URL} from branch ${env.BRANCH_NAME}")
-                script {
-                    env.NODE_STAGE = "Build"
-                }
                 sh '''
                 $SBT clean compile "project api" universal:packageBin coverage test coverageReport
-                cp target/universal/ons-sbr-api-*.zip dev-ons-sbr-api.zip
-                cp target/universal/ons-sbr-api-*.zip test-ons-sbr-api.zip
                 '''
+                script {
+                    env.NODE_STAGE = "Build"
+                    if (BRANCH_NAME == "develop") {
+                        env.DEPLOY_NAME = "dev"
+                        sh 'cp target/universal/ons-sbr-api-*.zip dev-ons-sbr-api.zip'
+                    }
+                    else if  (BRANCH_NAME == "release") {
+                        env.DEPLOY_NAME = "test"
+                        sh 'cp target/universal/ons-sbr-api-*.zip test-ons-sbr-api.zip'
+                    }
+                    else if (BRANCH_NAME == "master") {
+                        env.DEPLOY_NAME = "prod"
+                        sh 'cp target/universal/ons-sbr-api-*.zip prod-ons-sbr-api.zip'
+                    }
+                }
             }
         }
 
@@ -84,20 +94,20 @@ pipeline {
         // bundle all libs and dependencies
         stage ('Bundle') {
             agent any
-             when {
-                 anyOf {
-                     branch "develop"
-                     branch "release"
-                     branch "master"
-                 }
-             }
+            when {
+                anyOf {
+                    branch "develop"
+                    branch "release"
+                    branch "master"
+                }
+            }
             steps {
                 script {
                     env.NODE_STAGE = "Bundle"
                 }
                 colourText("info", "Bundling....")
                 dir('conf') {
-                    git(url: "$GITLAB_URL/StatBusReg/sbr-api.git", credentialsId: 'sbr-gitlab-id', branch: 'feature/env-key')
+                    git(url: "$GITLAB_URL/StatBusReg/sbr-api.git", credentialsId: 'sbr-gitlab-id', branch: 'develop')
                 }
                 // packageApp('dev')
                 // packageApp('test')
@@ -108,13 +118,13 @@ pipeline {
 
         stage ('Approve') {
             agent { label 'adrianharristesting' }
-             when {
-                 anyOf {
-                     branch "develop"
-                     branch "release"
-                     branch "master"
-                 }
-             }
+            when {
+                anyOf {
+                    branch "develop"
+                    branch "release"
+                    branch "master"
+                }
+            }
             steps {
                 script {
                     env.NODE_STAGE = "Approve"
@@ -142,6 +152,10 @@ pipeline {
                 branch "master"
             }
             steps {
+                sh '''
+                    $SBT clean compile package
+                    $SBT clean compile assembly
+                '''
                 colourText("success", 'Package.')
             }
 
@@ -149,27 +163,15 @@ pipeline {
 
         stage('Deploy'){
             agent any
-             when {
-                 anyOf {
-                     branch "develop"
-                     branch "release"
-                     branch "master"
-                 }
-             }
+            when {
+                anyOf {
+                    branch "develop"
+                    branch "release"
+                    branch "master"
+                }
+            }
             steps {
                 colourText("success", 'Deploy.')
-                script {
-                    env.NODE_STAGE = "Deploy"
-                    if (BRANCH_NAME == "develop") {
-                        env.DEPLOY_NAME = "dev"
-                    }
-                    else if  (BRANCH_NAME == "release") {
-                        env.DEPLOY_NAME = "test"
-                    }
-                    else if (BRANCH_NAME == "master") {
-                        env.DEPLOY_NAME = "prod"
-                    }
-                }
                 milestone(1)
                 lock('Deployment Initiated') {
                     colourText("info", 'deployment in progress')
@@ -188,6 +190,7 @@ pipeline {
                 }
             }
             steps {
+                sh "$SBT it:test"
                 colourText("success", 'Integration Tests - For Release or Dev environment.')
             }
         }
@@ -234,5 +237,3 @@ def deploy () {
         deployToCloudFoundry("cloud-foundry-sbr-${env.DEPLOY_NAME}-user", 'sbr', "${env.DEPLOY_NAME}", "${env.DEPLOY_NAME}-sbr-api", "${env.DEPLOY_NAME}-ons-sbr-api.zip", "conf/${env.DEPLOY_NAME}/manifest.yml")
     }
 }
-
-​
