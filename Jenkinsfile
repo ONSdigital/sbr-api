@@ -182,7 +182,7 @@ pipeline {
         }
 
         stage('Integration Tests') {
-            agent { label 'adrianharristesting' }
+            agent any
             when {
                 anyOf {
                     branch "develop"
