@@ -2,16 +2,20 @@ package controllers.v1
 
 import javax.inject.Inject
 
-import io.swagger.annotations.{ Api, ApiOperation, ApiResponses, ApiResponse, ApiParam }
+import io.swagger.annotations.{ Api, ApiOperation, ApiParam, ApiResponse, ApiResponses }
 import play.api.mvc.{ Action, AnyContent, Result }
 import utils.Utilities.errAsJson
 import utils.FutureResponse.futureSuccess
 import play.api.libs.json.JsValue
 import services.WSRequest.RequestGenerator
+import play.api.libs.json._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ Await, Future }
+import scala.concurrent.duration._
 import config.Properties._
+import play.api.Logger
+import play.api.libs.ws.WSResponse
 
 @Api("Search")
 class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils {
@@ -172,7 +176,7 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
               val mapOfRecordKeys = unitResp.map(x =>
                 (x \ "unitType").as[String] -> (x \ "id").as[String]).toMap
               val respRecords: List[JsValue] = ws.multiRequest(mapOfRecordKeys)
-              val json = toJson(respRecords, unitResp)
+              val json = seqToJson(respRecords, unitResp)
               Ok(json).as(JSON)
             } else
               PartialContent(unitResp.toString).as(JSON)
@@ -188,7 +192,7 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
   }
 
   // @todo - check NotFound flow
-  private def unitSearch(id: String, url: String): Future[Result] = {
+  private def unitSearchOld(id: String, url: String): Future[Result] = {
     val res = id match {
       case id if id.length >= minKeyLength =>
         logger.info(s"Checking id length: $id")
@@ -201,6 +205,35 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
       case _ => BadRequest(errAsJson(BAD_REQUEST, "missing_parameter", "No query string found")).future
     }
     res
+  }
+
+  def unitSearch(id: String, url: String): Future[Result] = {
+    val data = getData(id, url)
+    val links = getLinks(id)
+
+    val combinedFuture =
+      for {
+        dataResult <- data
+        linksResult <- links
+      } yield (dataResult, linksResult)
+
+    val (dataResult, linksResult) = Await.result(combinedFuture, Seq(1 minute, 1 minute, 1 minute).max)
+
+    val dataJson = Json.parse(dataResult.body)
+    val linksString = linksResult.json.as[JsValue].toString
+    // This is a quick fix, the JSON is in an array so remove the brackets at the start/end.
+    val linksJson = Json.parse(linksString.slice(1, linksString.length - 1))
+
+    val json = toJson(dataJson, linksJson)
+    Ok(json).as(JSON).future
+  }
+
+  private def getData(id: String, url: String): Future[WSResponse] = {
+    ws.singleRequestNoTimeout(s"$url$id")
+  }
+
+  private def getLinks(id: String, baseUrl: String = controlEndpoint): Future[WSResponse] = {
+    ws.singleRequest(id, baseUrl)
   }
 
 }
