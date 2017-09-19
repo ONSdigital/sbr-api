@@ -20,7 +20,7 @@ trait ControllerUtils extends Controller with StrictLogging {
   protected val cappedDisplayNumber = 1
   protected val fixedYeaMonthSize = 6
 
-  protected def seqToJson(record: Seq[JsValue], links: Seq[JsValue]): JsValue = {
+  protected def toJson(record: Seq[JsValue], links: Seq[JsValue]): JsValue = {
     val res = (links zip record).map(
       z => {
         // For BI, there is no "vars", just use the whole record
@@ -40,23 +40,6 @@ trait ControllerUtils extends Controller with StrictLogging {
       }
     )
     Json.toJson(res)
-  }
-
-  protected def toJson(record: JsValue, links: JsValue): JsValue = {
-    // For BI, there is no "vars", just use the whole record
-    val vars = (record \ "vars").getOrElse(record)
-    // BI does not have period, so use an empty string
-    val period = (record \ "period").getOrNull
-
-    val js = Json.obj(
-      "id" -> (links \ "id").getOrNull,
-      "parents" -> (links \ "parents").getOrNull,
-      "children" -> (links \ "children").getOrNull,
-      "unitType" -> (links \ "unitType").getOrNull,
-      "period" -> period,
-      "vars" -> vars
-    )
-    Json.toJson(js)
   }
 
   protected def responseException: PartialFunction[Throwable, Result] = {
