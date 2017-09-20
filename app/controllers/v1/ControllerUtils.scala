@@ -20,26 +20,42 @@ trait ControllerUtils extends Controller with StrictLogging {
   protected val cappedDisplayNumber = 1
   protected val fixedYeaMonthSize = 6
 
-  protected def toJson(record: Seq[JsValue], links: Seq[JsValue]): JsValue = {
+  protected def seqToJson(record: Seq[JsValue], links: Seq[JsValue]): JsValue = {
     val res = (links zip record).map(
-      z => {
-        // For BI, there is no "vars", just use the whole record
-        val vars = (z._2 \ "vars").getOrElse(z._2)
-        // BI does not have period, so use an empty string
-        val period = (z._2 \ "period").getOrNull
+      z => toJson(z._2, z._1)
+    )
+    Json.toJson(res)
+  }
 
-        val js = Json.obj(
-          "id" -> (z._1 \ "id").getOrNull,
-          "parents" -> (z._1 \ "parents").getOrNull,
-          "children" -> (z._1 \ "children").getOrNull,
-          "unitType" -> (z._1 \ "unitType").getOrNull,
+  protected def toJson(record: JsValue, links: JsValue): JsValue = {
+    // For BI, there is no "vars", just use the whole record
+    val vars = (record \ "vars").getOrElse(record)
+    // BI does not have period, so use an empty string
+    val period = (record \ "period").getOrNull
+
+    // Only get childrenJson for Enterprises
+    val js = (links \ "unitType").getOrNull.toString.replaceAll("^\"|\"$", "") match {
+      case "ENT" => {
+        Json.obj(
+          "id" -> (links \ "id").getOrNull,
+          "parents" -> (links \ "parents").getOrNull,
+          "children" -> (links \ "children").getOrNull,
+          "childrenJson" -> (record \ "childrenJson").getOrNull,
+          "unitType" -> (links \ "unitType").getOrNull,
           "period" -> period,
           "vars" -> vars
         )
-        js
       }
-    )
-    Json.toJson(res)
+      case _ => Json.obj(
+        "id" -> (links \ "id").getOrNull,
+        "parents" -> (links \ "parents").getOrNull,
+        "children" -> (links \ "children").getOrNull,
+        "unitType" -> (links \ "unitType").getOrNull,
+        "period" -> period,
+        "vars" -> vars
+      )
+    }
+    Json.toJson(js)
   }
 
   protected def responseException: PartialFunction[Throwable, Result] = {
