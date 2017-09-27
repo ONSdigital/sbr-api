@@ -39,17 +39,10 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
   ): Action[AnyContent] = {
     Action.async { implicit request =>
       val key = id.orElse(request.getQueryString("id")).getOrElse("")
-      search[UnitLinksListType](key, uriPathBuilder(sbrControlApiBase, key))
+      search[UnitLinksListType](key, uriPathBuilder(sbrControlApiBase, key), individualSearch = false)
     }
   }
 
-  /**
-   *
-   *
-   * TODO -> rep. period param in url => remove replace [temp]. Use Request object [?]
-   *
-   *
-   */
   //public api
   @ApiOperation(
     value = "Json id and period match or a list of unit conflicts",
@@ -74,7 +67,7 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
       val res = date match {
         case x if x.length == fixedYeaMonthSize =>
           // todo - apply FUNC: uriPathBuilder on all uri creations
-          search[UnitLinksListType](key, uriPathBuilder(sbrControlApiBase, key, Some(date)), periodParam = Some(date))
+          search[UnitLinksListType](key, uriPathBuilder(sbrControlApiBase, key, Some(date)), periodParam = Some(date), individualSearch = false)
         case _ => BadRequest(errAsJson(BAD_REQUEST, "bad_request", s"Invalid date, try checking the length of given date $date")).future
       }
       res
@@ -172,7 +165,7 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
     search[StatisticalUnitLinkType](id, uriPathBuilder(sbrControlApiBase, id, Some(date), Some(COMPANIES_HOUSE_REFERENCE_NUMBER_TYPE)), COMPANIES_HOUSE_REFERENCE_NUMBER_TYPE, Some(date))
   }
 
-  private def search[T](key: String, baseUrl: Uri, group: String = "", periodParam: Option[String] = None)(implicit fjs: Reads[T]): Future[Result] = {
+  private def search[T](key: String, baseUrl: Uri, group: String = "", periodParam: Option[String] = None, individualSearch: Boolean = true)(implicit fjs: Reads[T]): Future[Result] = {
     val res: Future[Result] = key match {
       case k if k.length >= minKeyLength =>
         ws.singleRequest(baseUrl) map {
@@ -183,14 +176,14 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
               case u: UnitLinksListType =>
                 if (u.length == cappedDisplayNumber) {
                   val mapOfRecordKeys = Map((u.head \ "unitType").as[String] -> (u.head \ "id").as[String])
-                  mergeJson(mapOfRecordKeys, periodParam, u)
+                  mergeJson(mapOfRecordKeys, periodParam, u, individualSearch)
                 } else {
                   PartialContent(unitResp.toString).as(JSON)
                 }
               // a single StatisticalUnitLink obj [arg: UnitType param]
               case u: StatisticalUnitLinkType =>
                 val mapOfRecordKeys = Map(group -> (u \ "id").as[String])
-                mergeJson(mapOfRecordKeys, periodParam, Seq(u))
+                mergeJson(mapOfRecordKeys, periodParam, Seq(u), individualSearch)
             }
           }
           case response if response.status == NOT_FOUND => NotFound(response.body).as(JSON)
@@ -204,9 +197,9 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
   }
 
   private def mergeJson(mapOfRecordKeys: Map[String, String], periodParam: Option[String],
-    unitResp: Seq[JsValue]): Result = {
+    unitResp: Seq[JsValue], individualSearch: Boolean): Result = {
     val respRecords: List[JsValue] = ws.parsedRequest(mapOfRecordKeys, periodParam)
-    val json = toJson(respRecords, unitResp)
+    val json = toJson(respRecords, unitResp, individualSearch)
     Ok(json).as(JSON)
   }
 

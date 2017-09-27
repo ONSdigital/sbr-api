@@ -17,9 +17,9 @@ object Properties {
   lazy val leuSourceHost: String = config.getString("leuSourceHost")
   lazy val requestTimeout: Long = config.getInt("requestTimeout")
   lazy val minKeyLength: Int = config.getInt("minLengthKey")
-
+  lazy val controlEditEnt: String = config.getString("sbrControlEditEnt")
+  lazy val controlEditEntWithPeriod: String = config.getString("sbrControlEditEntPeriod")
   lazy val sbrControlApiBase: String = config.getString("sbrControlApiBase")
   lazy val sbrAdminBase: String = config.getString("sbrAdminBase")
   lazy val biBase: String = config.getString("biBase")
-
 }

@@ -2,7 +2,7 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
-# Searching Features
+# Searching Endpoints
 
 GET     /v1/search                      controllers.v1.SearchController.searchById(id: Option[String] ?= None, origin: Option[String] ?= None)
 GET     /v1/searchWithPeriod            controllers.v1.SearchController.searchByReferencePeriod(period: Option[String] ?= None, id: Option[String] ?= None)
@@ -20,6 +20,11 @@ GET     /v1/periods/:date/ents/:id      controllers.v1.SearchController.searchEn
 GET     /v1/periods/:date/vats/:id      controllers.v1.SearchController.searchVatWithPeriod(date, id)
 GET     /v1/periods/:date/payes/:id     controllers.v1.SearchController.searchPayeWithPeriod(date, id)
 GET     /v1/periods/:date/crns/:id      controllers.v1.SearchController.searchCrnWithPeriod(date, id)
+
+# Editing Endpoints
+
+POST    /v1/enterprises/:id                  controllers.v1.EditController.editEnterprise(id)
+POST    /v1/periods/:period/enterprises/:id  controllers.v1.EditController.editEnterpriseForPeriod(period, id)
 
 # Home
 GET     /                               controllers.HomeController.status

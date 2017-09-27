@@ -126,8 +126,7 @@ pipeline {
                 // stash name: "zip"
             }
         }
-
-
+      
         stage("Releases"){
             agent any
             when {

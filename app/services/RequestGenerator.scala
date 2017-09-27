@@ -1,7 +1,6 @@
 package services.WSRequest
 
 import javax.inject.{ Inject, Singleton }
-
 import com.netaporter.uri.Uri
 import org.slf4j.LoggerFactory
 
@@ -9,11 +8,18 @@ import scala.concurrent.{ Await, Future }
 import scala.concurrent.duration._
 import play.api.http.{ ContentTypes, Status }
 import play.api.libs.json.JsValue
-import play.api.libs.ws.{ WSClient, WSResponse }
-import play.api.mvc.Results
-import uk.gov.ons.sbr.models.UnitTypesShortNames._
+import play.api.libs.ws.{ WSClient, WSResponse, WSRequest }
+import play.api.mvc.{ BodyParser, Result, Results }
+import play.mvc.Action
+import play.mvc.Http.Request
+import play.mvc.BodyParser.AnyContent
+import play.api.Logger
 import config.Properties._
+
+import uk.gov.ons.sbr.models.UnitTypesShortNames._
 import utils.UriBuilder.uriPathBuilder
+import utils.Utilities.errAsJson
+import config.Properties.{ requestTimeout }
 
 /**
  * Created by haqa on 20/07/2017.
@@ -38,6 +44,11 @@ class RequestGenerator @Inject() (ws: WSClient) extends Results with Status with
     Redirect(url = s"http://$host/v1/searchBy$route").flashing(
       "redirect" -> s"You are being redirected to $route route", "status" -> "ok"
     )
+  }
+
+  def controlReroute(url: String, headers: (String, String), body: JsValue): Future[WSResponse] = {
+    logger.debug(s"Rerouting to route: $url")
+    ws.url(url).withHeaders(headers).withRequestTimeout(requestTimeout.millis).post(body)
   }
 
   /**

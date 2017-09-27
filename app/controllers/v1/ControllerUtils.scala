@@ -5,10 +5,8 @@ import javax.naming.ServiceUnavailableException
 
 import scala.concurrent.TimeoutException
 import com.typesafe.scalalogging.StrictLogging
-
 import play.api.mvc.{ Controller, Result }
-import play.api.libs.json.{ JsValue, Json }
-
+import play.api.libs.json.{ JsDefined, JsUndefined, JsValue, Json }
 import utils.Utilities.{ errAsJson, orElseNull }
 
 /**
@@ -28,7 +26,7 @@ trait ControllerUtils extends Controller with StrictLogging {
   protected val fixedYeaMonthSize = 6
 
   // @todo - fix parent and children to return none if null etc.. [Option]
-  protected def toJson(record: Seq[JsValue], links: Seq[JsValue]): JsValue = {
+  protected def toJson(record: Seq[JsValue], links: Seq[JsValue], individualSearch: Boolean): JsValue = {
     val res = (links zip record).map {
       case (link, unit) => {
         // For BI, there is no "vars", just use the whole record
@@ -36,18 +34,40 @@ trait ControllerUtils extends Controller with StrictLogging {
         // BI does not have period, so use an empty string
         val period = (unit \ "period").getOrNull
 
-        val js = Json.obj(
-          "id" -> (link \ "id").getOrNull,
-          "parents" -> (link \ "parents").getOrNull,
-          "children" -> (link \ "children").getOrNull,
-          "unitType" -> (unit \ "unitType").getOrNull,
-          "period" -> period,
-          "vars" -> vars
-        )
+        // BI links do not have unitType
+        val unitType = (unit \ "unitType") match {
+          case (v: JsDefined) => v.get.as[String]
+          case (u: JsUndefined) => "LEU"
+        }
+
+        // Only return childrenJson with an Enterprise
+        val js = unitType match {
+          case "ENT" => {
+            Json.obj(
+              "id" -> (link \ "id").getOrNull,
+              "parents" -> (link \ "parents").getOrNull,
+              "children" -> (link \ "children").getOrNull,
+              "childrenJson" -> (unit \ "childrenJson").getOrNull,
+              "unitType" -> (unit \ "unitType").getOrNull,
+              "period" -> period,
+              "vars" -> vars
+            )
+          }
+          case _ => {
+            Json.obj(
+              "id" -> (link \ "id").getOrNull,
+              "parents" -> (link \ "parents").getOrNull,
+              "children" -> (link \ "children").getOrNull,
+              "unitType" -> unitType,
+              "period" -> period,
+              "vars" -> vars
+            )
+          }
+        }
         js
       }
     }
-    Json.toJson(res)
+    if (individualSearch) Json.toJson(res.head) else Json.toJson(res)
   }
 
   protected def responseException: PartialFunction[Throwable, Result] = {
