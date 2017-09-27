@@ -1,8 +1,9 @@
 package unit
 
-import controllers.v1.ControllerUtils
 import play.api.libs.json.JsNumber
 import play.api.mvc.Result
+
+import controllers.v1.ControllerUtils
 import resource.TestUtils
 
 /**

@@ -1,13 +1,28 @@
 #!groovy
-@Library('jenkins-pipeline-shared@develop') _
+@Library('jenkins-pipeline-shared@feature/version') _
 
 pipeline {
-    agent any
+    environment {
+        RELEASE_TYPE = "PATCH"
+
+        BRANCH_DEV = "develop"
+        BRANCH_TEST = "release"
+        BRANCH_PROD = "master"
+
+        DEPLOY_DEV = "dev"
+        DEPLOY_TEST = "test"
+        DEPLOY_PROD = "prod"
+
+        GIT_TYPE = "Github"
+        GIT_CREDS = "github-sbr-user"
+    }
     options {
         skipDefaultCheckout()
         buildDiscarder(logRotator(numToKeepStr: '30', artifactNumToKeepStr: '30'))
-        timeout(time: 30, unit: 'MINUTES')
+        timeout(time: 15, unit: 'MINUTES')
+        timestamps()
     }
+    agent any
     stages {
         stage('Checkout'){
             agent any
@@ -19,7 +34,6 @@ pipeline {
                 script {
                     version = '1.0.' + env.BUILD_NUMBER
                     currentBuild.displayName = version
-                    // currentBuild.result = "SUCCESS"
                     env.NODE_STAGE = "Checkout"
                 }
             }
@@ -34,16 +48,16 @@ pipeline {
                 '''
                 script {
                     env.NODE_STAGE = "Build"
-                    if (BRANCH_NAME == "develop") {
-                        env.DEPLOY_NAME = "dev"
+                    if (BRANCH_NAME == BRANCH_DEV) {
+                        env.DEPLOY_NAME = DEPLOY_DEV
                         sh 'cp target/universal/ons-sbr-api-*.zip dev-ons-sbr-api.zip'
                     }
-                    else if  (BRANCH_NAME == "release") {
-                        env.DEPLOY_NAME = "test"
+                    else if  (BRANCH_NAME == BRANCH_TEST) {
+                        env.DEPLOY_NAME = DEPLOY_TEST
                         sh 'cp target/universal/ons-sbr-api-*.zip test-ons-sbr-api.zip'
                     }
-                    else if (BRANCH_NAME == "master") {
-                        env.DEPLOY_NAME = "prod"
+                    else if (BRANCH_NAME == BRANCH_PROD) {
+                        env.DEPLOY_NAME = DEPLOY_PROD
                         sh 'cp target/universal/ons-sbr-api-*.zip prod-ons-sbr-api.zip'
                     }
                 }
@@ -109,15 +123,13 @@ pipeline {
                 dir('conf') {
                     git(url: "$GITLAB_URL/StatBusReg/sbr-api.git", credentialsId: 'sbr-gitlab-id', branch: 'develop')
                 }
-                // packageApp('dev')
-                // packageApp('test')
                 // stash name: "zip"
             }
         }
 
 
-        stage ('Approve') {
-            agent { label 'adrianharristesting' }
+        stage("Releases"){
+            agent any
             when {
                 anyOf {
                     branch "develop"
@@ -127,22 +139,14 @@ pipeline {
             }
             steps {
                 script {
-                    env.NODE_STAGE = "Approve"
-                }
-                timeout(time: 2, unit: 'MINUTES') {
-                    input message: 'Do you wish to deploy the build to ${env.BRANCH_NAME} (Note: Live deployment will create an artifact)?'
-                }
-            }
-        }
+                    env.NODE_STAGE = "Releases"
+                    currentTag = getLatestGitTag()
+                    colourText("info", "Found latest tag: ${currentTag}")
+                    newTag =  IncrementTag( currentTag, RELEASE_TYPE )
+                    colourText("info", "Generated new tag: ${newTag}")
+                    push(newTag, currentTag)
 
-
-        stage ('Release') {
-            agent any
-            when {
-                branch "master"
-            }
-            steps {
-                colourText("success", 'Release.')
+                }
             }
         }
 
@@ -211,25 +215,21 @@ pipeline {
         }
         unstable {
             colourText("warn", "Something went wrong, build finished with result ${currentResult}. This may be caused by failed tests, code violation or in some cases unexpected interrupt.")
-            sendNotifications currentResult, "\$SBR_EMAIL_LIST", "${env.NODE_STAGE}"
+            sendNotifications currentBuild.result, "\$SBR_EMAIL_LIST", "${env.NODE_STAGE}"
         }
         failure {
             colourText("warn","Process failed at: ${env.NODE_STAGE}")
-            sendNotifications currentResult, "\$SBR_EMAIL_LIST", "${env.NODE_STAGE}"
+            sendNotifications currentBuild.result, "\$SBR_EMAIL_LIST", "${env.NODE_STAGE}"
         }
     }
 }
 
 
 
-// def packageApp(String env) {
-//   withEnv(["ENV=${env}"]) {
-//     sh '''
-//       zip -g $ENV-ons-bi-api.zip conf/$ENV/krb5.conf
-//       zip -g $ENV-ons-bi-api.zip conf/$ENV/bi-$ENV-ci.keytab
-//     '''
-//   }
-// }
+def push (String newTag, String currentTag) {
+    echo "Pushing tag ${newTag} to Gitlab"
+    GitRelease( GIT_CREDS, newTag, currentTag, "${env.BUILD_ID}", "${env.BRANCH_NAME}", GIT_TYPE)
+}
 
 def deploy () {
     echo "Deploying Api app to ${env.DEPLOY_NAME}"

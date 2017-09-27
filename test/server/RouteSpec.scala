@@ -2,6 +2,7 @@ package scala.server
 
 import play.api.test.Helpers._
 import play.api.test._
+
 import resource.TestUtils
 
 /**
@@ -53,7 +54,6 @@ class RouteSpec extends TestUtils {
       err_code mustBe s""""invalid_key_size""""
     }
   }
-
 
   "VersionController" should {
     "display list of versions" in {

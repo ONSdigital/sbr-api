@@ -9,7 +9,7 @@ import play.api.libs.json.{ Json, JsLookupResult, JsValue, JsObject, JsNull }
  */
 object Utilities {
 
-  def currentDirectory = new File(".").getCanonicalPath
+  private def currentDirectory = new File(".").getCanonicalPath
 
   def errAsJson(status: Int, code: String, msg: String, cause: String = "Not traced"): JsObject = {
     Json.obj(

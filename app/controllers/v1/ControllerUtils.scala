@@ -3,59 +3,51 @@ package controllers.v1
 import java.time.format.DateTimeParseException
 import javax.naming.ServiceUnavailableException
 
-import play.api.mvc.{ Controller, Result }
-import com.typesafe.scalalogging.StrictLogging
-import play.api.libs.json.{ JsValue, Json }
-import utils.Utilities.{ errAsJson, orElseNull }
-
 import scala.concurrent.TimeoutException
+import com.typesafe.scalalogging.StrictLogging
+
+import play.api.mvc.{ Controller, Result }
+import play.api.libs.json.{ JsValue, Json }
+
+import utils.Utilities.{ errAsJson, orElseNull }
 
 /**
  * Created by haqa on 10/07/2017.
  */
+// @todo - fix typedef [temp
 trait ControllerUtils extends Controller with StrictLogging {
 
+  type UnitLinksListType = Seq[JsValue]
+  type StatisticalUnitLinkType = JsValue
+
   protected val placeholderPeriod = "*date"
+  protected val placeholderUnitType = "*type"
+
   // number of units displayable
   protected val cappedDisplayNumber = 1
   protected val fixedYeaMonthSize = 6
 
-  protected def seqToJson(record: Seq[JsValue], links: Seq[JsValue]): JsValue = {
-    val res = (links zip record).map(
-      z => toJson(z._2, z._1)
-    )
-    Json.toJson(res)
-  }
+  // @todo - fix parent and children to return none if null etc.. [Option]
+  protected def toJson(record: Seq[JsValue], links: Seq[JsValue]): JsValue = {
+    val res = (links zip record).map {
+      case (link, unit) => {
+        // For BI, there is no "vars", just use the whole record
+        val vars = (unit \ "vars").getOrElse(unit)
+        // BI does not have period, so use an empty string
+        val period = (unit \ "period").getOrNull
 
-  protected def toJson(record: JsValue, links: JsValue): JsValue = {
-    // For BI, there is no "vars", just use the whole record
-    val vars = (record \ "vars").getOrElse(record)
-    // BI does not have period, so use an empty string
-    val period = (record \ "period").getOrNull
-
-    // Only get childrenJson for Enterprises
-    val js = (links \ "unitType").getOrNull.toString.replaceAll("^\"|\"$", "") match {
-      case "ENT" => {
-        Json.obj(
-          "id" -> (links \ "id").getOrNull,
-          "parents" -> (links \ "parents").getOrNull,
-          "children" -> (links \ "children").getOrNull,
-          "childrenJson" -> (record \ "childrenJson").getOrNull,
-          "unitType" -> (links \ "unitType").getOrNull,
+        val js = Json.obj(
+          "id" -> (link \ "id").getOrNull,
+          "parents" -> (link \ "parents").getOrNull,
+          "children" -> (link \ "children").getOrNull,
+          "unitType" -> (unit \ "unitType").getOrNull,
           "period" -> period,
           "vars" -> vars
         )
+        js
       }
-      case _ => Json.obj(
-        "id" -> (links \ "id").getOrNull,
-        "parents" -> (links \ "parents").getOrNull,
-        "children" -> (links \ "children").getOrNull,
-        "unitType" -> (links \ "unitType").getOrNull,
-        "period" -> period,
-        "vars" -> vars
-      )
     }
-    Json.toJson(js)
+    Json.toJson(res)
   }
 
   protected def responseException: PartialFunction[Throwable, Result] = {

@@ -1,20 +1,19 @@
 package services.WSRequest
 
 import javax.inject.{ Inject, Singleton }
-import javax.naming.ServiceUnavailableException
 
-import play.api.http.{ ContentTypes, Status }
-import play.api.libs.json.JsValue
-import play.api.libs.ws.{ WSClient, WSRequest, WSResponse }
-import play.api.mvc.{ Result, Results }
-import utils.Utilities.errAsJson
-import config.Properties.{ baseSearchRoute, controlEndpoint, requestTimeout }
+import com.netaporter.uri.Uri
+import org.slf4j.LoggerFactory
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ Await, Future }
 import scala.concurrent.duration._
-import org.slf4j.LoggerFactory
-import play.api.Logger
+import play.api.http.{ ContentTypes, Status }
+import play.api.libs.json.JsValue
+import play.api.libs.ws.{ WSClient, WSResponse }
+import play.api.mvc.Results
+import uk.gov.ons.sbr.models.UnitTypesShortNames._
+import config.Properties._
+import utils.UriBuilder.uriPathBuilder
 
 /**
  * Created by haqa on 20/07/2017.
@@ -24,16 +23,17 @@ class RequestGenerator @Inject() (ws: WSClient) extends Results with Status with
 
   private[this] val logger = LoggerFactory.getLogger(getClass)
 
-  protected def status(response: WSResponse) = response.status
+  //  @SuppressWarnings("Unused - for request debugging")
+  private def status(response: WSResponse) = response.status
 
-  def singleRequest(id: String, prefix: String): Future[WSResponse] = {
-    val res = ws.url(s"$prefix$id").withRequestTimeout(requestTimeout.millis).get()
-    res
-  }
+  def singleRequest(path: Uri): Future[WSResponse] =
+    ws.url(path.toString).withRequestTimeout(requestTimeout.millis).get()
 
-  def singleRequestNoTimeout(url: String): Future[WSResponse] = ws.url(url).get()
+  private def singleRequestWithTimeout(url: String, timeout: Duration = Duration(requestTimeout, MILLISECONDS)) =
+    Await.result(ws.url(url).get(), timeout)
 
-  protected def reroute(host: String, route: String) = {
+  //  @SuppressWarnings("Unused - see HealthController")
+  private def reroute(host: String, route: String) = {
     logger.debug(s"rerouting to search route $route")
     Redirect(url = s"http://$host/v1/searchBy$route").flashing(
       "redirect" -> s"You are being redirected to $route route", "status" -> "ok"
@@ -41,19 +41,24 @@ class RequestGenerator @Inject() (ws: WSClient) extends Results with Status with
   }
 
   /**
-   * @todo duration.inf - place cap
+   *
+   * TODO - duration.inf -> place cap
+   *
    */
-  def multiRequest(searchList: Map[String, String], prefix: String = baseSearchRoute,
-    suffix: String = "s/"): List[JsValue] = {
-    searchList.map { s =>
-      val id = s._2
-      val path = s._1.toLowerCase match {
-        case "ch" => "crn"
-        case a => a
-      }
-      val newPath = s"$prefix$path$suffix$id"
-      val resp = Await.result(singleRequestNoTimeout(newPath), Duration.Inf)
-      resp.json
+  def parsedRequest(searchList: Map[String, String], withPeriod: Option[String] = None): List[JsValue] = {
+    searchList.map {
+      case (group, id) =>
+        val path = group.toUpperCase match {
+          case LEGAL_UNIT_TYPE => biBase
+          case COMPANIES_HOUSE_REFERENCE_NUMBER_TYPE => sbrAdminBase
+          case PAYE_TYPE => sbrAdminBase
+          case VAT_REFERENCE_TYPE => sbrAdminBase
+          case ENTERPRISE_TYPE => sbrControlApiBase
+        }
+        val newPath = uriPathBuilder(path, id, withPeriod, group = group.toLowerCase)
+        logger.info(s"Sending request to $newPath")
+        val resp = singleRequestWithTimeout(newPath.toString, Duration.Inf)
+        resp.json
     }.toList
   }
 

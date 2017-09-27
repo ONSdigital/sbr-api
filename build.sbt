@@ -100,6 +100,7 @@ lazy val api = (project in file("."))
       "com.outworkers"               %%    "util-play"           %    Versions.util,
       "org.scalatestplus.play"       %%    "scalatestplus-play"  %    "2.0.0"           % Test,
       "io.swagger"                   %%    "swagger-play2"       %    "1.5.3",
+      "io.lemonlabs"                 %%    "scala-uri"           %    "0.5.0",
       "org.webjars"                  %     "swagger-ui"          %    "2.2.10-1",
       "com.typesafe"                 %      "config"             %    "1.3.1"
       excludeAll ExclusionRule("commons-logging", "commons-logging")

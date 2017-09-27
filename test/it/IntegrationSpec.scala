@@ -1,6 +1,7 @@
 package scala.integration
 
 import play.api.test.Helpers._
+
 import resource.TestUtils
 
 /**

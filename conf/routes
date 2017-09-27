@@ -14,6 +14,8 @@ GET     /v1/vats/:id                    controllers.v1.SearchController.searchVa
 GET     /v1/payes/:id                   controllers.v1.SearchController.searchPaye(id)
 GET     /v1/crns/:id                    controllers.v1.SearchController.searchCrn(id)
 
+GET     /v1/periods/:date/leus/:id      controllers.v1.SearchController.searchLeUWithPeriod(date, id)
+
 GET     /v1/periods/:date/ents/:id      controllers.v1.SearchController.searchEnterpriseWithPeriod(date, id)
 GET     /v1/periods/:date/vats/:id      controllers.v1.SearchController.searchVatWithPeriod(date, id)
 GET     /v1/periods/:date/payes/:id     controllers.v1.SearchController.searchPayeWithPeriod(date, id)
