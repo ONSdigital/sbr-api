@@ -143,8 +143,7 @@ pipeline {
                     colourText("info", "Found latest tag: ${currentTag}")
                     newTag =  IncrementTag( currentTag, RELEASE_TYPE )
                     colourText("info", "Generated new tag: ${newTag}")
-                    push(newTag, currentTag)
-
+                    //push(newTag, currentTag)
                 }
             }
         }
@@ -155,6 +154,9 @@ pipeline {
                 branch "master"
             }
             steps {
+                script {
+                    env.NODE_STAGE = "Package and Push Artifact"
+                }
                 sh '''
                     $SBT clean compile package
                     $SBT clean compile assembly
@@ -174,6 +176,9 @@ pipeline {
                 }
             }
             steps {
+                script {
+                        env.NODE_STAGE = "Deploy"
+                }
                 colourText("success", 'Deploy.')
                 milestone(1)
                 lock('Deployment Initiated') {
@@ -193,11 +198,13 @@ pipeline {
                 }
             }
             steps {
+                script {
+                        env.NODE_STAGE = "Integration Tests"
+                }
                 sh "$SBT it:test"
                 colourText("success", 'Integration Tests - For Release or Dev environment.')
             }
         }
-
 
     }
     post {

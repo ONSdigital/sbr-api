@@ -2,7 +2,11 @@ import play.sbt.PlayScala
 import sbtbuildinfo.BuildInfoPlugin.autoImport._
 import sbtassembly.AssemblyPlugin.autoImport._
 
+val publishRepo = settingKey[String]("publishRepo")
+
 licenses := Seq("MIT-License" -> url("https://github.com/ONSdigital/sbr-control-api/blob/master/LICENSE"))
+
+publishRepo := sys.props.getOrElse("publishRepo", default = "Unused transient repository")
 
 // key-bindings
 lazy val ITest = config("it") extend Test
@@ -22,6 +26,11 @@ lazy val Constant = new {
   val team = "sbr"
 }
 
+lazy val Resolvers = Seq(
+  Resolver.typesafeRepo("releases"),
+  "Hadoop Releases" at "https://repository.cloudera.com/content/repositories/releases/"
+)
+
 lazy val testSettings = Seq(
   sourceDirectory in ITest := baseDirectory.value / "/test/it",
   resourceDirectory in ITest := baseDirectory.value / "/test/resources",
@@ -30,10 +39,15 @@ lazy val testSettings = Seq(
   parallelExecution in Test := false
 )
 
-lazy val Resolvers = Seq(
-  Resolver.typesafeRepo("releases"),
-  "Hadoop Releases" at "https://repository.cloudera.com/content/repositories/releases/"
+lazy val publishingSettings = Seq(
+  publishArtifact := false,
+  publishTo := Some("Artifactory Realm" at publishRepo.value),
+  releaseTagComment := s"Releasing $name ${(version in ThisBuild).value}",
+  releaseCommitMessage := s"Setting Release tag to ${(version in ThisBuild).value}",
+  // no commit - ignore zip and other package files
+  releaseIgnoreUntrackedFiles := true
 )
+
 
 lazy val commonSettings = Seq (
   scalaVersion := Versions.scala,
@@ -72,7 +86,10 @@ lazy val api = (project in file("."))
   .settings(inConfig(ITest)(Defaults.testSettings) : _*)
   .settings(commonSettings: _*)
   .settings(testSettings:_*)
+  .settings(publishingSettings:_*)
   .settings(
+    publishLocal := {},
+    publish := {},
     name := Constant.appName,
     moduleName := "control-api",
     version := Versions.appVersion,
