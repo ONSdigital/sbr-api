@@ -68,21 +68,21 @@ pipeline {
             agent any
             steps {
                 parallel (
-                        "Unit" :  {
-                            colourText("info","Running unit tests")
-                            // sh "$SBT test"
-                        },
-                        "Style" : {
-                            colourText("info","Running style tests")
-                            sh '''
-                            $SBT scalastyleGenerateConfig
-                            $SBT scalastyle
-                            '''
-                        },
-                        "Additional" : {
-                            colourText("info","Running additional tests")
-                            sh "$SBT scapegoat"
-                        }
+                    "Unit" :  {
+                        colourText("info","Running unit tests")
+                        // sh "$SBT test"
+                    },
+                    "Style" : {
+                        colourText("info","Running style tests")
+                        sh '''
+                        $SBT scalastyleGenerateConfig
+                        $SBT scalastyle
+                        '''
+                    },
+                    "Additional" : {
+                        colourText("info","Running additional tests")
+                        sh "$SBT scapegoat"
+                    }
                 )
             }
             post {
@@ -177,7 +177,7 @@ pipeline {
             }
             steps {
                 script {
-                        env.NODE_STAGE = "Deploy"
+                    env.NODE_STAGE = "Deploy"
                 }
                 colourText("success", 'Deploy.')
                 milestone(1)
@@ -199,7 +199,7 @@ pipeline {
             }
             steps {
                 script {
-                        env.NODE_STAGE = "Integration Tests"
+                    env.NODE_STAGE = "Integration Tests"
                 }
                 sh "$SBT it:test"
                 colourText("success", 'Integration Tests - For Release or Dev environment.')
