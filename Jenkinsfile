@@ -46,6 +46,7 @@ pipeline {
                 sh '''
                 $SBT clean compile "project api" universal:packageBin coverage test coverageReport
                 '''
+                stash name: 'compiled'
                 script {
                     env.NODE_STAGE = "Build"
                     if (BRANCH_NAME == BRANCH_DEV) {
@@ -163,7 +164,6 @@ pipeline {
                 '''
                 colourText("success", 'Package.')
             }
-
         }
 
         stage('Deploy'){
@@ -179,12 +179,11 @@ pipeline {
                 script {
                     env.NODE_STAGE = "Deploy"
                 }
-                colourText("success", 'Deploy.')
                 milestone(1)
                 lock('Deployment Initiated') {
                     colourText("info", 'deployment in progress')
                     deploy()
-                    // unstash zip
+                    colourText("success", 'Deploy.')
                 }
             }
         }
@@ -201,11 +200,11 @@ pipeline {
                 script {
                     env.NODE_STAGE = "Integration Tests"
                 }
+                unstash 'compiled'
                 sh "$SBT it:test"
                 colourText("success", 'Integration Tests - For Release or Dev environment.')
             }
         }
-
     }
     post {
         always {
@@ -213,7 +212,6 @@ pipeline {
                 colourText("info", 'Post steps initiated')
                 deleteDir()
             }
-
         }
         success {
             colourText("success", "All stages complete. Build was successful.")
@@ -229,7 +227,6 @@ pipeline {
         }
     }
 }
-
 
 
 def push (String newTag, String currentTag) {
