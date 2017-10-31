@@ -1,12 +1,22 @@
 import play.sbt.PlayScala
-import sbtbuildinfo.BuildInfoPlugin.autoImport._
+
 import sbtassembly.AssemblyPlugin.autoImport._
+import sbtbuildinfo.BuildInfoPlugin.autoImport._
+import com.typesafe.config.ConfigFactory
 
-val publishRepo = settingKey[String]("publishRepo")
 
-licenses := Seq("MIT-License" -> url("https://github.com/ONSdigital/sbr-control-api/blob/master/LICENSE"))
+//lazy val publishTrigger = settingKey[Boolean]("publishTrigger")
+lazy val publishRepo = settingKey[String]("publishRepo")
+//lazy val artHost = settingKey[String]("artHost")
+//lazy val artUser = settingKey[String]("artUser")
+//lazy val artPassword = settingKey[String]("artPassword")
+
 
 publishRepo := sys.props.getOrElse("publishRepo", default = "Unused transient repository")
+
+lazy val configPath = System.getProperty("config.path")
+lazy val appConfig = ConfigFactory.parseFile(new File(configPath + "myFile.conf"))
+//publishRepo := appConfig.getString("username")
 
 // key-bindings
 lazy val ITest = config("it") extend Test
@@ -15,7 +25,6 @@ lazy val Versions = new {
   val scala = "2.11.11"
   val appVersion = "0.1"
   val scapegoatVersion = "1.1.0"
-  val util = "0.27.8"
 }
 
 
@@ -27,8 +36,7 @@ lazy val Constant = new {
 }
 
 lazy val Resolvers = Seq(
-  Resolver.typesafeRepo("releases"),
-  "Hadoop Releases" at "https://repository.cloudera.com/content/repositories/releases/"
+  Resolver.typesafeRepo("releases")
 )
 
 lazy val testSettings = Seq(
@@ -37,6 +45,11 @@ lazy val testSettings = Seq(
   scalaSource in ITest := baseDirectory.value / "test/it",
   // test setup
   parallelExecution in Test := false
+)
+
+lazy val noPublishSettings = Seq(
+  publish := {},
+  publishLocal := {}
 )
 
 lazy val publishingSettings = Seq(
@@ -87,34 +100,46 @@ lazy val api = (project in file("."))
   .settings(commonSettings: _*)
   .settings(testSettings:_*)
   .settings(publishingSettings:_*)
+  .settings(noPublishSettings:_*)
   .settings(
-    publishLocal := {},
-    publish := {},
-    name := Constant.appName,
-    moduleName := "control-api",
-    version := Versions.appVersion,
+    developers := List(Developer("Adrian Harris (Tech Lead)", "SBR", "ons-sbr-team@ons.gov.uk", new java.net.URL(s"https:///v1/home"))),
+    moduleName := "sbr-api",
+    organizationName := "ons",
+    description := "<description>",
+    version := (version in ThisBuild).value,
+    name := s"${organizationName.value}-${moduleName.value}",
+    licenses := Seq("MIT-License" -> url("https://github.com/ONSdigital/sbr-control-api/blob/master/LICENSE")),
+    startYear := Some(2017),
     buildInfoPackage := "controllers",
     // gives us last compile time and tagging info
     buildInfoKeys := Seq[BuildInfoKey](
-      organization,
+      organizationName,
+      moduleName,
       name,
+      description,
+      developers,
       version,
       scalaVersion,
       sbtVersion,
+      startYear,
       BuildInfoKey.action("gitVersion") {
-        git.gitTagToVersionNumber.?.value.getOrElse(Some(Constant.projectStage))+"@"+ git.formattedDateVersion.?.value.getOrElse("")
-    }),
+        git.formattedShaVersion.?.value.getOrElse(Some("Unknown")).getOrElse("Unknown") +"@"+ git.formattedDateVersion.?.value.getOrElse("")
+      },
+      BuildInfoKey.action("codeLicenses"){ licenses.value },
+      BuildInfoKey.action("projectTeam"){ Constant.team },
+      BuildInfoKey.action("projectStage"){ Constant.projectStage },
+      BuildInfoKey.action("repositoryAddress"){ Some(scmInfo.value.get.browseUrl).getOrElse("REPO_ADDRESS_NOT_FOUND")}
+    ),
     // di router -> swagger
     routesGenerator := InjectedRoutesGenerator,
     buildInfoOptions += BuildInfoOption.ToMap,
     buildInfoOptions += BuildInfoOption.ToJson,
     buildInfoOptions += BuildInfoOption.BuildTime,
     libraryDependencies ++= Seq (
+      ws,
       filters,
       "org.webjars"                  %%    "webjars-play"        %    "2.5.0-3",
       "com.typesafe.scala-logging"   %%    "scala-logging"       %    "3.5.0",
-      "com.outworkers"               %%    "util-parsers-cats"   %    Versions.util,
-      "com.outworkers"               %%    "util-play"           %    Versions.util,
       "org.scalatestplus.play"       %%    "scalatestplus-play"  %    "2.0.0"           % Test,
       "io.swagger"                   %%    "swagger-play2"       %    "1.5.3",
       "io.lemonlabs"                 %%    "scala-uri"           %    "0.5.0",

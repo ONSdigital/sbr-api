@@ -45,9 +45,27 @@ class RouteSpec extends TestUtils {
     }
 
     // @todo - make badrequest route (short key size)
-    "return Badrequest as json error 2with key size too small" ignore {
+    "return BadRequest as json error 2with key size too small" ignore {
       val shortId = "123"
       val search = fakeRequest(s"/v1/search?id=$shortId")
+      status(search) mustBe BAD_REQUEST
+      contentType(search) mustBe Some("application/json")
+      val err_code: String = getJsValue(contentAsJson(search) \ "code")
+      err_code mustBe s""""invalid_key_size""""
+    }
+
+    "return BadRequest for a valid period and invalud id" ignore {
+      val shortId = "123"
+      val search = fakeRequest(s"/v1/searchWithPeriod?period=201706&id=$shortId")
+      status(search) mustBe BAD_REQUEST
+      contentType(search) mustBe Some("application/json")
+      val err_code: String = getJsValue(contentAsJson(search) \ "code")
+      err_code mustBe s""""invalid_key_size""""
+    }
+
+    "return BadRequest with valid period and invalid id length on specific unit search" ignore {
+      val shortId = "123"
+      val search = fakeRequest(s"/v1/periods/201706/crns/$shortId")
       status(search) mustBe BAD_REQUEST
       contentType(search) mustBe Some("application/json")
       val err_code: String = getJsValue(contentAsJson(search) \ "code")

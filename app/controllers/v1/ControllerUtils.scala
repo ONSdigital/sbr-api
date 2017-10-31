@@ -4,19 +4,18 @@ import java.time.format.DateTimeParseException
 import javax.naming.ServiceUnavailableException
 
 import scala.concurrent.TimeoutException
+
 import com.typesafe.scalalogging.StrictLogging
-import play.api.mvc.{ Controller, Result }
 import play.api.libs.json.{ JsDefined, JsUndefined, JsValue, Json }
+import play.api.mvc.{ Controller, Result }
+
 import utils.Utilities.{ errAsJson, orElseNull }
 
 /**
  * Created by haqa on 10/07/2017.
  */
-// @todo - fix typedef [temp
+// @todo - fix typedef
 trait ControllerUtils extends Controller with StrictLogging {
-
-  type UnitLinksListType = Seq[JsValue]
-  type StatisticalUnitLinkType = JsValue
 
   protected val placeholderPeriod = "*date"
   protected val placeholderUnitType = "*type"
@@ -25,9 +24,8 @@ trait ControllerUtils extends Controller with StrictLogging {
   protected val cappedDisplayNumber = 1
   protected val fixedYeaMonthSize = 6
 
-  // @todo - fix parent and children to return none if null etc.. [Option]
-  protected def toJson(record: Seq[JsValue], links: Seq[JsValue], individualSearch: Boolean): JsValue = {
-    val res = (links zip record).map {
+  protected def toJson(record: (JsValue, JsValue)): JsValue = {
+    val res = record match {
       case (link, unit) => {
         // For BI, there is no "vars", just use the whole record
         val vars = (unit \ "vars").getOrElse(unit)
@@ -35,9 +33,9 @@ trait ControllerUtils extends Controller with StrictLogging {
         val period = (unit \ "period").getOrNull
 
         // BI links do not have unitType
-        val unitType = (unit \ "unitType") match {
+        val unitType = unit \ "unitType" match {
           case (v: JsDefined) => v.get.as[String]
-          case (u: JsUndefined) => "LEU"
+          case (_: JsUndefined) => "LEU"
         }
 
         // Only return childrenJson with an Enterprise
@@ -67,7 +65,7 @@ trait ControllerUtils extends Controller with StrictLogging {
         js
       }
     }
-    if (individualSearch) Json.toJson(res.head) else Json.toJson(res)
+    Json.toJson(res)
   }
 
   protected def responseException: PartialFunction[Throwable, Result] = {

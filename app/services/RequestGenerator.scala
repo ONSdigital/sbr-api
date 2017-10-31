@@ -1,25 +1,21 @@
 package services.WSRequest
 
 import javax.inject.{ Inject, Singleton }
-import com.netaporter.uri.Uri
-import org.slf4j.LoggerFactory
 
-import scala.concurrent.{ Await, Future }
 import scala.concurrent.duration._
+import scala.concurrent.{ Await, Future }
+
+import org.slf4j.LoggerFactory
+import com.netaporter.uri.Uri
 import play.api.http.{ ContentTypes, Status }
 import play.api.libs.json.JsValue
-import play.api.libs.ws.{ WSClient, WSResponse, WSRequest }
-import play.api.mvc.{ BodyParser, Result, Results }
-import play.mvc.Action
-import play.mvc.Http.Request
-import play.mvc.BodyParser.AnyContent
-import play.api.Logger
-import config.Properties._
+import play.api.libs.ws.{ WSClient, WSResponse }
+import play.api.mvc.Results
 
-import uk.gov.ons.sbr.models.UnitTypesShortNames._
+import uk.gov.ons.sbr.models._
+
+import config.Properties.{ biBase, requestTimeout, sbrAdminBase, sbrControlApiBase }
 import utils.UriBuilder.uriPathBuilder
-import utils.Utilities.errAsJson
-import config.Properties.{ requestTimeout }
 
 /**
  * Created by haqa on 20/07/2017.
@@ -59,14 +55,17 @@ class RequestGenerator @Inject() (ws: WSClient) extends Results with Status with
   def parsedRequest(searchList: Map[String, String], withPeriod: Option[String] = None): List[JsValue] = {
     searchList.map {
       case (group, id) =>
-        val path = group.toUpperCase match {
-          case LEGAL_UNIT_TYPE => biBase
-          case COMPANIES_HOUSE_REFERENCE_NUMBER_TYPE => sbrAdminBase
-          case PAYE_TYPE => sbrAdminBase
-          case VAT_REFERENCE_TYPE => sbrAdminBase
-          case ENTERPRISE_TYPE => sbrControlApiBase
+        // fix ch -> crn
+        val filter = group match {
+          case x if x == "CH" => "CRN"
+          case x => x
         }
-        val newPath = uriPathBuilder(path, id, withPeriod, group = group.toLowerCase)
+        val path = DataSourceTypesUtil.fromString(filter.toUpperCase) match {
+          case Some(LEU) => biBase
+          case Some(CRN | PAYE | VAT) => sbrAdminBase
+          case Some(ENT) => sbrControlApiBase
+        }
+        val newPath = uriPathBuilder(path, id, withPeriod, group = filter)
         logger.info(s"Sending request to $newPath")
         val resp = singleRequestWithTimeout(newPath.toString, Duration.Inf)
         resp.json

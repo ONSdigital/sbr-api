@@ -18,18 +18,23 @@ class XResponseTimeHeader @Inject() (implicit val mat: Materializer) extends Fil
     nextFilter(requestHeader).map { result =>
       val endTime = System.currentTimeMillis
       val responseTime = endTime - startTime
-      // Use env var 'environment' to decide when to add CORS headers
       val env = sys.props.get("environment").getOrElse("default")
 
-      // CORS headers are added to every request, can use env variable to only add them on certain environments
-      result.withHeaders(
-        "X-Response-Time" -> responseTime.toString,
-        "Server" -> (BuildInfo.name + "/" + BuildInfo.version),
-        "Access-Control-Allow-Origin" -> "*",
-        "Access-Control-Allow-Methods" -> "OPTIONS, GET, POST, PUT, DELETE, HEAD",
-        "Access-Control-Allow-Headers" -> "Accept, Content-Type, Origin, X-Json, X-Prototype-Version, X-Requested-With",
-        "Access-Control-Allow-Credentials" -> "true"
-      )
+      if (env == "local") {
+        result.withHeaders(
+          "X-Response-Time" -> responseTime.toString,
+          "Server" -> (BuildInfo.name + "/" + BuildInfo.version),
+          "Access-Control-Allow-Origin" -> "*",
+          "Access-Control-Allow-Methods" -> "OPTIONS, GET, POST, PUT, DELETE, HEAD",
+          "Access-Control-Allow-Headers" -> "Accept, Content-Type, Origin, X-Json, X-Prototype-Version, X-Requested-With",
+          "Access-Control-Allow-Credentials" -> "true"
+        )
+      } else {
+        result.withHeaders(
+          "X-Response-Time" -> responseTime.toString,
+          "Server" -> (BuildInfo.name + "/" + BuildInfo.version)
+        )
+      }
     }
   }
 }

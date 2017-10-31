@@ -13,13 +13,20 @@ pipeline {
         DEPLOY_TEST = "test"
         DEPLOY_PROD = "prod"
 
+        CF_CREDS = "sbr-api-dev-secret-key"
+
         GIT_TYPE = "Github"
         GIT_CREDS = "github-sbr-user"
+        GITLAB_CREDS = "sbr-gitlab-id"
+
+        ORGANIZATION = "ons"
+        TEAM = "sbr"
+        MODULE_NAME = "sbr-api"
     }
     options {
         skipDefaultCheckout()
         buildDiscarder(logRotator(numToKeepStr: '30', artifactNumToKeepStr: '30'))
-        timeout(time: 15, unit: 'MINUTES')
+        timeout(time: 30, unit: 'MINUTES')
         timestamps()
     }
     agent any
@@ -43,23 +50,26 @@ pipeline {
             agent any
             steps {
                 colourText("info", "Building ${env.BUILD_ID} on ${env.JENKINS_URL} from branch ${env.BRANCH_NAME}")
-                sh '''
-                $SBT clean compile "project api" universal:packageBin coverage test coverageReport
-                '''
-                stash name: 'compiled'
                 script {
                     env.NODE_STAGE = "Build"
+                    sh '''
+                        $SBT clean compile "project api" universal:packageBin coverage test coverageReport
+                    '''
+                    stash name: 'compiled'
                     if (BRANCH_NAME == BRANCH_DEV) {
                         env.DEPLOY_NAME = DEPLOY_DEV
-                        sh 'cp target/universal/ons-sbr-api-*.zip dev-ons-sbr-api.zip'
+                        sh "cp target/universal/${ORGANIZATION}-${MODULE_NAME}-*.zip ${DEPLOY_TEST}-${ORGANIZATION}-${MODULE_NAME}.zip"
                     }
                     else if  (BRANCH_NAME == BRANCH_TEST) {
                         env.DEPLOY_NAME = DEPLOY_TEST
-                        sh 'cp target/universal/ons-sbr-api-*.zip test-ons-sbr-api.zip'
+                        sh "cp target/universal/${ORGANIZATION}-${MODULE_NAME}-*.zip ${DEPLOY_TEST}-${ORGANIZATION}-${MODULE_NAME}.zip"
                     }
                     else if (BRANCH_NAME == BRANCH_PROD) {
                         env.DEPLOY_NAME = DEPLOY_PROD
-                        sh 'cp target/universal/ons-sbr-api-*.zip prod-ons-sbr-api.zip'
+                        sh "cp target/universal/${ORGANIZATION}-${MODULE_NAME}-*.zip ${DEPLOY_TEST}-${ORGANIZATION}-${MODULE_NAME}.zip"
+                    }
+                    else {
+                        colourText("info", "Not a deployable Git banch!")
                     }
                 }
             }
@@ -75,10 +85,10 @@ pipeline {
                     },
                     "Style" : {
                         colourText("info","Running style tests")
-                        sh '''
-                        $SBT scalastyleGenerateConfig
-                        $SBT scalastyle
-                        '''
+                        sh """
+                            $SBT scalastyleGenerateConfig
+                            $SBT scalastyle
+                        """
                     },
                     "Additional" : {
                         colourText("info","Running additional tests")
@@ -111,9 +121,9 @@ pipeline {
             agent any
             when {
                 anyOf {
-                    branch "develop"
-                    branch "release"
-                    branch "master"
+                    branch BRANCH_DEV
+                    branch BRANCH_TEST
+                    branch BRANCH_PROD
                 }
             }
             steps {
@@ -122,19 +132,19 @@ pipeline {
                 }
                 colourText("info", "Bundling....")
                 dir('conf') {
-                    git(url: "$GITLAB_URL/StatBusReg/sbr-api.git", credentialsId: 'sbr-gitlab-id', branch: 'develop')
+                    git(url: "$GITLAB_URL/StatBusReg/${MODULE_NAME}.git", credentialsId: GITLAB_CREDS, branch: "${BRANCH_DEV}")
                 }
                 // stash name: "zip"
             }
         }
-      
+
         stage("Releases"){
             agent any
             when {
                 anyOf {
-                    branch "develop"
-                    branch "release"
-                    branch "master"
+                    branch BRANCH_DEV
+                    branch BRANCH_TEST
+                    branch BRANCH_PROD
                 }
             }
             steps {
@@ -152,16 +162,16 @@ pipeline {
         stage ('Package and Push Artifact') {
             agent any
             when {
-                branch "master"
+                branch BRANCH_PROD
             }
             steps {
                 script {
                     env.NODE_STAGE = "Package and Push Artifact"
                 }
-                sh '''
+                sh """
                     $SBT clean compile package
                     $SBT clean compile assembly
-                '''
+                """
                 colourText("success", 'Package.')
             }
         }
@@ -170,9 +180,9 @@ pipeline {
             agent any
             when {
                 anyOf {
-                    branch "develop"
-                    branch "release"
-                    branch "master"
+                    branch BRANCH_DEV
+                    branch BRANCH_TEST
+                    branch BRANCH_PROD
                 }
             }
             steps {
@@ -192,8 +202,8 @@ pipeline {
             agent any
             when {
                 anyOf {
-                    branch "develop"
-                    branch "release"
+                    branch BRANCH_DEV
+                    branch BRANCH_TEST
                 }
             }
             steps {
@@ -234,9 +244,10 @@ def push (String newTag, String currentTag) {
     GitRelease( GIT_CREDS, newTag, currentTag, "${env.BUILD_ID}", "${env.BRANCH_NAME}", GIT_TYPE)
 }
 
+
 def deploy () {
     echo "Deploying Api app to ${env.DEPLOY_NAME}"
-    withCredentials([string(credentialsId: "sbr-api-dev-secret-key", variable: 'APPLICATION_SECRET')]) {
-        deployToCloudFoundry("cloud-foundry-sbr-${env.DEPLOY_NAME}-user", 'sbr', "${env.DEPLOY_NAME}", "${env.DEPLOY_NAME}-sbr-api", "${env.DEPLOY_NAME}-ons-sbr-api.zip", "conf/${env.DEPLOY_NAME}/manifest.yml")
+    withCredentials([string(credentialsId: CF_CREDS, variable: 'APPLICATION_SECRET')]) {
+        deployToCloudFoundry("cloud-foundry-${TEAM}-${env.DEPLOY_NAME}-user", TEAM, "${env.DEPLOY_NAME}", "${env.DEPLOY_NAME}-${MODULE_NAME}", "${env.DEPLOY_NAME}-${ORGANIZATION}-${MODULE_NAME}.zip", "conf/${env.DEPLOY_NAME}/manifest.yml")
     }
 }
