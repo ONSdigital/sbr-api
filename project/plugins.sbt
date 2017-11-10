@@ -1,9 +1,5 @@
-// The Play plugin
+// Default sbt
 addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.5.14")
-
-addSbtPlugin("com.typesafe.sbt" % "sbt-digest" % "1.1.1")
-
-addSbtPlugin("org.irundaia.sbt" % "sbt-sassify" % "1.4.6")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "0.9.3")
 

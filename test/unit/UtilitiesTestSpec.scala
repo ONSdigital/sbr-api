@@ -7,7 +7,7 @@ import uk.gov.ons.sbr.models.{ CRN, ENT }
 
 import utils.UriBuilder.uriPathBuilder
 import utils.Utilities._
-import resource.TestUtils
+import resources.TestUtils
 
 class UtilitiesTestSpec extends TestUtils {
 

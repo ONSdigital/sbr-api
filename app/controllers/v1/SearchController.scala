@@ -7,12 +7,12 @@ import scala.concurrent.Future
 
 import com.netaporter.uri.Uri
 import io.swagger.annotations._
-import play.api.libs.json.{ JsValue, Json, Reads }
-import play.api.mvc.{ Action, AnyContent, Result }
+import play.api.libs.json.{JsValue, Json, Reads}
+import play.api.mvc.{Action, AnyContent, Result}
 
 import uk.gov.ons.sbr.models._
 
-import config.Properties.{ minKeyLength, sbrControlApiBase }
+import config.Properties.{minKeyLength, sbrControlApiBase}
 import utils.FutureResponse.futureSuccess
 import utils.UriBuilder.uriPathBuilder
 import utils.Utilities.errAsJson
@@ -167,8 +167,7 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
     search[StatisticalUnitLinkType](id, uriPathBuilder(sbrControlApiBase, id, Some(date), Some(CRN)), CRN, Some(date))
   }
 
-  private def search[T](key: String, baseUrl: Uri, sourceType: DataSourceTypes = ENT, periodParam: Option[String]
-    = None)(implicit fjs: Reads[T]): Future[Result] = {
+  private def search[T](key: String, baseUrl: Uri, sourceType: DataSourceTypes = ENT, periodParam: Option[String] = None)(implicit fjs: Reads[T]): Future[Result] = {
     val res: Future[Result] = key match {
       case k if k.length >= minKeyLength =>
         ws.singleRequest(baseUrl) map {

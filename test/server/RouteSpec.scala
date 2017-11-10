@@ -3,7 +3,7 @@ package scala.server
 import play.api.test.Helpers._
 import play.api.test._
 
-import resource.TestUtils
+import resources.TestUtils
 
 /**
  * Test application routes operate

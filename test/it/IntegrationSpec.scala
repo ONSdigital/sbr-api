@@ -1,6 +1,6 @@
 package scala.integration
 
-import resource.TestUtils
+import resources.TestUtils
 
 /**
  * Created by haqa on 14/07/2017.
