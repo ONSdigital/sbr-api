@@ -7,16 +7,16 @@ import io.swagger.annotations._
 import play.api.Logger
 import play.api.libs.json._
 import play.api.mvc.{ Action, AnyContent, Result }
-import services.WSRequest.RequestGenerator
 
 import utils.FutureResponse.futureSuccess
 import utils.Utilities._
-
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
+import services.RequestGenerator
+
 @Api("Edit")
-class EditController @Inject() (ws: RequestGenerator) extends ControllerUtils {
+class EditController @Inject() (ws: RequestGenerator[String]) extends ControllerUtils {
   // TODO: Fix CORS issue to allow use of Content-Type: application/json
   // There is a CORS issue meaning the UI cannot do a POST request with the headers:
   // Content-Type: application/json
@@ -67,7 +67,7 @@ class EditController @Inject() (ws: RequestGenerator) extends ControllerUtils {
 
   def rerouteEditPost(jsonBody: Option[String], url: String): Future[Result] = {
     jsonBody.map { text =>
-      ws.controlReroute(url, ("Content-Type" -> "application/json"), Json.parse(text.toString)).map {
+      ws.controlReroute(url, "Content-Type" -> "application/json", Json.parse(text.toString)).map {
         response => Status(response.status)(response.body)
       }
     }.getOrElse {

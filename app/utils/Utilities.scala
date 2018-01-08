@@ -5,7 +5,11 @@ import java.io.File
 import play.api.libs.json.{ Json, JsLookupResult, JsValue, JsObject, JsNull }
 
 /**
- * Created by haqa on 05/07/2017.
+ * UriBuilder
+ * ----------------
+ * Author: haqa & coolit
+ * Date: 16 August 2017 - 09:25
+ * Copyright (c) 2017  Office for National Statistics
  */
 object Utilities {
 

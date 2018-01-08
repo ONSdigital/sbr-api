@@ -3,8 +3,16 @@ package utils
 import com.netaporter.uri.Uri
 import com.netaporter.uri.dsl._
 
-import uk.gov.ons.sbr.models._
+import uk.gov.ons.sbr.models.{ CRN, DataSourceTypes, DataSourceTypesUtil }
 
+/**
+ * UriBuilder
+ * ----------------
+ * Author: haqa
+ * Date: 16 August 2017 - 09:25
+ * Copyright (c) 2017  Office for National Statistics
+ */
+// TODO - generalise and remove patch
 object UriBuilder {
 
   private val periodPath = "periods"

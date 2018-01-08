@@ -4,6 +4,13 @@ import io.swagger.annotations.{ Api, ApiOperation, ApiResponse, ApiResponses }
 
 import play.api.mvc.{ Controller, Action }
 
+/**
+ * HomeController
+ * ----------------
+ * Author: haqa
+ * Date: 12 July 2017 - 09:25
+ * Copyright (c) 2017  Office for National Statistics
+ */
 @Api("Utils")
 class HomeController extends Controller {
 

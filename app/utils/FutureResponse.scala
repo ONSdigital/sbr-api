@@ -6,7 +6,11 @@ import scala.util.Try
 import play.api.mvc.Result
 
 /**
- * Created by haqa on 11/08/2017.
+ * FutureResponse
+ * ----------------
+ * Author: haqa
+ * Date: 16 August 2017 - 09:25
+ * Copyright (c) 2017  Office for National Statistics
  */
 object FutureResponse {
 
