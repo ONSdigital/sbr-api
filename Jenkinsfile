@@ -11,9 +11,10 @@ pipeline {
 
         DEPLOY_DEV = "dev"
         DEPLOY_TEST = "test"
-        DEPLOY_PROD = "prod"
+        DEPLOY_PROD = "beta"
 
         CF_CREDS = "sbr-api-dev-secret-key"
+        CF_PROJECT = "SBR"
 
         GIT_TYPE = "Github"
         GIT_CREDS = "github-sbr-user"
@@ -246,8 +247,9 @@ def push (String newTag, String currentTag) {
 
 
 def deploy () {
+    cf_env = "${env.DEPLOY_NAME}".capitalize()
     echo "Deploying Api app to ${env.DEPLOY_NAME}"
     withCredentials([string(credentialsId: CF_CREDS, variable: 'APPLICATION_SECRET')]) {
-        deployToCloudFoundry("cloud-foundry-${TEAM}-${env.DEPLOY_NAME}-user", TEAM, "${env.DEPLOY_NAME}", "${env.DEPLOY_NAME}-${MODULE_NAME}", "${env.DEPLOY_NAME}-${ORGANIZATION}-${MODULE_NAME}.zip", "conf/${env.DEPLOY_NAME}/manifest.yml")
+        deployToCloudFoundry("${TEAM}-${env.DEPLOY_NAME}-cf", "${CF_PROJECT}", "${cf_env}", "${env.DEPLOY_NAME}-${MODULE_NAME}", "${env.DEPLOY_NAME}-${ORGANIZATION}-${MODULE_NAME}.zip", "conf/${env.DEPLOY_NAME}/manifest.yml")
     }
 }
