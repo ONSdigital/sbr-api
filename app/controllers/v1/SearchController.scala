@@ -7,12 +7,12 @@ import scala.concurrent.Future
 
 import com.netaporter.uri.Uri
 import io.swagger.annotations._
-import play.api.libs.json.{JsValue, Json, Reads}
-import play.api.mvc.{Action, AnyContent, Result}
+import play.api.libs.json.{ JsValue, Json, Reads }
+import play.api.mvc.{ Action, AnyContent, Result }
 
 import uk.gov.ons.sbr.models._
 
-import config.Properties.{minKeyLength, sbrControlApiBase}
+import config.Properties.{ minKeyLength, sbrControlApiBase }
 import utils.FutureResponse.futureSuccess
 import utils.UriBuilder.uriPathBuilder
 import utils.Utilities.errAsJson
