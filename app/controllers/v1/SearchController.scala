@@ -6,14 +6,14 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 
-import play.api.libs.json.{JsValue, Json, Reads}
-import play.api.mvc.{Action, AnyContent, Result}
+import play.api.libs.json.{ JsValue, Json, Reads }
+import play.api.mvc.{ Action, AnyContent, Result }
 import com.netaporter.uri.Uri
 import io.swagger.annotations._
 
 import uk.gov.ons.sbr.models._
 
-import config.Properties.{biBase, minKeyLength, sbrAdminBase, sbrControlApiBase}
+import config.Properties.{ biBase, minKeyLength, sbrAdminBase, sbrControlApiBase }
 import utils.FutureResponse.futureSuccess
 import utils.UriBuilder.uriPathBuilder
 import utils.Utilities.errAsJson
