@@ -12,7 +12,11 @@ import play.api.mvc.{ Controller, Result }
 import utils.Utilities.{ errAsJson, orElseNull }
 
 /**
- * Created by haqa on 10/07/2017.
+ * SearchController
+ * ----------------
+ * Author: haqa
+ * Date: 10 July 2017 - 09:25
+ * Copyright (c) 2017  Office for National Statistics
  */
 // @todo - fix typedef
 trait ControllerUtils extends Controller with StrictLogging {

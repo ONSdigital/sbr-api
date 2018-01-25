@@ -1,11 +1,18 @@
 package uk.gov.ons.sbr.models
 
 /**
- * Created by haqa on 17/10/2017.
+ * DataSourceTypes
+ * ----------------
+ * Author: haqa
+ * Date: 17 October 2017 - 09:25
+ * Copyright (c) 2017  Office for National Statistics
  */
 sealed trait DataSourceTypes { def path: String }
 
-case object CRN extends DataSourceTypes { val path = "companies"; val shortName: String = "CH" }
+case object CRN extends DataSourceTypes {
+  val path = "companies"
+  val shortName: String = "CH"
+}
 case object VAT extends DataSourceTypes { val path = "vats" }
 case object PAYE extends DataSourceTypes { val path = "payes" }
 case object LEU extends DataSourceTypes { val path = "business" }

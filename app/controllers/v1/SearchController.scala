@@ -4,22 +4,31 @@ import javax.inject.Inject
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scala.concurrent.duration.Duration
 
+import play.api.libs.json.{JsValue, Json, Reads}
+import play.api.mvc.{Action, AnyContent, Result}
 import com.netaporter.uri.Uri
 import io.swagger.annotations._
-import play.api.libs.json.{ JsValue, Json, Reads }
-import play.api.mvc.{ Action, AnyContent, Result }
 
 import uk.gov.ons.sbr.models._
 
-import config.Properties.{ minKeyLength, sbrControlApiBase }
+import config.Properties.{biBase, minKeyLength, sbrAdminBase, sbrControlApiBase}
 import utils.FutureResponse.futureSuccess
 import utils.UriBuilder.uriPathBuilder
 import utils.Utilities.errAsJson
-import services.WSRequest.RequestGenerator
 
+import services.RequestGenerator
+
+/**
+ * SearchController
+ * ----------------
+ * Author: haqa
+ * Date: 10 July 2017 - 09:25
+ * Copyright (c) 2017  Office for National Statistics
+ */
 @Api("Search")
-class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils {
+class SearchController @Inject() (ws: RequestGenerator[Uri]) extends ControllerUtils {
 
   private type UnitLinksListType = Seq[JsValue]
   private type StatisticalUnitLinkType = JsValue
@@ -43,7 +52,8 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
   ): Action[AnyContent] = {
     Action.async { implicit request =>
       val key = id.orElse(request.getQueryString("id")).getOrElse("")
-      search[UnitLinksListType](key, uriPathBuilder(sbrControlApiBase, key))
+      val uri = uriPathBuilder(sbrControlApiBase, key)
+      search[UnitLinksListType](key, uri)
     }
   }
 
@@ -69,7 +79,8 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
       val key = id.orElse(request.getQueryString("id")).getOrElse("")
       val res = period match {
         case x if x.length == fixedYeaMonthSize =>
-          search[UnitLinksListType](key, uriPathBuilder(sbrControlApiBase, key, Some(period)), periodParam = Some(period))
+          val uri = uriPathBuilder(sbrControlApiBase, key, Some(period))
+          search[UnitLinksListType](key, uri, periodParam = Some(period))
         case _ => BadRequest(errAsJson(BAD_REQUEST, "bad_request", s"Invalid date, try checking the length of given date $period")).future
       }
       res
@@ -93,7 +104,8 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
     @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
   ): Action[AnyContent] = Action.async {
     logger.info(s"Sending request to Business Index for legal unit: $id")
-    search[StatisticalUnitLinkType](id, uriPathBuilder(sbrControlApiBase, id, types = Some(LEU)), LEU)
+    val uri = uriPathBuilder(sbrControlApiBase, id, types = Some(LEU))
+    search[StatisticalUnitLinkType](id, uri, LEU)
   }
 
   def searchEnterprise(
@@ -101,7 +113,8 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
   ): Action[AnyContent] = {
     Action.async { implicit request =>
       logger.info(s"Sending request to Control Api to retrieve enterprise with $id")
-      search[StatisticalUnitLinkType](id, uriPathBuilder(sbrControlApiBase, id, types = Some(ENT)), ENT)
+      val uri = uriPathBuilder(sbrControlApiBase, id, types = Some(ENT))
+      search[StatisticalUnitLinkType](id, uri, ENT)
     }
   }
 
@@ -109,21 +122,24 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
     @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
   ): Action[AnyContent] = Action.async {
     logger.info(s"Sending request to Admin Api to retrieve VAT reference with $id")
-    search[StatisticalUnitLinkType](id, uriPathBuilder(sbrControlApiBase, id, types = Some(VAT)), VAT)
+    val uri = uriPathBuilder(sbrControlApiBase, id, types = Some(VAT))
+    search[StatisticalUnitLinkType](id, uri, VAT)
   }
 
   def searchPaye(
     @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
   ): Action[AnyContent] = Action.async {
     logger.info(s"Sending request to Admin Api to retrieve PAYE record with $id")
-    search[StatisticalUnitLinkType](id, uriPathBuilder(sbrControlApiBase, id, types = Some(PAYE)), PAYE)
+    val uri = uriPathBuilder(sbrControlApiBase, id, types = Some(PAYE))
+    search[StatisticalUnitLinkType](id, uri, PAYE)
   }
 
   def searchCrn(
     @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
   ): Action[AnyContent] = Action.async {
     logger.info(s"Sending request to Admin Api to retrieve Companies House Number with $id")
-    search[StatisticalUnitLinkType](id, uriPathBuilder(sbrControlApiBase, id, types = Some(CRN)), CRN)
+    val uri = uriPathBuilder(sbrControlApiBase, id, types = Some(CRN))
+    search[StatisticalUnitLinkType](id, uri, CRN)
   }
 
   // equiv. with period routes
@@ -140,7 +156,8 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
     @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
   ): Action[AnyContent] = Action.async {
     logger.info(s"Sending request to Control Api to retrieve enterprise with $id and $date")
-    search[StatisticalUnitLinkType](id, uriPathBuilder(sbrControlApiBase, id, Some(date), Some(ENT)), ENT, Some(date))
+    val uri = uriPathBuilder(sbrControlApiBase, id, Some(date), Some(ENT))
+    search[StatisticalUnitLinkType](id, uri, ENT, Some(date))
   }
 
   def searchVatWithPeriod(
@@ -148,7 +165,8 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
     @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
   ): Action[AnyContent] = Action.async {
     logger.info(s"Sending request to Admin Api to retrieve VAT reference with $id and $date")
-    search[StatisticalUnitLinkType](id, uriPathBuilder(sbrControlApiBase, id, Some(date), Some(VAT)), VAT, Some(date))
+    val uri = uriPathBuilder(sbrControlApiBase, id, Some(date), Some(VAT))
+    search[StatisticalUnitLinkType](id, uri, VAT, Some(date))
   }
 
   def searchPayeWithPeriod(
@@ -156,7 +174,8 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
     @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
   ): Action[AnyContent] = Action.async {
     logger.info(s"Sending request to Admin Api to retrieve PAYE record with $id and $date")
-    search[StatisticalUnitLinkType](id, uriPathBuilder(sbrControlApiBase, id, Some(date), Some(PAYE)), PAYE, Some(date))
+    val uri = uriPathBuilder(sbrControlApiBase, id, Some(date), Some(PAYE))
+    search[StatisticalUnitLinkType](id, uri, PAYE, Some(date))
   }
 
   def searchCrnWithPeriod(
@@ -164,13 +183,16 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
     @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
   ): Action[AnyContent] = Action.async {
     logger.info(s"Sending request to Admin Api to retrieve Companies House Number with $id and $date")
-    search[StatisticalUnitLinkType](id, uriPathBuilder(sbrControlApiBase, id, Some(date), Some(CRN)), CRN, Some(date))
+    val uri = uriPathBuilder(sbrControlApiBase, id, Some(date), Some(CRN))
+    search[StatisticalUnitLinkType](id, uri, CRN, Some(date))
   }
 
-  private def search[T](key: String, baseUrl: Uri, sourceType: DataSourceTypes = ENT, periodParam: Option[String] = None)(implicit fjs: Reads[T]): Future[Result] = {
+  // @ TODO - CHECK error control
+  private def search[T](key: String, baseUrl: Uri, sourceType: DataSourceTypes = ENT,
+    periodParam: Option[String] = None)(implicit fjs: Reads[T]): Future[Result] = {
     val res: Future[Result] = key match {
       case k if k.length >= minKeyLength =>
-        ws.singleRequest(baseUrl) map {
+        ws.singleGETRequest(baseUrl) map {
           case response if response.status == OK => {
             val unitResp = response.json.as[T]
             unitResp match {
@@ -178,8 +200,8 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
                 // if one UnitLinks found -> get unit
                 if (u.length == cappedDisplayNumber) {
                   val mapOfRecordKeys = Map((u.head \ "unitType").as[String] -> (u.head \ "id").as[String])
-                  val respRecords: List[JsValue] = ws.parsedRequest(mapOfRecordKeys, periodParam)
-                  val json: Seq[JsValue] = (u zip respRecords).map(x => toJson(x))
+                  val respRecords: List[JsValue] = parsedRequest(mapOfRecordKeys, periodParam)
+                  val json: Seq[JsValue] = (u zip respRecords).map(toJson)
                   Ok(Json.toJson(json)).as(JSON)
                 } else {
                   // return UnitLinks if multiple
@@ -187,8 +209,8 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
                 }
               case s: StatisticalUnitLinkType =>
                 val mapOfRecordKeys = Map(sourceType.toString -> (s \ "id").as[String])
-                val respRecords = ws.parsedRequest(mapOfRecordKeys, periodParam)
-                val json = (Seq(s) zip respRecords).map(x => toJson(x)).head
+                val respRecords = parsedRequest(mapOfRecordKeys, periodParam)
+                val json = (Seq(s) zip respRecords).map(toJson).head
                 Ok(json).as(JSON)
             }
           }
@@ -198,6 +220,27 @@ class SearchController @Inject() (ws: RequestGenerator) extends ControllerUtils 
         BadRequest(errAsJson(BAD_REQUEST, "missing_param", s"missing key or key [$key] is too short [$minKeyLength]")).future
     }
     res
+  }
+
+  // @TODO - duration.inf -> place cap
+  def parsedRequest(searchList: Map[String, String], withPeriod: Option[String] = None): List[JsValue] = {
+    searchList.map {
+      case (group, id) =>
+        // fix ch -> crn
+        val filter = group match {
+          case x if x == "CH" => "CRN"
+          case x => x
+        }
+        val path = DataSourceTypesUtil.fromString(filter.toUpperCase) match {
+          case Some(LEU) => biBase
+          case Some(CRN | PAYE | VAT) => sbrAdminBase
+          case Some(ENT) => sbrControlApiBase
+        }
+        val newPath = uriPathBuilder(path, id, withPeriod, group = filter)
+        logger.info(s"Sending request to $newPath")
+        val resp = ws.singleGETRequestWithTimeout(newPath, Duration.Inf)
+        resp.json
+    }.toList
   }
 
 }

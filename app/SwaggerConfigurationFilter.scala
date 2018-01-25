@@ -5,8 +5,13 @@ import io.swagger.model.ApiDescription
 import io.swagger.models.parameters.Parameter
 import io.swagger.models.{ Model, Operation }
 import io.swagger.models.properties.Property
+
 /**
- * Created by haqa on 24/07/2017.
+ * SwaggerConfigurationFilter
+ * ----------------
+ * Author: haqa
+ * Date: 24 July 2017 - 09:25
+ * Copyright (c) 2017  Office for National Statistics
  */
 class SwaggerConfigurationFilter extends SwaggerSpecFilter {
 
