@@ -3,13 +3,22 @@ package controllers.v1
 import java.time.format.DateTimeParseException
 import javax.naming.ServiceUnavailableException
 
-import scala.concurrent.TimeoutException
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Future, TimeoutException}
 
+import play.api.libs.json._
+import play.api.mvc.{Controller, Result}
+import com.netaporter.uri.Uri
 import com.typesafe.scalalogging.StrictLogging
-import play.api.libs.json.{ JsDefined, JsUndefined, JsValue, Json }
-import play.api.mvc.{ Controller, Result }
 
-import utils.Utilities.{ errAsJson, orElseNull }
+import uk.gov.ons.sbr.models._
+
+import config.Properties.{biBase, minKeyLength, sbrAdminBase, sbrControlApiBase}
+import utils.FutureResponse.futureSuccess
+import utils.UriBuilder.uriPathBuilder
+import utils.Utilities.{errAsJson, orElseNull}
+import services.RequestGenerator
 
 /**
  * SearchController
@@ -22,13 +31,16 @@ import utils.Utilities.{ errAsJson, orElseNull }
 trait ControllerUtils extends Controller with StrictLogging {
 
   protected val placeholderPeriod = "*date"
-  protected val placeholderUnitType = "*type"
+  private val placeholderUnitType = "*type"
 
   // number of units displayable
-  protected val cappedDisplayNumber = 1
+  private val cappedDisplayNumber = 1
   protected val fixedYeaMonthSize = 6
 
-  protected def toJson(record: (JsValue, JsValue)): JsValue = {
+  protected type UnitLinksListType = Seq[JsValue]
+  protected type StatisticalUnitLinkType = JsValue
+
+  private def toJson(record: (JsValue, JsValue)): JsValue = {
     val res = record match {
       case (link, unit) => {
         // For BI, there is no "vars", just use the whole record
@@ -72,7 +84,7 @@ trait ControllerUtils extends Controller with StrictLogging {
     Json.toJson(res)
   }
 
-  protected def responseException: PartialFunction[Throwable, Result] = {
+  private def responseException: PartialFunction[Throwable, Result] = {
     case ex: DateTimeParseException =>
       BadRequest(errAsJson(BAD_REQUEST, "invalid_date", s"cannot parse date exception found $ex"))
     case ex: RuntimeException =>
@@ -83,6 +95,62 @@ trait ControllerUtils extends Controller with StrictLogging {
       RequestTimeout(errAsJson(REQUEST_TIMEOUT, "request_timeout",
         s"This may be due to connection being blocked or host failure. Found exception $ex", s"${ex.getCause}"))
     case ex => InternalServerError(errAsJson(INTERNAL_SERVER_ERROR, "internal_server_error", s"$ex", s"${ex.getCause}"))
+  }
+
+  // @ TODO - CHECK error control
+  protected def search[T](key: String, baseUrl: Uri, sourceType: DataSourceTypes = ENT,
+    periodParam: Option[String] = None)(implicit fjs: Reads[T], ws: RequestGenerator): Future[Result] = {
+    val res: Future[Result] = key match {
+      case k if k.length >= minKeyLength =>
+        ws.singleGETRequest(baseUrl.toString) map {
+          case response if response.status == OK => {
+            val unitResp = response.json.as[T]
+            unitResp match {
+              case u: UnitLinksListType =>
+                // if one UnitLinks found -> get unit
+                if (u.length == cappedDisplayNumber) {
+                  val mapOfRecordKeys = Map((u.head \ "unitType").as[String] -> (u.head \ "id").as[String])
+                  val respRecords = parsedRequest(mapOfRecordKeys, periodParam)
+                  val json: Seq[JsValue] = (u zip respRecords).map(toJson)
+                  Ok(Json.toJson(json)).as(JSON)
+                } else {
+                  // return UnitLinks if multiple
+                  PartialContent(unitResp.toString).as(JSON)
+                }
+              case s: StatisticalUnitLinkType =>
+                val mapOfRecordKeys = Map(sourceType.toString -> (s \ "id").as[String])
+                val respRecords = parsedRequest(mapOfRecordKeys, periodParam)
+                val json = (Seq(s) zip respRecords).map(toJson).head
+                Ok(json).as(JSON)
+            }
+          }
+          case response if response.status == NOT_FOUND => NotFound(response.body).as(JSON)
+        } recover responseException
+      case _ =>
+        BadRequest(errAsJson(BAD_REQUEST, "missing_param", s"missing key or key [$key] is too short [$minKeyLength]")).future
+    }
+    res
+  }
+
+  // @TODO - duration.inf -> place cap
+  private def parsedRequest(searchList: Map[String, String], withPeriod: Option[String] = None)(implicit ws: RequestGenerator): List[JsValue] = {
+    searchList.map {
+      case (group, id) =>
+        // fix ch -> crn
+        val filter = group match {
+          case x if x == "CH" => "CRN"
+          case x => x
+        }
+        val path = DataSourceTypesUtil.fromString(filter.toUpperCase) match {
+          case Some(LEU) => biBase
+          case Some(CRN | PAYE | VAT) => sbrAdminBase
+          case Some(ENT) => sbrControlApiBase
+        }
+        val newPath = uriPathBuilder(path, id, withPeriod, group = filter)
+        logger.info(s"Sending request to $newPath")
+        val resp = ws.singleGETRequestWithTimeout(newPath.toString, Duration.Inf)
+        resp.json
+    }.toList
   }
 
 }

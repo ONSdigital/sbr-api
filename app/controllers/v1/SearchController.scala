@@ -2,18 +2,12 @@ package controllers.v1
 
 import javax.inject.Inject
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
-import scala.concurrent.duration.Duration
-
-import play.api.libs.json.{ JsValue, Json, Reads }
-import play.api.mvc.{ Action, AnyContent, Result }
-import com.netaporter.uri.Uri
+import play.api.mvc.{Action, AnyContent}
 import io.swagger.annotations._
 
 import uk.gov.ons.sbr.models._
 
-import config.Properties.{ biBase, minKeyLength, sbrAdminBase, sbrControlApiBase }
+import config.Properties.sbrControlApiBase
 import utils.FutureResponse.futureSuccess
 import utils.UriBuilder.uriPathBuilder
 import utils.Utilities.errAsJson
@@ -27,10 +21,7 @@ import services.RequestGenerator
  * Copyright (c) 2017  Office for National Statistics
  */
 @Api("Search")
-class SearchController @Inject() (ws: RequestGenerator[Uri]) extends ControllerUtils {
-
-  private type UnitLinksListType = Seq[JsValue]
-  private type StatisticalUnitLinkType = JsValue
+class SearchController @Inject() (implicit ws: RequestGenerator) extends ControllerUtils {
 
   //public api
   @ApiOperation(
@@ -185,61 +176,4 @@ class SearchController @Inject() (ws: RequestGenerator[Uri]) extends ControllerU
     val uri = uriPathBuilder(sbrControlApiBase, id, Some(date), Some(CRN))
     search[StatisticalUnitLinkType](id, uri, CRN, Some(date))
   }
-
-  // @ TODO - CHECK error control
-  private def search[T](key: String, baseUrl: Uri, sourceType: DataSourceTypes = ENT,
-    periodParam: Option[String] = None)(implicit fjs: Reads[T]): Future[Result] = {
-    val res: Future[Result] = key match {
-      case k if k.length >= minKeyLength =>
-        ws.singleGETRequest(baseUrl) map {
-          case response if response.status == OK => {
-            val unitResp = response.json.as[T]
-            unitResp match {
-              case u: UnitLinksListType =>
-                // if one UnitLinks found -> get unit
-                if (u.length == cappedDisplayNumber) {
-                  val mapOfRecordKeys = Map((u.head \ "unitType").as[String] -> (u.head \ "id").as[String])
-                  val respRecords: List[JsValue] = parsedRequest(mapOfRecordKeys, periodParam)
-                  val json: Seq[JsValue] = (u zip respRecords).map(toJson)
-                  Ok(Json.toJson(json)).as(JSON)
-                } else {
-                  // return UnitLinks if multiple
-                  PartialContent(unitResp.toString).as(JSON)
-                }
-              case s: StatisticalUnitLinkType =>
-                val mapOfRecordKeys = Map(sourceType.toString -> (s \ "id").as[String])
-                val respRecords = parsedRequest(mapOfRecordKeys, periodParam)
-                val json = (Seq(s) zip respRecords).map(toJson).head
-                Ok(json).as(JSON)
-            }
-          }
-          case response if response.status == NOT_FOUND => NotFound(response.body).as(JSON)
-        } recover responseException
-      case _ =>
-        BadRequest(errAsJson(BAD_REQUEST, "missing_param", s"missing key or key [$key] is too short [$minKeyLength]")).future
-    }
-    res
-  }
-
-  // @TODO - duration.inf -> place cap
-  def parsedRequest(searchList: Map[String, String], withPeriod: Option[String] = None): List[JsValue] = {
-    searchList.map {
-      case (group, id) =>
-        // fix ch -> crn
-        val filter = group match {
-          case x if x == "CH" => "CRN"
-          case x => x
-        }
-        val path = DataSourceTypesUtil.fromString(filter.toUpperCase) match {
-          case Some(LEU) => biBase
-          case Some(CRN | PAYE | VAT) => sbrAdminBase
-          case Some(ENT) => sbrControlApiBase
-        }
-        val newPath = uriPathBuilder(path, id, withPeriod, group = filter)
-        logger.info(s"Sending request to $newPath")
-        val resp = ws.singleGETRequestWithTimeout(newPath, Duration.Inf)
-        resp.json
-    }.toList
-  }
-
 }

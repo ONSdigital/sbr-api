@@ -2,21 +2,21 @@ package controllers.v1
 
 import javax.inject.Inject
 
-import config.Properties._
-import io.swagger.annotations._
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+
 import play.api.Logger
 import play.api.libs.json._
-import play.api.mvc.{ Action, AnyContent, Result }
+import play.api.mvc.{Action, AnyContent, Result}
+import io.swagger.annotations._
 
+import config.Properties._
 import utils.FutureResponse.futureSuccess
 import utils.Utilities._
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
-
 import services.RequestGenerator
 
 @Api("Edit")
-class EditController @Inject() (ws: RequestGenerator[String]) extends ControllerUtils {
+class EditController @Inject() (ws: RequestGenerator) extends ControllerUtils {
   // TODO: Fix CORS issue to allow use of Content-Type: application/json
   // There is a CORS issue meaning the UI cannot do a POST request with the headers:
   // Content-Type: application/json
