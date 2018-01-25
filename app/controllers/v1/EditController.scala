@@ -5,18 +5,17 @@ import javax.inject.Inject
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-import play.api.Logger
+import play.api.{ Configuration, Logger }
 import play.api.libs.json._
-import play.api.mvc.{Action, AnyContent, Result}
+import play.api.mvc.{ Action, AnyContent, Result }
 import io.swagger.annotations._
 
-import config.Properties._
 import utils.FutureResponse.futureSuccess
 import utils.Utilities._
 import services.RequestGenerator
 
 @Api("Edit")
-class EditController @Inject() (ws: RequestGenerator) extends ControllerUtils {
+class EditController @Inject() (ws: RequestGenerator, val configuration: Configuration) extends ControllerUtils {
   // TODO: Fix CORS issue to allow use of Content-Type: application/json
   // There is a CORS issue meaning the UI cannot do a POST request with the headers:
   // Content-Type: application/json
@@ -37,7 +36,7 @@ class EditController @Inject() (ws: RequestGenerator) extends ControllerUtils {
   def editEnterprise(
     @ApiParam(value = "An Enterprise ID", example = "1234567890", required = true) id: String
   ): Action[AnyContent] = Action.async { implicit request =>
-    val url = s"$controlEditEnt$id"
+    val url = s"$controlEditEntURL$id"
     val jsonBody: Option[String] = request.body.asText
     Logger.info(s"Rerouting edit enterprise by default period request to: $url")
     rerouteEditPost(jsonBody, url)
@@ -59,7 +58,7 @@ class EditController @Inject() (ws: RequestGenerator) extends ControllerUtils {
     @ApiParam(value = "A period in yyyyMM format", example = "201706", required = true) period: String,
     @ApiParam(value = "An Enterprise ID", example = "1234567890", required = true) id: String
   ): Action[AnyContent] = Action.async { implicit request =>
-    val url = s"${controlEditEnt.replace(placeholderPeriod, period)}$id"
+    val url = s"${controlEditEntURL.replace(placeholderPeriod, period)}$id"
     val jsonBody: Option[String] = request.body.asText
     Logger.info(s"Rerouting edit enterprise by specified period request to: $url")
     rerouteEditPost(jsonBody, url)

@@ -133,7 +133,8 @@ pipeline {
                 }
                 colourText("info", "Bundling....")
                 dir('conf') {
-                    git(url: "$GITLAB_URL/StatBusReg/${MODULE_NAME}.git", credentialsId: GITLAB_CREDS, branch: "${BRANCH_DEV}")
+                    git(url: "$GITLAB_URL/StatBusReg/${MODULE_NAME}.git", credentialsId: GITLAB_CREDS, branch: "feature/new-admin-routes")
+                   // git(url: "$GITLAB_URL/StatBusReg/${MODULE_NAME}.git", credentialsId: GITLAB_CREDS, branch: "${BRANCH_DEV}")
                 }
                 // stash name: "zip"
             }

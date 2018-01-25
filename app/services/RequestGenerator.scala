@@ -1,19 +1,20 @@
 package services
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.{ Inject, Singleton }
 
 import scala.concurrent.duration.Duration.Infinite
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{ Await, Future }
 
-import play.api.http.{ContentTypes, Status}
+import play.api.Configuration
+import play.api.http.{ ContentTypes, Status }
 import play.api.libs.json.JsValue
-import play.api.libs.ws.{WSClient, WSResponse}
-import play.api.mvc.{Result, Results}
+import play.api.libs.ws.{ WSClient, WSResponse }
+import play.api.mvc.{ Result, Results }
 import org.slf4j.LoggerFactory
-import com.typesafe.config.{Config, ConfigFactory}
+import com.typesafe.config.{ Config, ConfigFactory }
 
-import config.Properties.requestTimeout
+import config.Properties
 
 /**
  * WSRequestGenerator
@@ -25,15 +26,15 @@ import config.Properties.requestTimeout
 
 @Singleton
 class RequestGenerator @Inject() (
-    ws: WSClient
+    ws: WSClient,
+    val configuration: Configuration
 //    durationMetric: TimeUnit = MILLISECONDS,
 //    timeout: Option[Long] = None
-) extends Results with Status with ContentTypes {
+) extends Results with Status with ContentTypes with Properties {
 
   private[this] val LOGGER = LoggerFactory.getLogger(getClass)
 
   private final val config: Config = ConfigFactory.load()
-  //    .getConfig("ws")
   private final val DURATION_METRIC: TimeUnit = MILLISECONDS
   private final val TIMEOUT_REQUEST: Long = config.getString("play.ws.request.timeout").toLong
   private final val INF_REQUEST: Infinite = Duration.Inf

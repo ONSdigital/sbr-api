@@ -5,19 +5,19 @@ import javax.naming.ServiceUnavailableException
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Future, TimeoutException}
+import scala.concurrent.{ Future, TimeoutException }
 
 import play.api.libs.json._
-import play.api.mvc.{Controller, Result}
+import play.api.mvc.{ Controller, Result }
 import com.netaporter.uri.Uri
 import com.typesafe.scalalogging.StrictLogging
 
 import uk.gov.ons.sbr.models._
 
-import config.Properties.{biBase, minKeyLength, sbrAdminBase, sbrControlApiBase}
+import config.Properties
 import utils.FutureResponse.futureSuccess
 import utils.UriBuilder.uriPathBuilder
-import utils.Utilities.{errAsJson, orElseNull}
+import utils.Utilities.{ errAsJson, orElseNull }
 import services.RequestGenerator
 
 /**
@@ -28,7 +28,7 @@ import services.RequestGenerator
  * Copyright (c) 2017  Office for National Statistics
  */
 // @todo - fix typedef
-trait ControllerUtils extends Controller with StrictLogging {
+trait ControllerUtils extends Controller with StrictLogging with Properties {
 
   protected val placeholderPeriod = "*date"
   private val placeholderUnitType = "*type"
@@ -142,9 +142,12 @@ trait ControllerUtils extends Controller with StrictLogging {
           case x => x
         }
         val path = DataSourceTypesUtil.fromString(filter.toUpperCase) match {
-          case Some(LEU) => biBase
-          case Some(CRN | PAYE | VAT) => sbrAdminBase
-          case Some(ENT) => sbrControlApiBase
+          case Some(LEU) => businessIndexApiURL
+          case Some(CRN) => chAdminDataApiURL
+          case Some(VAT) => vatAdminDataApiURL
+          case Some(PAYE) => payeAdminDataApiURL
+
+          case Some(ENT) => sbrControlApiURL
         }
         val newPath = uriPathBuilder(path, id, withPeriod, group = filter)
         logger.info(s"Sending request to $newPath")

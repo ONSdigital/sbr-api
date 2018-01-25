@@ -7,10 +7,10 @@ lazy val applicationConfig = settingKey[Map[String, String]]("config values")
 
 applicationConfig := {
   val conf = ConfigFactory.parseFile((resourceDirectory in Compile).value / "application.conf").resolve()
-  val artifactoryConfig = conf.getConfig("env.default.artifactory")
+  val artifactoryConfig = conf.getConfig("artifactory")
   Map (
-    "publishTrigger" -> artifactoryConfig.getBoolean("publish-init").toString,
-    "artifactoryAddress" -> artifactoryConfig.getString("publish-repository"),
+    "publishTrigger" -> artifactoryConfig.getBoolean("publish.init").toString,
+    "artifactoryAddress" -> artifactoryConfig.getString("publish.repository"),
     "artifactoryHost" -> artifactoryConfig.getString("host"),
     "artifactoryUser" -> artifactoryConfig.getString("user"),
     "artifactoryPassword" -> artifactoryConfig.getString("password")
