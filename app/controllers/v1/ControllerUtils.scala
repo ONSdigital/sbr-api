@@ -146,7 +146,6 @@ trait ControllerUtils extends Controller with StrictLogging with Properties {
           case Some(CRN) => chAdminDataApiURL
           case Some(VAT) => vatAdminDataApiURL
           case Some(PAYE) => payeAdminDataApiURL
-
           case Some(ENT) => sbrControlApiURL
         }
         val newPath = uriPathBuilder(path, id, withPeriod, group = filter)
