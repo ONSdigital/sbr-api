@@ -1,4 +1,5 @@
 import com.typesafe.config.ConfigFactory
+import com.typesafe.sbt.packager.docker.DockerPlugin.autoImport.dockerBaseImage
 
 /**
   * APP CONFIG
@@ -201,5 +202,7 @@ lazy val api = (project in file("."))
     licenses := Seq("MIT-License" -> url("https://github.com/ONSdigital/sbr-control-api/blob/master/LICENSE")),
     startYear := Some(2017),
     homepage := Some(url("https://SBR-UI-HOMEPAGE.gov.uk")),
-    libraryDependencies ++= devDeps
+    libraryDependencies ++= devDeps,
+    dockerBaseImage := "openjdk:8-jre",
+    dockerExposedPorts := Seq(9000)
   )
