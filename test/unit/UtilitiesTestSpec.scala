@@ -65,7 +65,7 @@ class UtilitiesTestSpec extends TestUtils {
       uri.toString mustEqual expected
     }
     "return a uri with period, type params and the write unit path param (companies)" in {
-      val expected = "/localhost:8080/v0/periods/201706/types/CH/companies/00011"
+      val expected = "/localhost:8080/v0/periods/201706/types/CH/records/00011"
       val uri = uriPathBuilder("localhost:8080/v0", "00011", Some("201706"), Some(CRN), "crn")
       uri mustBe a[Uri]
       uri.toString mustEqual expected
