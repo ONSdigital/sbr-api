@@ -102,6 +102,7 @@ trait ControllerUtils extends Controller with StrictLogging with Properties {
     periodParam: Option[String] = None)(implicit fjs: Reads[T], ws: RequestGenerator): Future[Result] = {
     val res: Future[Result] = key match {
       case k if k.length >= minKeyLength =>
+        logger.debug(s"Send request to ${baseUrl.toString}")
         ws.singleGETRequest(baseUrl.toString) map {
           case response if response.status == OK => {
             val unitResp = response.json.as[T]
@@ -109,11 +110,13 @@ trait ControllerUtils extends Controller with StrictLogging with Properties {
               case u: UnitLinksListType =>
                 // if one UnitLinks found -> get unit
                 if (u.length == cappedDisplayNumber) {
+                  logger.debug(s"Found a single response with ${(u.head \ "id").as[String]}")
                   val mapOfRecordKeys = Map((u.head \ "unitType").as[String] -> (u.head \ "id").as[String])
                   val respRecords = parsedRequest(mapOfRecordKeys, periodParam)
                   val json: Seq[JsValue] = (u zip respRecords).map(toJson)
                   Ok(Json.toJson(json)).as(JSON)
                 } else {
+                  logger.debug(s"Found multiple records matching given id, $key. Returning multiple as list.")
                   // return UnitLinks if multiple
                   PartialContent(unitResp.toString).as(JSON)
                 }
