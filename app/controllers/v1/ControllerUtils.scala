@@ -9,6 +9,7 @@ import scala.concurrent.{ Future, TimeoutException }
 
 import play.api.libs.json._
 import play.api.mvc.{ Controller, Result }
+import org.slf4j.{ Logger, LoggerFactory }
 import com.netaporter.uri.Uri
 import com.typesafe.scalalogging.StrictLogging
 
@@ -30,15 +31,17 @@ import services.RequestGenerator
 // @todo - fix typedef
 trait ControllerUtils extends Controller with StrictLogging with Properties {
 
-  protected val placeholderPeriod = "*date"
-  private val placeholderUnitType = "*type"
+  protected val PLACEHOLDER_PERIOD = "*date"
+  private val PLACEHOLDER_UNIT_TYPE = "*type"
 
   // number of units displayable
-  private val cappedDisplayNumber = 1
-  protected val fixedYeaMonthSize = 6
+  private val CAPPED_DISPLAY_NUMBER = 1
+  protected val FIXED_YEARMONTH_SIZE = 6
 
   protected type UnitLinksListType = Seq[JsValue]
   protected type StatisticalUnitLinkType = JsValue
+
+  protected[this] val LOGGER: Logger = LoggerFactory.getLogger(getClass)
 
   private def toJson(record: (JsValue, JsValue)): JsValue = {
     val res = record match {
@@ -102,21 +105,21 @@ trait ControllerUtils extends Controller with StrictLogging with Properties {
     periodParam: Option[String] = None)(implicit fjs: Reads[T], ws: RequestGenerator): Future[Result] = {
     val res: Future[Result] = key match {
       case k if k.length >= minKeyLength =>
-        logger.debug(s"Send request to ${baseUrl.toString}")
+        LOGGER.debug(s"Send request to ${baseUrl.toString}")
         ws.singleGETRequest(baseUrl.toString) map {
           case response if response.status == OK => {
             val unitResp = response.json.as[T]
             unitResp match {
               case u: UnitLinksListType =>
                 // if one UnitLinks found -> get unit
-                if (u.length == cappedDisplayNumber) {
-                  logger.debug(s"Found a single response with ${(u.head \ "id").as[String]}")
+                if (u.length == CAPPED_DISPLAY_NUMBER) {
+                  LOGGER.debug(s"Found a single response with ${(u.head \ "id").as[String]}")
                   val mapOfRecordKeys = Map((u.head \ "unitType").as[String] -> (u.head \ "id").as[String])
                   val respRecords = parsedRequest(mapOfRecordKeys, periodParam)
                   val json: Seq[JsValue] = (u zip respRecords).map(toJson)
                   Ok(Json.toJson(json)).as(JSON)
                 } else {
-                  logger.debug(s"Found multiple records matching given id, $key. Returning multiple as list.")
+                  LOGGER.debug(s"Found multiple records matching given id, $key. Returning multiple as list.")
                   // return UnitLinks if multiple
                   PartialContent(unitResp.toString).as(JSON)
                 }
@@ -152,7 +155,7 @@ trait ControllerUtils extends Controller with StrictLogging with Properties {
           case Some(ENT) => sbrControlApiURL
         }
         val newPath = uriPathBuilder(path, id, withPeriod, group = filter)
-        logger.info(s"Sending request to $newPath")
+        LOGGER.info(s"Sending request to $newPath")
         val resp = ws.singleGETRequestWithTimeout(newPath.toString, Duration.Inf)
         resp.json
     }.toList
