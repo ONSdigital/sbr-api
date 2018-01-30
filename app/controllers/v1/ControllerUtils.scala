@@ -116,7 +116,7 @@ trait ControllerUtils extends Controller with StrictLogging with Properties {
                   LOGGER.debug(s"Found a single response with ${(u.head \ "id").as[String]}")
                   val mapOfRecordKeys = Map((u.head \ "unitType").as[String] -> (u.head \ "id").as[String])
                   val respRecords = parsedRequest(mapOfRecordKeys, periodParam)
-                  val json: Seq[JsValue] = (u zip respRecords).map(x => toJson(x, (u.head \ "id").as[String]))
+                  val json: Seq[JsValue] = (u zip respRecords).map(x => toJson(x, (u.head \ "unitType").as[String]))
                   Ok(Json.toJson(json)).as(JSON)
                 } else {
                   LOGGER.debug(s"Found multiple records matching given id, $key. Returning multiple as list.")
