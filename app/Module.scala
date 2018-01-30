@@ -1,9 +1,7 @@
-import com.google.inject.AbstractModule
 import java.time.Clock
 
-import com.typesafe.config.{ Config, ConfigFactory }
-import config.SBRPropertiesConfiguration
 import play.api.{ Configuration, Environment }
+import com.google.inject.AbstractModule
 
 /**
  * This class is a Guice module that tells Guice how to bind several
@@ -22,9 +20,9 @@ class Module(
 
   override def configure() = {
 
-    val config = SBRPropertiesConfiguration.envConfig(ConfigFactory.load())
-    //    val config: Config = ConfigFactory.load
-    bind(classOf[Config]).toInstance(config)
+    //    val config = SBRPropertiesConfiguration.envConfig(ConfigFactory.load())
+    //    //    val config: Config = ConfigFactory.load
+    //    bind(classOf[Config]).toInstance(config)
 
     // Use the system clock as the default implementation of Clock
     bind(classOf[Clock]).toInstance(Clock.systemDefaultZone)

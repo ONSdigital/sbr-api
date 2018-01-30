@@ -10,11 +10,11 @@ package uk.gov.ons.sbr.models
 sealed trait DataSourceTypes { def path: String }
 
 case object CRN extends DataSourceTypes {
-  val path = "companies"
+  val path = "records"
   val shortName: String = "CH"
 }
-case object VAT extends DataSourceTypes { val path = "vats" }
-case object PAYE extends DataSourceTypes { val path = "payes" }
+case object VAT extends DataSourceTypes { val path = "records" }
+case object PAYE extends DataSourceTypes { val path = "records" }
 case object LEU extends DataSourceTypes { val path = "business" }
 case object ENT extends DataSourceTypes { val path = "enterprises" }
 
