@@ -41,9 +41,9 @@ trait ControllerUtils extends Controller with StrictLogging with Properties {
   protected type UnitLinksListType = Seq[JsValue]
   protected type StatisticalUnitLinkType = JsValue
 
-  protected[this] val LOGGER: Logger = LoggerFactory.getLogger(getClass)
+  protected[this] val LOGGER: Logger = LoggerFactory.getLogger(getClass.getName)
 
-  private def toJson(record: (JsValue, JsValue)): JsValue = {
+  private def toJson(record: (JsValue, JsValue), `type`: String): JsValue = {
     val res = record match {
       case (link, unit) => {
         // For BI, there is no "vars", just use the whole record
@@ -52,20 +52,20 @@ trait ControllerUtils extends Controller with StrictLogging with Properties {
         val period = (unit \ "period").getOrNull
 
         // BI links do not have unitType
-        val unitType = unit \ "unitType" match {
-          case (v: JsDefined) => v.get.as[String]
-          case (_: JsUndefined) => "LEU"
-        }
+//        val unitType = unit \ "unitType" match {
+//          case (v: JsDefined) => v.get.as[String]
+//          case (_: JsUndefined) => "LEU"
+//        }
 
         // Only return childrenJson with an Enterprise
-        val js = unitType match {
+        val js = `type` match {
           case "ENT" => {
             Json.obj(
               "id" -> (link \ "id").getOrNull,
               "parents" -> (link \ "parents").getOrNull,
               "children" -> (link \ "children").getOrNull,
               "childrenJson" -> (unit \ "childrenJson").getOrNull,
-              "unitType" -> (unit \ "unitType").getOrNull,
+              "unitType" -> `type`,
               "period" -> period,
               "vars" -> vars
             )
@@ -75,7 +75,7 @@ trait ControllerUtils extends Controller with StrictLogging with Properties {
               "id" -> (link \ "id").getOrNull,
               "parents" -> (link \ "parents").getOrNull,
               "children" -> (link \ "children").getOrNull,
-              "unitType" -> unitType,
+              "unitType" -> `type`,
               "period" -> period,
               "vars" -> vars
             )
@@ -116,7 +116,7 @@ trait ControllerUtils extends Controller with StrictLogging with Properties {
                   LOGGER.debug(s"Found a single response with ${(u.head \ "id").as[String]}")
                   val mapOfRecordKeys = Map((u.head \ "unitType").as[String] -> (u.head \ "id").as[String])
                   val respRecords = parsedRequest(mapOfRecordKeys, periodParam)
-                  val json: Seq[JsValue] = (u zip respRecords).map(toJson)
+                  val json: Seq[JsValue] = (u zip respRecords).map(x => toJson(x, (u.head \ "id").as[String]))
                   Ok(Json.toJson(json)).as(JSON)
                 } else {
                   LOGGER.debug(s"Found multiple records matching given id, $key. Returning multiple as list.")
@@ -126,7 +126,7 @@ trait ControllerUtils extends Controller with StrictLogging with Properties {
               case s: StatisticalUnitLinkType =>
                 val mapOfRecordKeys = Map(sourceType.toString -> (s \ "id").as[String])
                 val respRecords = parsedRequest(mapOfRecordKeys, periodParam)
-                val json = (Seq(s) zip respRecords).map(toJson).head
+                val json = (Seq(s) zip respRecords).map(x => toJson(x, sourceType.toString)).head
                 Ok(json).as(JSON)
             }
           }

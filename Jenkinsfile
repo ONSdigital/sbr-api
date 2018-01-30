@@ -11,7 +11,7 @@ pipeline {
 
         DEPLOY_DEV = "dev"
         DEPLOY_TEST = "test"
-        DEPLOY_PROD = "beta"
+        DEPLOY_PROD = "prod"
 
         CF_CREDS = "sbr-api-dev-secret-key"
 
@@ -21,7 +21,13 @@ pipeline {
 
         ORGANIZATION = "ons"
         TEAM = "sbr"
-        MODULE_NAME = "sbr-api"
+        MODULE_NAME = "sbr-admin-data"
+
+        // hbase config
+        CH_TABLE = "ch"
+        VAT_TABLE = "vat"
+        PAYE_TABLE = "paye"
+        NAMESPACE = "sbr_dev_db"
     }
     options {
         skipDefaultCheckout()
@@ -31,9 +37,9 @@ pipeline {
     }
     agent any
     stages {
-        stage('Checkout'){
+        stage('Checkout') {
             agent any
-            steps{
+            steps {
                 deleteDir()
                 checkout scm
                 stash name: 'app'
@@ -45,32 +51,26 @@ pipeline {
                 }
             }
         }
-
-        stage('Build'){
+        stage('Test'){
             agent any
             steps {
                 colourText("info", "Building ${env.BUILD_ID} on ${env.JENKINS_URL} from branch ${env.BRANCH_NAME}")
-                script {
-                    env.NODE_STAGE = "Build"
-                    sh '''
-                        $SBT clean compile "project api" universal:packageBin coverage test coverageReport
-                    '''
-                    stash name: 'compiled'
-                    if (BRANCH_NAME == BRANCH_DEV) {
-                        env.DEPLOY_NAME = DEPLOY_DEV
-                        sh "cp target/universal/${ORGANIZATION}-${MODULE_NAME}-*.zip ${DEPLOY_DEV}-${ORGANIZATION}-${MODULE_NAME}.zip"
+
+                sh """
+                    $SBT clean compile "project $MODULE_NAME" coverage test coverageReport coverageAggregate
+                """
+            }
+            post {
+                always {
+                    script {
+                        env.NODE_STAGE = "Test"
                     }
-                    else if  (BRANCH_NAME == BRANCH_TEST) {
-                        env.DEPLOY_NAME = DEPLOY_TEST
-                        sh "cp target/universal/${ORGANIZATION}-${MODULE_NAME}-*.zip ${DEPLOY_TEST}-${ORGANIZATION}-${MODULE_NAME}.zip"
-                    }
-                    else if (BRANCH_NAME == BRANCH_PROD) {
-                        env.DEPLOY_NAME = DEPLOY_PROD
-                        sh "cp target/universal/${ORGANIZATION}-${MODULE_NAME}-*.zip ${DEPLOY_PROD}-${ORGANIZATION}-${MODULE_NAME}.zip"
-                    }
-                    else {
-                        colourText("info", "Not a deployable Git banch!")
-                    }
+                }
+                success {
+                    colourText("info","Tests successful!")
+                }
+                failure {
+                    colourText("warn","Failure during tests!")
                 }
             }
         }
@@ -79,21 +79,14 @@ pipeline {
             agent any
             steps {
                 parallel (
-                    "Unit" :  {
-                        colourText("info","Running unit tests")
-                        // sh "$SBT test"
-                    },
-                    "Style" : {
-                        colourText("info","Running style tests")
-                        sh """
-                            $SBT scalastyleGenerateConfig
-                            $SBT scalastyle
-                        """
-                    },
-                    "Additional" : {
-                        colourText("info","Running additional tests")
-                        sh "$SBT scapegoat"
-                    }
+                        "Scalastyle" : {
+                            colourText("info","Running scalastyle analysis")
+                            // sh "$SBT scalastyle"
+                        },
+                        "Scapegoat" : {
+                            colourText("info","Running scapegoat analysis")
+                            sh "$SBT scapegoat"
+                        }
                 )
             }
             post {
@@ -106,8 +99,9 @@ pipeline {
                     colourText("info","Generating reports for tests")
                     //   junit '**/target/test-reports/*.xml'
 
-                    step([$class: 'CoberturaPublisher', coberturaReportFile: '**/target/scala-2.11/coverage-report/*.xml'])
-                    step([$class: 'CheckStylePublisher', pattern: 'target/scalastyle-result.xml, target/scala-2.11/scapegoat-report/scapegoat-scalastyle.xml'])
+                    // removed subfolder scala-2.11/ from target path
+                    step([$class: 'CoberturaPublisher', coberturaReportFile: '**/target/coverage-report/*.xml'])
+                    step([$class: 'CheckStylePublisher', pattern: '**/target/code-quality/style/*scalastyle*.xml'])
                 }
                 failure {
                     colourText("warn","Failed to retrieve reports.")
@@ -115,26 +109,68 @@ pipeline {
             }
         }
 
-
-        // bundle all libs and dependencies
-        stage ('Bundle') {
+        stage('Build'){
             agent any
-            when {
-                anyOf {
-                    branch BRANCH_DEV
-                    branch BRANCH_TEST
-                    branch BRANCH_PROD
+            steps {
+                dir('gitlab') {
+                    git(url: "$GITLAB_URL/StatBusReg/${MODULE_NAME}-api.git", credentialsId: GITLAB_CREDS, branch: "${BRANCH_DEV}")
+                }
+                // Replace fake VAT/PAYE data with real data
+                sh 'rm -rf conf/sample/201706/vat_data.csv'
+                sh 'rm -rf conf/sample/201706/paye_data.csv'
+                sh 'cp gitlab/dev/data/sbr-2500-ent-vat-data.csv conf/sample/201706/vat_data.csv'
+                sh 'cp gitlab/dev/data/sbr-2500-ent-paye-data.csv conf/sample/201706/paye_data.csv'
+                sh 'cp gitlab/dev/conf/* conf'
+
+                sh """
+                    $SBT clean compile "project $MODULE_NAME" universal:packageBin
+                """
+                script {
+                    if (BRANCH_NAME == BRANCH_DEV) {
+                        env.DEPLOY_NAME = DEPLOY_DEV
+                    }
+                    else if  (BRANCH_NAME == BRANCH_TEST) {
+                        env.DEPLOY_NAME = DEPLOY_TEST
+                    }
+                    else if (BRANCH_NAME == BRANCH_PROD) {
+                        env.DEPLOY_NAME = DEPLOY_PROD
+                    }
+                    else {
+                        env.DEPLOY_NAME = DEPLOY_TEST
+                    }
                 }
             }
+            post {
+                always {
+                    script {
+                        env.NODE_STAGE = "Build"
+                    }
+                }
+                success {
+                    colourText("info","Packaging Successful!")
+                    sh "cp target/universal/${ORGANIZATION}-${MODULE_NAME}-*.zip ${env.DEPLOY_NAME}-${ORGANIZATION}-${MODULE_NAME}.zip"
+                }
+                failure {
+                    colourText("warn","Something went wrong!")
+                }
+            }
+        }
+
+        stage ('Bundle') {
+            agent any
+             when {
+                 anyOf {
+                     branch DEPLOY_DEV
+                     branch DEPLOY_TEST
+                     branch DEPLOY_PROD
+                 }
+             }
             steps {
                 script {
                     env.NODE_STAGE = "Bundle"
                 }
                 colourText("info", "Bundling....")
-                dir('conf') {
-                    git(url: "$GITLAB_URL/StatBusReg/${MODULE_NAME}.git", credentialsId: GITLAB_CREDS, branch: "${BRANCH_DEV}")
-                }
-                // stash name: "zip"
+//                stash name: "zip"
             }
         }
 
@@ -142,9 +178,9 @@ pipeline {
             agent any
             when {
                 anyOf {
-                    branch BRANCH_DEV
-                    branch BRANCH_TEST
-                    branch BRANCH_PROD
+                    branch DEPLOY_DEV
+                    branch DEPLOY_TEST
+                    branch DEPLOY_PROD
                 }
             }
             steps {
@@ -162,7 +198,7 @@ pipeline {
         stage ('Package and Push Artifact') {
             agent any
             when {
-                branch BRANCH_PROD
+                branch DEPLOY_PROD
             }
             steps {
                 script {
@@ -178,22 +214,32 @@ pipeline {
 
         stage('Deploy'){
             agent any
-            when {
-                anyOf {
-                    branch BRANCH_DEV
-                    branch BRANCH_TEST
-                    branch BRANCH_PROD
-                }
-            }
+              when {
+                  anyOf {
+                      branch DEPLOY_DEV
+                      branch DEPLOY_TEST
+                      branch DEPLOY_PROD
+                  }
+              }
             steps {
                 script {
                     env.NODE_STAGE = "Deploy"
                 }
                 milestone(1)
-                lock('Deployment Initiated') {
-                    colourText("info", 'deployment in progress')
-                    deploy()
-                    colourText("success", 'Deploy.')
+                lock('CH Deployment Initiated') {
+                    colourText("info", "${env.DEPLOY_NAME}-${CH_TABLE}-${MODULE_NAME} deployment in progress")
+                    deploy(CH_TABLE)
+                    colourText("success", "${env.DEPLOY_NAME}-${CH_TABLE}-${MODULE_NAME} Deployed.")
+                }
+                lock('VAT Deployment Initiated') {
+                    colourText("info", "${env.DEPLOY_NAME}-${VAT_TABLE}-${MODULE_NAME} deployment in progress")
+                    deploy(VAT_TABLE)
+                    colourText("success", "${env.DEPLOY_NAME}-${VAT_TABLE}-${MODULE_NAME} Deployed.")
+                }
+                lock('PAYE Deployment Initiated') {
+                    colourText("info", "${env.DEPLOY_NAME}-${PAYE_TABLE}-${MODULE_NAME} deployment in progress")
+                    deploy(PAYE_TABLE)
+                    colourText("success", "${env.DEPLOY_NAME}-${PAYE_TABLE}-${MODULE_NAME}E Deployed.")
                 }
             }
         }
@@ -202,8 +248,8 @@ pipeline {
             agent any
             when {
                 anyOf {
-                    branch BRANCH_DEV
-                    branch BRANCH_TEST
+                    branch DEPLOY_DEV
+                    branch DEPLOY_TEST
                 }
             }
             steps {
@@ -238,18 +284,16 @@ pipeline {
     }
 }
 
-
 def push (String newTag, String currentTag) {
     echo "Pushing tag ${newTag} to Gitlab"
     GitRelease( GIT_CREDS, newTag, currentTag, "${env.BUILD_ID}", "${env.BRANCH_NAME}", GIT_TYPE)
 }
 
-
-def deploy () {
+def deploy (String dataSource) {
     CF_SPACE = "${env.DEPLOY_NAME}".capitalize()
     CF_ORG = "${TEAM}".toUpperCase()
     echo "Deploying Api app to ${env.DEPLOY_NAME}"
     withCredentials([string(credentialsId: CF_CREDS, variable: 'APPLICATION_SECRET')]) {
-        deployToCloudFoundry("${TEAM}-${env.DEPLOY_NAME}-cf", "${CF_ORG}", "${CF_SPACE}", "${env.DEPLOY_NAME}-${MODULE_NAME}", "${env.DEPLOY_NAME}-${ORGANIZATION}-${MODULE_NAME}.zip", "conf/${env.DEPLOY_NAME}/manifest.yml")
+        deployToCloudFoundryHBase("${TEAM}-${env.DEPLOY_NAME}-cf", "${CF_ORG}", "${CF_SPACE}", "${env.DEPLOY_NAME}-${dataSource}-$MODULE_NAME", "${env.DEPLOY_NAME}-${ORGANIZATION}-${MODULE_NAME}.zip", "gitlab/${env.DEPLOY_NAME}/manifest.yml", ${dataSource}, NAMESPACE)
     }
 }
