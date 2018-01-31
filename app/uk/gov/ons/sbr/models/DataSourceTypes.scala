@@ -11,7 +11,8 @@ sealed trait DataSourceTypes { def path: String }
 
 case object CRN extends DataSourceTypes {
   val path = "records"
-  val shortName: String = "CH"
+  val referenceLabel = "CRN"
+  override def toString = "CH"
 }
 case object VAT extends DataSourceTypes { val path = "records" }
 case object PAYE extends DataSourceTypes { val path = "records" }
@@ -21,6 +22,12 @@ case object ENT extends DataSourceTypes { val path = "enterprises" }
 // create DataSourceTypes.type from str
 object DataSourceTypesUtil {
   def fromString(value: String): Option[DataSourceTypes] = {
-    Vector(CRN, VAT, PAYE, LEU, ENT).find(_.toString == value)
+    Vector(CRN, VAT, PAYE, LEU, ENT).find(_.toString.equalsIgnoreCase(value))
+  }
+
+  // returns unit reference name for CH
+  def converter(unit: String): String = unit match {
+    case x if x == CRN.toString => CRN.referenceLabel
+    case x => x
   }
 }

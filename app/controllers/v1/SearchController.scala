@@ -3,6 +3,7 @@ package controllers.v1
 import javax.inject.Inject
 
 import play.api.Configuration
+import play.api.i18n.{ I18nSupport, Messages, MessagesApi }
 import play.api.mvc.{ Action, AnyContent }
 import io.swagger.annotations._
 
@@ -10,8 +11,6 @@ import uk.gov.ons.sbr.models._
 
 import utils.FutureResponse.futureSuccess
 import utils.UriBuilder.uriPathBuilder
-import utils.Utilities.errAsJson
-
 import services.RequestGenerator
 
 /**
@@ -22,7 +21,8 @@ import services.RequestGenerator
  * Copyright (c) 2017  Office for National Statistics
  */
 @Api("Search")
-class SearchController @Inject() (implicit ws: RequestGenerator, val configuration: Configuration) extends ControllerUtils {
+class SearchController @Inject() (implicit ws: RequestGenerator, val configuration: Configuration,
+    val messagesApi: MessagesApi) extends ControllerUtils with I18nSupport {
 
   //public api
   @ApiOperation(
@@ -34,9 +34,11 @@ class SearchController @Inject() (implicit ws: RequestGenerator, val configurati
   )
   @ApiResponses(Array(
     new ApiResponse(code = 200, responseContainer = "JSONObject", message = "Success -> Record(s) found for id."),
-    new ApiResponse(code = 400, responseContainer = "JSONObject", message = "Client Side Error -> Required parameter was not found."),
+    new ApiResponse(code = 400, responseContainer = "JSONObject", message = "Client Side Error -> Required " +
+      "parameter was not found."),
     new ApiResponse(code = 404, responseContainer = "JSONObject", message = "Client Side Error -> Id not found."),
-    new ApiResponse(code = 500, responseContainer = "JSONObject", message = "Server Side Error -> Request could not be completed.")
+    new ApiResponse(code = 500, responseContainer = "JSONObject", message = "Server Side Error -> Request " +
+      "could not be completed.")
   ))
   def searchById(
     @ApiParam(value = "An identifier of any type", example = "825039145000", required = true) id: Option[String]
@@ -58,9 +60,11 @@ class SearchController @Inject() (implicit ws: RequestGenerator, val configurati
   )
   @ApiResponses(Array(
     new ApiResponse(code = 200, responseContainer = "JSONObject", message = "Success -> Record(s) found for id."),
-    new ApiResponse(code = 400, responseContainer = "JSONObject", message = "Client Side Error -> Required parameter was not found."),
+    new ApiResponse(code = 400, responseContainer = "JSONObject", message = "Client Side Error -> Required " +
+      "parameter was not found."),
     new ApiResponse(code = 404, responseContainer = "JSONObject", message = "Client Side Error -> Id not found."),
-    new ApiResponse(code = 500, responseContainer = "JSONObject", message = "Server Side Error -> Request could not be completed.")
+    new ApiResponse(code = 500, responseContainer = "JSONObject", message = "Server Side Error -> " +
+      "Request could not be completed.")
   ))
   def searchByReferencePeriod(
     @ApiParam(value = "An identifier of any type", example = "825039145000", required = true) id: Option[String],
@@ -72,7 +76,7 @@ class SearchController @Inject() (implicit ws: RequestGenerator, val configurati
         case x if x.length == FIXED_YEARMONTH_SIZE =>
           val uri = uriPathBuilder(sbrControlApiURL, key, Some(period))
           search[UnitLinksListType](key, uri, periodParam = Some(period))
-        case _ => BadRequest(errAsJson(BAD_REQUEST, "bad_request", s"Invalid date, try checking the length of given date $period")).future
+        case _ => BadRequest(Messages("controller.invalid.period", period, "yyyyMM")).future
       }
       res
     }
@@ -89,7 +93,8 @@ class SearchController @Inject() (implicit ws: RequestGenerator, val configurati
   @ApiResponses(Array(
     new ApiResponse(code = 200, message = "Success - Displays json list of dates for official development."),
     new ApiResponse(code = 500, responseContainer = "Json", message = "Internal Server Error - Request timed-out."),
-    new ApiResponse(code = 500, responseContainer = "Json", message = "Internal Server Error - Failed to connection or timeout with endpoint.")
+    new ApiResponse(code = 500, responseContainer = "Json", message = "Internal Server Error - " +
+      "Failed to connection or timeout with endpoint.")
   ))
   def searchLeU(
     @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String

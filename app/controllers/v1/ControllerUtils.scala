@@ -7,6 +7,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{ Future, TimeoutException }
 
+import play.api.i18n.{ I18nSupport, Messages }
 import play.api.libs.json._
 import play.api.mvc.{ Controller, Result }
 import org.slf4j.{ Logger, LoggerFactory }
@@ -29,7 +30,7 @@ import services.RequestGenerator
  * Copyright (c) 2017  Office for National Statistics
  */
 // @todo - fix typedef
-trait ControllerUtils extends Controller with StrictLogging with Properties {
+trait ControllerUtils extends Controller with StrictLogging with Properties with I18nSupport {
 
   protected val PLACEHOLDER_PERIOD = "*date"
   private val PLACEHOLDER_UNIT_TYPE = "*type"
@@ -51,21 +52,17 @@ trait ControllerUtils extends Controller with StrictLogging with Properties {
         // BI does not have period, so use an empty string
         val period = (unit \ "period").getOrNull
 
-        // BI links do not have unitType
-//        val unitType = unit \ "unitType" match {
-//          case (v: JsDefined) => v.get.as[String]
-//          case (_: JsUndefined) => "LEU"
-//        }
+        val unitType = DataSourceTypesUtil.fromString(`type`).getOrElse("").toString
 
         // Only return childrenJson with an Enterprise
-        val js = `type` match {
+        val js = unitType match {
           case "ENT" => {
             Json.obj(
               "id" -> (link \ "id").getOrNull,
               "parents" -> (link \ "parents").getOrNull,
               "children" -> (link \ "children").getOrNull,
               "childrenJson" -> (unit \ "childrenJson").getOrNull,
-              "unitType" -> `type`,
+              "unitType" -> unitType,
               "period" -> period,
               "vars" -> vars
             )
@@ -75,7 +72,7 @@ trait ControllerUtils extends Controller with StrictLogging with Properties {
               "id" -> (link \ "id").getOrNull,
               "parents" -> (link \ "parents").getOrNull,
               "children" -> (link \ "children").getOrNull,
-              "unitType" -> `type`,
+              "unitType" -> unitType,
               "period" -> period,
               "vars" -> vars
             )
@@ -89,15 +86,14 @@ trait ControllerUtils extends Controller with StrictLogging with Properties {
 
   private def responseException: PartialFunction[Throwable, Result] = {
     case ex: DateTimeParseException =>
-      BadRequest(errAsJson(BAD_REQUEST, "invalid_date", s"cannot parse date exception found $ex"))
+      BadRequest(Messages("controller.datetime.failed.parse", ex.toString))
     case ex: RuntimeException =>
-      InternalServerError(errAsJson(INTERNAL_SERVER_ERROR, "runtime_exception", s"$ex", s"${ex.getCause}"))
+      InternalServerError(errAsJson(ex.toString, ex.getCause.toString))
     case ex: ServiceUnavailableException =>
-      ServiceUnavailable(errAsJson(SERVICE_UNAVAILABLE, "service_unavailable", s"$ex", s"${ex.getCause}"))
+      ServiceUnavailable(errAsJson(ex.toString, ex.getCause.toString))
     case ex: TimeoutException =>
-      RequestTimeout(errAsJson(REQUEST_TIMEOUT, "request_timeout",
-        s"This may be due to connection being blocked or host failure. Found exception $ex", s"${ex.getCause}"))
-    case ex => InternalServerError(errAsJson(INTERNAL_SERVER_ERROR, "internal_server_error", s"$ex", s"${ex.getCause}"))
+      RequestTimeout(Messages("controller.timeout.request", s"$ex", s"${ex.getCause}"))
+    case ex => InternalServerError(errAsJson(ex.toString, ex.getCause.toString))
   }
 
   // @ TODO - CHECK error control
@@ -105,9 +101,10 @@ trait ControllerUtils extends Controller with StrictLogging with Properties {
     periodParam: Option[String] = None)(implicit fjs: Reads[T], ws: RequestGenerator): Future[Result] = {
     val res: Future[Result] = key match {
       case k if k.length >= minKeyLength =>
-        LOGGER.debug(s"Send request to ${baseUrl.toString}")
+        LOGGER.debug(s"Sending request to ${baseUrl.toString} to retrieve Unit Links")
         ws.singleGETRequest(baseUrl.toString) map {
           case response if response.status == OK => {
+            // @ TODO - add to success or failrue to JSON ??
             val unitResp = response.json.as[T]
             unitResp match {
               case u: UnitLinksListType =>
@@ -133,7 +130,7 @@ trait ControllerUtils extends Controller with StrictLogging with Properties {
           case response if response.status == NOT_FOUND => NotFound(response.body).as(JSON)
         } recover responseException
       case _ =>
-        BadRequest(errAsJson(BAD_REQUEST, "missing_param", s"missing key or key [$key] is too short [$minKeyLength]")).future
+        BadRequest(Messages("controller.invalid.id", key, minKeyLength)).future
     }
     res
   }
@@ -142,21 +139,18 @@ trait ControllerUtils extends Controller with StrictLogging with Properties {
   private def parsedRequest(searchList: Map[String, String], withPeriod: Option[String] = None)(implicit ws: RequestGenerator): List[JsValue] = {
     searchList.map {
       case (group, id) =>
-        // fix ch -> crn
-        val filter = group match {
-          case x if x == "CH" => "CRN"
-          case x => x
-        }
-        val path = DataSourceTypesUtil.fromString(filter.toUpperCase) match {
+        val unit = DataSourceTypesUtil.fromString(group)
+        val path = unit match {
           case Some(LEU) => businessIndexApiURL
           case Some(CRN) => chAdminDataApiURL
           case Some(VAT) => vatAdminDataApiURL
           case Some(PAYE) => payeAdminDataApiURL
           case Some(ENT) => sbrControlApiURL
         }
-        val newPath = uriPathBuilder(path, id, withPeriod, group = filter)
-        LOGGER.info(s"Sending request to $newPath")
+        val newPath = uriPathBuilder(path, id, withPeriod, group = unit.getOrElse("").toString)
+        LOGGER.info(s"Sending request to $newPath to get records of all variables of unit.")
         val resp = ws.singleGETRequestWithTimeout(newPath.toString, Duration.Inf)
+        // @ TODO - add to success or failrue to JSON ??
         resp.json
     }.toList
   }

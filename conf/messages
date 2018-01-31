@@ -1,0 +1,4 @@
+controller.invalid.id=ID {0} cannot be empty or too short. ID must be at least {1} in length.
+controller.invalid.period={0} is an invalid period! A period must be in a valid year and month format, {1}
+controller.datetime.failed.parse=Cannot parse given period as YearMonth object. Failed with exception: {0}
+controller.timeout.request=This may be due to connection being blocked or host failure. Found exception {0} with cause {1}

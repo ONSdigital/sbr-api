@@ -15,7 +15,7 @@ sbt "api/run -Dsbr.hbase.inmemory=true -Dhttp.port=9001"
 * [sbr-admin-data-api](https://github.com/ONSdigital/sbr-admin-data-api):
 
 ```shell
-sbt "api/run -Dsource=hbaseInMemory -Dsbr.hbase.inmemory=true -Dhttp.port=9003"
+Send request to
 ```
 
 * [business-index-api](https://github.com/ONSdigital/business-index-api):

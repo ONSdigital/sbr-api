@@ -5,6 +5,7 @@ import javax.inject.Inject
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
+import play.api.i18n.MessagesApi
 import play.api.{ Configuration, Logger }
 import play.api.libs.json._
 import play.api.mvc.{ Action, AnyContent, Result }
@@ -15,7 +16,7 @@ import utils.Utilities._
 import services.RequestGenerator
 
 @Api("Edit")
-class EditController @Inject() (ws: RequestGenerator, val configuration: Configuration) extends ControllerUtils {
+class EditController @Inject() (ws: RequestGenerator, val configuration: Configuration, val messagesApi: MessagesApi) extends ControllerUtils {
   // TODO: Fix CORS issue to allow use of Content-Type: application/json
   // There is a CORS issue meaning the UI cannot do a POST request with the headers:
   // Content-Type: application/json
@@ -71,7 +72,7 @@ class EditController @Inject() (ws: RequestGenerator, val configuration: Configu
       }
     }.getOrElse {
       Logger.debug(s"Invalid JSON for redirect to url: $url")
-      BadRequest(errAsJson(BAD_REQUEST, "invalid_json", "POST body json is malformed")).future
+      BadRequest(errAsJson(BAD_REQUEST, "invalid_json", "POST body json is malformed", "Not Traced")).future
     }
   }
 }

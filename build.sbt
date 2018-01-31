@@ -125,8 +125,8 @@ lazy val assemblySettings: Seq[Def.Setting[_]] = Seq(
     case PathList("org", "apache", xs @ _*)                            => MergeStrategy.last
     case PathList("org", "slf4j", xs @ _*)                             => MergeStrategy.first
     case PathList("META-INF", "io.netty.versions.properties", xs @ _*) => MergeStrategy.last
-    case PathList("org", "slf4j", xs @ _*)                             => MergeStrategy.first
     case "application.conf"                                            => MergeStrategy.first
+    case "logback.xml"                                                 => MergeStrategy.first
     case x =>
       val oldStrategy = (assemblyMergeStrategy in assembly).value
       oldStrategy(x)

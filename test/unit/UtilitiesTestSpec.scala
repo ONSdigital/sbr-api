@@ -21,9 +21,10 @@ class UtilitiesTestSpec extends TestUtils {
       val status = 400
       val code = "bad_request"
       val msg = "could not process request"
-      val errMsg = errAsJson(status, code, msg)
+      val cause = "Not Traced"
+      val errMsg = errAsJson(msg, cause)
       errMsg mustBe a[JsObject]
-      (errMsg \ "code").as[String] mustEqual code
+      (errMsg \ "route_with_cause").as[String] mustEqual cause
     }
   }
 
@@ -66,7 +67,7 @@ class UtilitiesTestSpec extends TestUtils {
     }
     "return a uri with period, type params and the write unit path param (companies)" in {
       val expected = "/localhost:8080/v0/periods/201706/types/CH/records/00011"
-      val uri = uriPathBuilder("localhost:8080/v0", "00011", Some("201706"), Some(CRN), "crn")
+      val uri = uriPathBuilder("localhost:8080/v0", "00011", Some("201706"), Some(CRN), "ch")
       uri mustBe a[Uri]
       uri.toString mustEqual expected
     }

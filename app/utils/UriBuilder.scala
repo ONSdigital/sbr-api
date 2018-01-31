@@ -18,15 +18,24 @@ object UriBuilder {
   private val periodPath = "periods"
   private val typePath = "types"
 
+  /**
+   *
+   * @param baseUrl
+   * @param units
+   * @param periods
+   * @param types
+   * @param group - used to trigger Unit Type Search. If passed then assumed group is a string Unit Type to get vars.
+   * @return
+   */
   // @TODO - Remove group parameter
   def uriPathBuilder(baseUrl: String, units: String, periods: Option[String] = None, types: Option[DataSourceTypes] = None,
     group: String = ""): Uri = {
-    val unitTypePath = DataSourceTypesUtil.fromString(group.toUpperCase).getOrElse(None) match {
+    val unitTypePath = DataSourceTypesUtil.fromString(group).getOrElse(None) match {
       case x: DataSourceTypes => x.path
       case _ => "units"
     }
     (periods, types, units) match {
-      case (Some(x), Some(y), z) => baseUrl / periodPath / x / typePath / crnToCHPatch(y) / unitTypePath / z
+      case (Some(x), Some(y), z) => baseUrl / periodPath / x / typePath / y.toString / unitTypePath / z
       case (Some(x), None, z) =>
         if (List(VAT.toString, CRN.toString, PAYE.toString) contains group) {
           baseUrl / unitTypePath / z / periodPath / x
@@ -34,12 +43,9 @@ object UriBuilder {
           baseUrl / periodPath / x / unitTypePath / z
         }
       case (None, Some(y), z) =>
-        baseUrl / typePath / crnToCHPatch(y) / unitTypePath / z
+        baseUrl / typePath / y.toString / unitTypePath / z
       case _ => baseUrl / unitTypePath / units
     }
   }
-
-  // @NOTEu - crn patch
-  def crnToCHPatch(`type`: DataSourceTypes): String = `type` match { case CRN => CRN.shortName case _ => `type`.toString }
 
 }

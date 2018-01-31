@@ -15,10 +15,18 @@ object Utilities {
 
   private def currentDirectory = new File(".").getCanonicalPath
 
-  def errAsJson(status: Int, code: String, msg: String, cause: String = "Not traced"): JsObject = {
+  @deprecated("Migrated to errAsJson with 2 params", "feature/new-admin-routes - 31 January 2018")
+  def errAsJson(status: Int, code: String, msg: String, cause: String): JsObject = {
     Json.obj(
       "status" -> status,
       "code" -> code,
+      "route_with_cause" -> cause,
+      "message_en" -> msg
+    )
+  }
+
+  def errAsJson(msg: String, cause: String = "Not traced"): JsObject = {
+    Json.obj(
       "route_with_cause" -> cause,
       "message_en" -> msg
     )
