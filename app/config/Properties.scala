@@ -27,5 +27,5 @@ trait Properties {
   lazy val vatAdminDataApiURL: String = config.getString("api.sbr.admin.data.vat.url")
   lazy val payeAdminDataApiURL: String = config.getString("api.sbr.admin.data.paye.url")
   // BUSINESS INDEX API
-  lazy val businessIndexApiURL: String = config.getString("api.business.index.url")
+  lazy val businessIndexDataApiURL: String = config.getString("api.business.index.data.url")
 }

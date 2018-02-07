@@ -143,8 +143,9 @@ class SearchController @Inject() (implicit ws: RequestGenerator, val configurati
     @ApiParam(value = "Identifier creation date", example = "2017/07", required = true) date: String,
     @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
   ): Action[AnyContent] = Action.async {
-    LOGGER.info(s"Sending request to Control Api to retrieve enterprise with $id and $date")
-    NotImplemented("Route not implemented. Please use searchLeU [without period param] -> route /v1/leus/:id").future
+    LOGGER.info(s"Sending request to Control Api to retrieve legal unit with $id and $date")
+    val uri = uriPathBuilder(sbrControlApiURL, id, Some(date), Some(LEU))
+    search[StatisticalUnitLinkType](id, uri, LEU, Some(date))
   }
 
   def searchEnterpriseWithPeriod(

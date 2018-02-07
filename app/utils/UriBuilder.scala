@@ -17,6 +17,7 @@ object UriBuilder {
 
   private val periodPath = "periods"
   private val typePath = "types"
+  private val unitPath = "units"
 
   /**
    *
@@ -32,7 +33,7 @@ object UriBuilder {
     group: String = ""): Uri = {
     val unitTypePath = DataSourceTypesUtil.fromString(group).getOrElse(None) match {
       case x: DataSourceTypes => x.path
-      case _ => "units"
+      case _ => unitPath
     }
     (periods, types, units) match {
       case (Some(x), Some(y), z) => baseUrl / periodPath / x / typePath / y.toString / unitTypePath / z
@@ -47,5 +48,4 @@ object UriBuilder {
       case _ => baseUrl / unitTypePath / units
     }
   }
-
 }
