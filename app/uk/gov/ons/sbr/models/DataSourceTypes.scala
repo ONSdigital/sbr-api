@@ -16,7 +16,7 @@ case object CRN extends DataSourceTypes {
 }
 case object VAT extends DataSourceTypes { val path = "records" }
 case object PAYE extends DataSourceTypes { val path = "records" }
-case object LEU extends DataSourceTypes { val path = "business" }
+case object LEU extends DataSourceTypes { val path = "records" }
 case object ENT extends DataSourceTypes { val path = "enterprises" }
 
 // create DataSourceTypes.type from str

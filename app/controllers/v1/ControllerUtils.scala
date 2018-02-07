@@ -153,7 +153,7 @@ trait ControllerUtils extends Controller with StrictLogging with Properties with
       case (group, id) =>
         val unit = DataSourceTypesUtil.fromString(group)
         val path = unit match {
-          case Some(LEU) => businessIndexApiURL
+          case Some(LEU) => businessIndexDataApiURL
           case Some(CRN) => chAdminDataApiURL
           case Some(VAT) => vatAdminDataApiURL
           case Some(PAYE) => payeAdminDataApiURL
