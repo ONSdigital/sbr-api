@@ -47,10 +47,22 @@ trait ControllerUtils extends Controller with StrictLogging with Properties with
   private def toJson(record: (JsValue, JsValue), `type`: String): JsValue = {
     val res = record match {
       case (link, unit) => {
-        // For BI, there is no "vars", just use the whole record
-        val vars = (unit \ "vars").getOrElse(unit)
+
+        // @ TODO PATCH - fix and remove patch
         // BI does not have period, so use an empty string
-        val period = (unit \ "period").getOrNull
+        val period = if (`type` == ENT.toString) {
+          (unit \ "period").getOrNull
+        } else {
+          (unit.as[Seq[JsValue]].head \ "period").getOrNull
+        }
+
+        // @ TODO PATCH - fix and remove patch
+        // For BI, there is no "vars", just use the whole record
+        val vars = if (`type` == ENT.toString || `type` == LEU.toString) {
+          (unit \ "vars").getOrElse(unit)
+        } else {
+          (unit.as[Seq[JsValue]].head \ "variables").getOrNull
+        }
 
         val unitType = DataSourceTypesUtil.fromString(`type`).getOrElse("").toString
 
