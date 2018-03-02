@@ -1,8 +1,9 @@
 package controllers
 
-import io.swagger.annotations.{ Api, ApiOperation, ApiResponse, ApiResponses }
+import javax.inject.Singleton
 
-import play.api.mvc.{ Controller, Action }
+import io.swagger.annotations.{ Api, ApiOperation, ApiResponse, ApiResponses }
+import play.api.mvc.{ Action, Controller }
 
 /**
  * HomeController
@@ -12,6 +13,7 @@ import play.api.mvc.{ Controller, Action }
  * Copyright (c) 2017  Office for National Statistics
  */
 @Api("Utils")
+@Singleton
 class HomeController extends Controller {
 
   //public api

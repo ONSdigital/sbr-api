@@ -12,39 +12,41 @@ import uk.gov.ons.sbr.models._
  * Date: 16 August 2017 - 09:25
  * Copyright (c) 2017  Office for National Statistics
  */
-// TODO - remove patch
 object UriBuilder {
 
-  private val periodPath = "periods"
-  private val typePath = "types"
-  private val unitPath = "units"
+  private val PERIOD_PATH = "periods"
+  private val TYPE_PATH = "types"
+  private val UNIT_PATH = "units"
+  private val HISTORY_PATH = "history"
+  private val HISTORY_MAX_ARG = "max"
 
   /**
    *
-   * @param baseUrl
-   * @param units
-   * @param periods
-   * @param types
+   * @param baseUrl - url of the api.
+   * @param units - id
+   * @param periods - Optional
+   * @param types - Optional
    * @param group - used to trigger Unit Type Search. If passed then assumed group is a string Unit Type to get vars.
-   * @return
+   * @param history - Optional, limits the result size when period isn't given.
+   * @return Uri
    */
   // @TODO - Remove group parameter
-  def uriPathBuilder(baseUrl: String, units: String, periods: Option[String] = None, types: Option[DataSourceTypes] = None,
-    group: String = ""): Uri = {
+  def createUri(baseUrl: String, units: String, periods: Option[String] = None, types: Option[DataSourceTypes] = None,
+    group: String = "", history: Option[Int] = None): Uri = {
     val unitTypePath = DataSourceTypesUtil.fromString(group).getOrElse(None) match {
       case x: DataSourceTypes => x.path
-      case _ => unitPath
+      case _ => UNIT_PATH
     }
-    (periods, types, units) match {
-      case (Some(x), Some(y), z) => baseUrl / periodPath / x / typePath / y.toString / unitTypePath / z
-      case (Some(x), None, z) =>
-        if (List(VAT.toString, CRN.toString, PAYE.toString) contains group) {
-          baseUrl / unitTypePath / z / periodPath / x
-        } else {
-          baseUrl / periodPath / x / unitTypePath / z
-        }
-      case (None, Some(y), z) =>
-        baseUrl / typePath / y.toString / unitTypePath / z
+    (periods, types, units, history) match {
+      case (Some(p), Some(t), u, None) => baseUrl / PERIOD_PATH / p / TYPE_PATH / t.toString / unitTypePath / u
+      case (Some(p), None, u, None) => if (List(VAT.toString, CRN.toString, PAYE.toString, LEU.toString) contains group) {
+        baseUrl / unitTypePath / u / PERIOD_PATH / p
+      } else {
+        baseUrl / PERIOD_PATH / p / unitTypePath / u
+      }
+      // TODO **WARN** ~ this will break for ENTERPRISE until history param arg route is add to sbr-control ~ **WARN**
+      case (None, None, u, Some(h)) => baseUrl / unitTypePath / u / HISTORY_PATH ? (HISTORY_MAX_ARG, h)
+      case (None, Some(t), u, None) => baseUrl / TYPE_PATH / t.toString / unitTypePath / u
       case _ => baseUrl / unitTypePath / units
     }
   }

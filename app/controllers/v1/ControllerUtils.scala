@@ -18,7 +18,7 @@ import uk.gov.ons.sbr.models._
 
 import config.Properties
 import utils.FutureResponse.futureSuccess
-import utils.UriBuilder.uriPathBuilder
+import utils.UriBuilder.createUri
 import utils.Utilities.{ errAsJson, orElseNull }
 import services.RequestGenerator
 
@@ -33,6 +33,7 @@ import services.RequestGenerator
 trait ControllerUtils extends Controller with StrictLogging with Properties with I18nSupport {
 
   protected val PLACEHOLDER_PERIOD = "*date"
+  protected val DEFAULT_HISTORY = 1
   private val PLACEHOLDER_UNIT_TYPE = "*type"
 
   // number of units displayable
@@ -110,13 +111,15 @@ trait ControllerUtils extends Controller with StrictLogging with Properties with
 
   // @ TODO - CHECK error control
   protected def search[T](key: String, baseUrl: Uri, sourceType: DataSourceTypes = ENT,
-    periodParam: Option[String] = None)(implicit fjs: Reads[T], ws: RequestGenerator): Future[Result] = {
+    periodParam: Option[String] = None, history: Option[Int] = None)(implicit
+    fjs: Reads[T],
+    ws: RequestGenerator): Future[Result] = {
     val res: Future[Result] = key match {
       case k if k.length >= minKeyLength =>
         LOGGER.debug(s"Sending request to ${baseUrl.toString} to retrieve Unit Links")
         ws.singleGETRequest(baseUrl.toString) map {
           case response if response.status == OK => {
-            // @ TODO - add to success or failrue to JSON ??
+            // @ TODO - add to success or failure to JSON ??
             val unitResp = response.json.as[T]
             unitResp match {
               case u: UnitLinksListType =>
@@ -124,7 +127,7 @@ trait ControllerUtils extends Controller with StrictLogging with Properties with
                 if (u.length == CAPPED_DISPLAY_NUMBER) {
                   LOGGER.debug(s"Found a single response with ${(u.head \ "id").as[String]}")
                   val mapOfRecordKeys = Map((u.head \ "unitType").as[String] -> (u.head \ "id").as[String])
-                  val respRecords = parsedRequest(mapOfRecordKeys, periodParam)
+                  val respRecords = parsedRequest(mapOfRecordKeys, periodParam, history)
                   val json: Seq[JsValue] = (u zip respRecords).map(x => toJson(x, (u.head \ "unitType").as[String]))
                   Ok(Json.toJson(json)).as(JSON)
                 } else {
@@ -147,8 +150,8 @@ trait ControllerUtils extends Controller with StrictLogging with Properties with
     res
   }
 
-  // @TODO - duration.inf -> place cap
-  private def parsedRequest(searchList: Map[String, String], withPeriod: Option[String] = None)(implicit ws: RequestGenerator): List[JsValue] = {
+  private def parsedRequest(searchList: Map[String, String], withPeriod: Option[String] = None,
+                            limit: Option[Int] = None)(implicit ws: RequestGenerator): List[JsValue] = {
     searchList.map {
       case (group, id) =>
         val unit = DataSourceTypesUtil.fromString(group)
@@ -159,8 +162,10 @@ trait ControllerUtils extends Controller with StrictLogging with Properties with
           case Some(PAYE) => payeAdminDataApiURL
           case Some(ENT) => sbrControlApiURL
         }
-        val newPath = uriPathBuilder(path, id, withPeriod, group = unit.getOrElse("").toString)
+        // TODO - fix unit.getOrElse("").toString
+        val newPath = createUri(path, id, withPeriod, group = unit.getOrElse("").toString, history = limit)
         LOGGER.info(s"Sending request to $newPath to get records of all variables of unit.")
+        // @TODO - duration.inf -> place cap
         val resp = ws.singleGETRequestWithTimeout(newPath.toString, Duration.Inf)
         // @ TODO - add to success or failrue to JSON ??
         resp.json

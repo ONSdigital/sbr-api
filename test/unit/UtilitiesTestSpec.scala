@@ -5,13 +5,13 @@ import play.api.libs.json._
 
 import uk.gov.ons.sbr.models.{ CRN, ENT }
 
-import utils.UriBuilder.uriPathBuilder
+import utils.UriBuilder.createUri
 import utils.Utilities._
 import resources.TestUtils
 
 class UtilitiesTestSpec extends TestUtils {
 
-  private val testJS: JsValue = Json.obj(
+  private val TEST_JS: JsValue = Json.obj(
     "name" -> "Watership Down",
     "location" -> Json.obj("lat" -> 51.235685, "long" -> -1.309197)
   )
@@ -47,27 +47,31 @@ class UtilitiesTestSpec extends TestUtils {
 
   "getOrNull" should {
     "give JsValue" in {
-      val jsName = (testJS \ "name").getOrNull
+      val jsName = (TEST_JS \ "name").getOrNull
       jsName mustBe a[JsValue]
       jsName mustEqual JsString("Watership Down")
     }
     "give JsNull when no valid JsValue is found" in {
-      val jsName = (testJS \ "location" \ "x").getOrNull
+      val jsName = (TEST_JS \ "location" \ "x").getOrNull
       jsName mustBe a[JsValue]
       jsName mustEqual JsNull
     }
   }
 
+  // TODO - create history admin data
+  // TODO - unit links only
+  // TODO - case using the if condition
+  // TODO - LEU
   "uriPathBuilder" should {
     "should return a uri with types and units path arg set as ENT and 0000 respectively" in {
       val expected = "/localhost:8080/v0/types/ENT/units/0000"
-      val uri = uriPathBuilder("localhost:8080/v0", "0000", None, Some(ENT))
+      val uri = createUri("localhost:8080/v0", "0000", None, Some(ENT))
       uri mustBe a[Uri]
       uri.toString mustEqual expected
     }
     "return a uri with period, type params and the write unit path param (companies)" in {
       val expected = "/localhost:8080/v0/periods/201706/types/CH/records/00011"
-      val uri = uriPathBuilder("localhost:8080/v0", "00011", Some("201706"), Some(CRN), "ch")
+      val uri = createUri("localhost:8080/v0", "00011", Some("201706"), Some(CRN), "ch")
       uri mustBe a[Uri]
       uri.toString mustEqual expected
     }
