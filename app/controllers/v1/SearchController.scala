@@ -2,6 +2,8 @@ package controllers.v1
 
 import javax.inject.{ Inject, Singleton }
 
+import scala.util.Try
+
 import play.api.Configuration
 import play.api.i18n.{ I18nSupport, Messages, MessagesApi }
 import play.api.mvc.{ Action, AnyContent }
@@ -48,7 +50,7 @@ class SearchController @Inject() (implicit ws: RequestGenerator, val configurati
   ): Action[AnyContent] = {
     Action.async { implicit request =>
       val key = id.orElse(request.getQueryString("id")).getOrElse("")
-      val limit = history.orElse(Some(request.getQueryString("history").getOrElse(DEFAULT_HISTORY.toString).toInt))
+      val limit = history.orElse(Try(Some(request.getQueryString("history").get.toInt)).getOrElse(None))
       val uri = createUri(SBR_CONTROL_API_URL, key)
       search[UnitLinksListType](key, uri, history = limit)
     }

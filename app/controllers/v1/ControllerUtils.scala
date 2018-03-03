@@ -33,7 +33,6 @@ import services.RequestGenerator
 trait ControllerUtils extends Controller with StrictLogging with Properties with I18nSupport {
 
   protected val PLACEHOLDER_PERIOD = "*date"
-  protected val DEFAULT_HISTORY = 1
   private val PLACEHOLDER_UNIT_TYPE = "*type"
   // number of units displayable
   private val CAPPED_DISPLAY_NUMBER = 1
