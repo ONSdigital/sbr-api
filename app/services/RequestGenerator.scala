@@ -1,18 +1,18 @@
 package services
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.{ Inject, Singleton }
 
 import scala.concurrent.duration.Duration.Infinite
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{ Await, Future }
 
 import play.api.Configuration
-import play.api.http.{ContentTypes, Status}
+import play.api.http.{ ContentTypes, Status }
 import play.api.libs.json.JsValue
-import play.api.libs.ws.{WSClient, WSResponse}
-import play.api.mvc.{Result, Results}
+import play.api.libs.ws.{ WSClient, WSResponse }
+import play.api.mvc.{ Result, Results }
 import org.slf4j.LoggerFactory
-import com.typesafe.config.{Config, ConfigFactory}
+import com.typesafe.config.{ Config, ConfigFactory }
 
 import config.Properties
 
@@ -63,7 +63,7 @@ class RequestGenerator @Inject() (
   @deprecated("Migrate to singlePOSTRequest", "27 Nov 2017 - fix/tidy-up-1")
   def controlReroute(url: String, headers: (String, String), body: JsValue): Future[WSResponse] = {
     LOGGER.debug(s"Rerouting to route: $url")
-    ws.url(url).withHeaders(headers).withRequestTimeout(REQUEST_TIMEOUT.millis).post(body)
+    ws.url(url).withHeaders(headers).withRequestTimeout(API_REQUEST_TIMEOUT.millis).post(body)
   }
 
   def singlePOSTRequest(url: String, headers: (String, String), body: JsValue): Future[WSResponse] = {

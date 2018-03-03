@@ -45,7 +45,7 @@ trait ControllerUtils extends Controller with StrictLogging with Properties with
   protected type StatisticalUnitLinkType = JsValue
 
   private def toJson(record: (JsValue, JsValue), `type`: String): JsValue = {
-    Json.toJson( JsObject( record match {
+    Json.toJson(JsObject(record match {
       case (link, unit) =>
 
         // @ TODO PATCH - fix and remove patch
@@ -88,7 +88,7 @@ trait ControllerUtils extends Controller with StrictLogging with Properties with
               "period" -> period,
               "vars" -> vars
             )
-        }).fields.filterNot{ case (_, v) => v == JsNull }
+        }).fields.filterNot { case (_, v) => v == JsNull }
     }))
   }
 

@@ -4,18 +4,18 @@ import play.api.Configuration
 import com.typesafe.config.Config
 
 /**
-  * Properties
-  * ----------------
-  * Author: haqa
-  * Date: 10 July 2017 - 09:25
-  * Copyright (c) 2017  Office for National Statistics
-  */
+ * Properties
+ * ----------------
+ * Author: haqa
+ * Date: 10 July 2017 - 09:25
+ * Copyright (c) 2017  Office for National Statistics
+ */
 trait Properties {
   implicit val configuration: Configuration
   lazy private val CONFIG: Config = configuration.underlying
 
   // Utils
-  lazy val REQUEST_TIMEOUT: Long = CONFIG.getInt("request.timeout")
+  lazy val API_REQUEST_TIMEOUT: Long = CONFIG.getInt("request.timeout")
   lazy val MINIMUM_KEY_LENGTH: Int = CONFIG.getInt("minimum.key.length")
   // SBR CONTROL API
   lazy val CONTROL_EDIT_ENTERPRISE_URL: String = CONFIG.getString("api.sbr.control.edit.enterprise")
