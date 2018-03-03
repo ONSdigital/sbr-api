@@ -4,28 +4,28 @@ import play.api.Configuration
 import com.typesafe.config.Config
 
 /**
- * Created by haqa on 28/07/2017.
- */
-
-/**
- * @todo - fix config vals based on environment unforced default issue
- */
-
+  * Properties
+  * ----------------
+  * Author: haqa
+  * Date: 10 July 2017 - 09:25
+  * Copyright (c) 2017  Office for National Statistics
+  */
 trait Properties {
   implicit val configuration: Configuration
-  lazy private val config: Config = configuration.underlying
+  lazy private val CONFIG: Config = configuration.underlying
 
-  lazy val requestTimeout: Long = config.getInt("request.timeout")
-  lazy val minKeyLength: Int = config.getInt("minimum.key.length")
-
+  // Utils
+  lazy val REQUEST_TIMEOUT: Long = CONFIG.getInt("request.timeout")
+  lazy val MINIMUM_KEY_LENGTH: Int = CONFIG.getInt("minimum.key.length")
   // SBR CONTROL API
-  lazy val controlEditEntURL: String = config.getString("api.sbr.control.edit.enterprise")
-  lazy val controlEditEntWithPeriodURL: String = config.getString("api.sbr.control.edit.enterprise.with.period")
-  lazy val sbrControlApiURL: String = config.getString("api.sbr.control.url")
+  lazy val CONTROL_EDIT_ENTERPRISE_URL: String = CONFIG.getString("api.sbr.control.edit.enterprise")
+  // TODO - REMOVE if uneeded controlEditEntWithPeriodURL
+  lazy val controlEditEntWithPeriodURL: String = CONFIG.getString("api.sbr.control.edit.enterprise.with.period")
+  lazy val SBR_CONTROL_API_URL: String = CONFIG.getString("api.sbr.control.url")
   // ADMIN DATA APIs
-  lazy val chAdminDataApiURL: String = config.getString("api.sbr.admin.data.ch.url")
-  lazy val vatAdminDataApiURL: String = config.getString("api.sbr.admin.data.vat.url")
-  lazy val payeAdminDataApiURL: String = config.getString("api.sbr.admin.data.paye.url")
+  lazy val CH_ADMIN_DATA_API_URL: String = CONFIG.getString("api.sbr.admin.data.ch.url")
+  lazy val VAT_ADMIN_DATA_API_URL: String = CONFIG.getString("api.sbr.admin.data.vat.url")
+  lazy val PAYE_ADMIN_DATA_API_URL: String = CONFIG.getString("api.sbr.admin.data.paye.url")
   // BUSINESS INDEX API
-  lazy val businessIndexDataApiURL: String = config.getString("api.business.index.data.url")
+  lazy val LEGAL_UNIT_DATA_API_URL: String = CONFIG.getString("api.business.index.data.url")
 }
