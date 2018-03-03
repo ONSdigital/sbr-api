@@ -35,6 +35,7 @@ class RouteSpec extends TestUtils {
     }
   }
 
+  // TODO - ADD new search routes => test they exist
   "SearchController" should {
     "return BadRequest as json error stating no expected param found" in {
       val search = fakeRequest("/v1/search?id=")
