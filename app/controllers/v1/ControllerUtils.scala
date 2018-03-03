@@ -23,7 +23,7 @@ import utils.Utilities.{ errAsJson, orElseNull }
 import services.RequestGenerator
 
 /**
- * SearchController
+ * ControllerUtils
  * ----------------
  * Author: haqa
  * Date: 10 July 2017 - 09:25
@@ -114,7 +114,7 @@ trait ControllerUtils extends Controller with StrictLogging with Properties with
     periodParam: Option[String] = None, history: Option[Int] = None)(implicit
     fjs: Reads[T],
     ws: RequestGenerator): Future[Result] = {
-    val res: Future[Result] = key match {
+    key match {
       case k if k.length >= minKeyLength =>
         LOGGER.debug(s"Sending request to ${baseUrl.toString} to retrieve Unit Links")
         ws.singleGETRequest(baseUrl.toString) map {
@@ -147,7 +147,6 @@ trait ControllerUtils extends Controller with StrictLogging with Properties with
       case _ =>
         BadRequest(Messages("controller.invalid.id", key, minKeyLength)).future
     }
-    res
   }
 
   private def parsedRequest(searchList: Map[String, String], withPeriod: Option[String] = None,
