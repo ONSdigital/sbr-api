@@ -22,6 +22,8 @@ pipeline {
         ORGANIZATION = "ons"
         TEAM = "sbr"
         MODULE_NAME = "sbr-api"
+        
+        STAGE = "NONE"
     }
     options {
         skipDefaultCheckout()
@@ -41,7 +43,7 @@ pipeline {
                 script {
                     version = '1.0.' + env.BUILD_NUMBER
                     currentBuild.displayName = version
-                    env.NODE_STAGE = "Checkout"
+                    STAGE = "Checkout"
                 }
             }
         }
@@ -51,22 +53,22 @@ pipeline {
             steps {
                 colourText("info", "Building ${env.BUILD_ID} on ${env.JENKINS_URL} from branch ${env.BRANCH_NAME}")
                 script {
-                    env.NODE_STAGE = "Build"
+                    STAGE = "Build"
                     sh '''
                         $SBT clean compile "project api" universal:packageBin coverage test coverageReport
                     '''
                     stash name: 'compiled'
                     if (BRANCH_NAME == BRANCH_DEV) {
                         env.DEPLOY_NAME = DEPLOY_DEV
-                        sh "cp target/universal/${ORGANIZATION}-${MODULE_NAME}-*.zip ${DEPLOY_DEV}-${ORGANIZATION}-${MODULE_NAME}.zip"
+                        sh "cp target/universal/${ORGANIZATION}-${MODULE_NAME}-*.zip ${env.DEPLOY_NAME}-${ORGANIZATION}-${MODULE_NAME}.zip"
                     }
                     else if  (BRANCH_NAME == BRANCH_TEST) {
                         env.DEPLOY_NAME = DEPLOY_TEST
-                        sh "cp target/universal/${ORGANIZATION}-${MODULE_NAME}-*.zip ${DEPLOY_TEST}-${ORGANIZATION}-${MODULE_NAME}.zip"
+                        sh "cp target/universal/${ORGANIZATION}-${MODULE_NAME}-*.zip ${env.DEPLOY_NAME}-${ORGANIZATION}-${MODULE_NAME}.zip"
                     }
                     else if (BRANCH_NAME == BRANCH_PROD) {
                         env.DEPLOY_NAME = DEPLOY_PROD
-                        sh "cp target/universal/${ORGANIZATION}-${MODULE_NAME}-*.zip ${DEPLOY_PROD}-${ORGANIZATION}-${MODULE_NAME}.zip"
+                        sh "cp target/universal/${ORGANIZATION}-${MODULE_NAME}-*.zip ${env.DEPLOY_NAME}-${ORGANIZATION}-${MODULE_NAME}.zip"
                     }
                     else {
                         colourText("info", "Not a deployable Git banch!")
@@ -99,7 +101,7 @@ pipeline {
             post {
                 always {
                     script {
-                        env.NODE_STAGE = "Static Analysis"
+                        STAGE = "Static Analysis"
                     }
                 }
                 success {
@@ -128,7 +130,7 @@ pipeline {
             }
             steps {
                 script {
-                    env.NODE_STAGE = "Bundle"
+                    STAGE = "Bundle"
                 }
                 colourText("info", "Bundling....")
                 dir('conf') {
@@ -149,7 +151,7 @@ pipeline {
             }
             steps {
                 script {
-                    env.NODE_STAGE = "Releases"
+                    STAGE = "Releases"
                     currentTag = getLatestGitTag()
                     colourText("info", "Found latest tag: ${currentTag}")
                     newTag =  IncrementTag( currentTag, RELEASE_TYPE )
@@ -166,7 +168,7 @@ pipeline {
             }
             steps {
                 script {
-                    env.NODE_STAGE = "Package and Push Artifact"
+                    STAGE = "Package and Push Artifact"
                 }
                 sh """
                     $SBT clean compile package
@@ -187,7 +189,7 @@ pipeline {
             }
             steps {
                 script {
-                    env.NODE_STAGE = "Deploy"
+                    STAGE = "Deploy"
                 }
                 milestone(1)
                 lock('Deployment Initiated') {
@@ -208,7 +210,7 @@ pipeline {
             }
             steps {
                 script {
-                    env.NODE_STAGE = "Integration Tests"
+                    STAGE = "Integration Tests"
                 }
                 unstash 'compiled'
                 sh "$SBT it:test"
@@ -229,11 +231,11 @@ pipeline {
         }
         unstable {
             colourText("warn", "Something went wrong, build finished with result ${currentResult}. This may be caused by failed tests, code violation or in some cases unexpected interrupt.")
-            sendNotifications currentBuild.result, "\$SBR_EMAIL_LIST", "${env.NODE_STAGE}"
+            sendNotifications currentBuild.result, "\$SBR_EMAIL_LIST", "${STAGE}"
         }
         failure {
             colourText("warn","Process failed at: ${env.NODE_STAGE}")
-            sendNotifications currentBuild.result, "\$SBR_EMAIL_LIST", "${env.NODE_STAGE}"
+            sendNotifications currentBuild.result, "\$SBR_EMAIL_LIST", "${STAGE}"
         }
     }
 }
