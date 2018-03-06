@@ -41,8 +41,6 @@ object UriBuilder {
       case (Some(p), Some(t), u, None) => baseUrl / PERIOD_PATH / p / TYPE_PATH / t.toString / unitTypePath / u
       case (Some(p), None, u, None) => if (List(VAT.toString, CRN.toString, PAYE.toString, LEU.toString) contains group) {
         baseUrl / unitTypePath / u / PERIOD_PATH / p
-      } else if (ENT.toString == group) {
-        baseUrl / PERIOD_PATH / p / unitTypePath / u
       } else {
         baseUrl / PERIOD_PATH / p / unitTypePath / u
       }
