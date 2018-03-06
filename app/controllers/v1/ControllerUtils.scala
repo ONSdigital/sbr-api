@@ -162,7 +162,7 @@ trait ControllerUtils extends Controller with StrictLogging with Properties with
         LOGGER.info(s"Sending request to $newPath to get records of all variables of unit.")
         // @TODO - Duration.Inf -> place cap
         val resp = ws.singleGETRequestWithTimeout(newPath.toString, Duration.Inf)
-        LOGGER.debug(s"Result for record is: $resp")
+        LOGGER.debug(s"Result for record is: ${resp.body}")
         // @ TODO - add to success or failrue to JSON ??
         resp.json
     }.toList
