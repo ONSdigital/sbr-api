@@ -52,7 +52,7 @@ trait ControllerUtils extends Controller with StrictLogging with Properties with
         val period = if (`type` == ENT.toString) {
           (unit \ "period").getOrNull
         } else {
-          (unit.as[JsValue] \ "period").getOrNull
+          (unit.as[Seq[JsValue]].head \ "period").getOrNull
         }
 
         // @ TODO PATCH - fix and remove patch when BI and ENTERPRISE apis are fixed
@@ -61,7 +61,7 @@ trait ControllerUtils extends Controller with StrictLogging with Properties with
         val vars = if (`type` == ENT.toString) {
           (unit \ "vars").getOrElse(unit)
         } else {
-          (unit.as[JsValue] \ "variables").getOrNull
+          (unit.as[Seq[JsValue]].head \ "variables").getOrNull
         }
 
         val unitType = DataSourceTypesUtil.fromString(`type`).getOrElse("").toString
@@ -113,6 +113,7 @@ trait ControllerUtils extends Controller with StrictLogging with Properties with
         LOGGER.debug(s"Sending request to ${baseUrl.toString} to retrieve Unit Links")
         ws.singleGETRequest(baseUrl.toString) map {
           case response if response.status == OK => {
+            LOGGER.debug(s"Result for unit is: ${response.body}")
             // @ TODO - add to success or failure to JSON ??
             val unitResp = response.json.as[T]
             unitResp match {
@@ -161,6 +162,7 @@ trait ControllerUtils extends Controller with StrictLogging with Properties with
         LOGGER.info(s"Sending request to $newPath to get records of all variables of unit.")
         // @TODO - Duration.Inf -> place cap
         val resp = ws.singleGETRequestWithTimeout(newPath.toString, Duration.Inf)
+        LOGGER.debug(s"Result for record is: $resp")
         // @ TODO - add to success or failrue to JSON ??
         resp.json
     }.toList
