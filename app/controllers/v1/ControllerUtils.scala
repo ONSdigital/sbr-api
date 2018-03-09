@@ -52,7 +52,7 @@ trait ControllerUtils extends Controller with StrictLogging with Properties with
         val period = if (`type` == ENT.toString) {
           (unit \ "period").getOrNull
         } else {
-          (unit.as[Seq[JsValue]].head \ "period").getOrNull
+          (unit.as[JsValue] \ "period").getOrNull
         }
 
         // @ TODO PATCH - fix and remove patch when BI and ENTERPRISE apis are fixed
@@ -61,7 +61,7 @@ trait ControllerUtils extends Controller with StrictLogging with Properties with
         val vars = if (`type` == ENT.toString) {
           (unit \ "vars").getOrElse(unit)
         } else {
-          (unit.as[Seq[JsValue]].head \ "variables").getOrNull
+          (unit.as[JsValue] \ "variables").getOrNull
         }
 
         val unitType = DataSourceTypesUtil.fromString(`type`).getOrElse("").toString
