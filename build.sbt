@@ -109,7 +109,7 @@ lazy val buildInfoConfig: Seq[Def.Setting[_]] = Seq(
     BuildInfoKey.action("codeLicenses"){ licenses.value },
     BuildInfoKey.action("projectTeam"){ Constant.team },
     BuildInfoKey.action("projectStage"){ Constant.projectStage },
-    BuildInfoKey.action("repositoryAddress"){ Some(scmInfo.value.get.browseUrl).getOrElse("REPO_ADDRESS_NOT_FOUND")}
+    BuildInfoKey.action("repositoryAddress"){ scmInfo.value.fold("REPO_ADDRESS_NOT_FOUND")(_.browseUrl.toExternalForm) }
   ),
   // di router -> swagger
   routesGenerator := InjectedRoutesGenerator,
