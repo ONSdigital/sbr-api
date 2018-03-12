@@ -5,13 +5,13 @@ import play.api.libs.json._
 
 import uk.gov.ons.sbr.models.{ CRN, ENT }
 
-import utils.UriBuilder.uriPathBuilder
+import utils.UriBuilder.createUri
 import utils.Utilities._
 import resources.TestUtils
 
 class UtilitiesTestSpec extends TestUtils {
 
-  private val testJS: JsValue = Json.obj(
+  private val TEST_JS: JsValue = Json.obj(
     "name" -> "Watership Down",
     "location" -> Json.obj("lat" -> 51.235685, "long" -> -1.309197)
   )
@@ -47,27 +47,65 @@ class UtilitiesTestSpec extends TestUtils {
 
   "getOrNull" should {
     "give JsValue" in {
-      val jsName = (testJS \ "name").getOrNull
+      val jsName = (TEST_JS \ "name").getOrNull
       jsName mustBe a[JsValue]
       jsName mustEqual JsString("Watership Down")
     }
     "give JsNull when no valid JsValue is found" in {
-      val jsName = (testJS \ "location" \ "x").getOrNull
+      val jsName = (TEST_JS \ "location" \ "x").getOrNull
       jsName mustBe a[JsValue]
       jsName mustEqual JsNull
     }
   }
 
+  // TODO - create history admin data
+  // TODO - unit links only
+  // TODO - case using the if condition
   "uriPathBuilder" should {
-    "should return a uri with types and units path arg set as ENT and 0000 respectively" in {
+    "return a uri with types and units path arg set as ENT and 0000 respectively" in {
       val expected = "/localhost:8080/v0/types/ENT/units/0000"
-      val uri = uriPathBuilder("localhost:8080/v0", "0000", None, Some(ENT))
+      val uri = createUri("localhost:8080/v0", "0000", None, Some(ENT))
       uri mustBe a[Uri]
       uri.toString mustEqual expected
     }
-    "return a uri with period, type params and the write unit path param (companies)" in {
-      val expected = "/localhost:8080/v0/periods/201706/types/CH/records/00011"
-      val uri = uriPathBuilder("localhost:8080/v0", "00011", Some("201706"), Some(CRN), "ch")
+    "return a uri for control-api route to get unit with the specified type and period param" in {
+      val expected = "/localhost:8080/v0/periods/201706/types/CH/units/00011"
+      val uri = createUri("localhost:8080/v0", "00011", Some("201706"), Some(CRN))
+      uri mustBe a[Uri]
+      uri.toString mustEqual expected
+    }
+    "return a uri that a request to LEU hbase rest api" in {
+      val expected = "/leu-localhost:8080/v0/records/1000345"
+      val uri = createUri("leu-localhost:8080/v0", "1000345", group = "ch")
+      uri mustBe a[Uri]
+      uri.toString mustEqual expected
+    }
+
+    "return a VAT admin data uri request with period parameter - executes first IF conditional in Builder" in {
+      val expected = "/vat-localhost:8080/v0/records/9000089/periods/201901"
+      val uri = createUri("/vat-localhost:8080/v0", "9000089", Some("201901"), group = "VAT")
+      uri mustBe a[Uri]
+      uri.toString mustEqual expected
+    }
+
+    "return a control url with id and period path in exact order - executes last IF clause in Builder" in {
+      val expected = "/localhost:8080/v0/periods/201912/units/11111"
+      val uri = createUri("/localhost:8080/v0", "11111", Some("201912"))
+      uri mustBe a[Uri]
+      uri.toString mustEqual expected
+    }
+
+    "returns a control url for a single unit param url only - no period" in {
+      val expected = "/localhost:8080/v0/units/11111"
+      val uri = createUri("/localhost:8080/v0", "11111")
+      uri mustBe a[Uri]
+      uri.toString mustEqual expected
+    }
+
+    "generate a request to a admin data api with max argument set" in {
+      val max = 3
+      val expected = s"/localhost:8080/v0/records/12345678/history?max=$max"
+      val uri = createUri("/localhost:8080/v0", "12345678", group = "PAYE", history = Some(max))
       uri mustBe a[Uri]
       uri.toString mustEqual expected
     }

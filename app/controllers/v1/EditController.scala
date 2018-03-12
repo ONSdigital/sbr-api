@@ -37,7 +37,7 @@ class EditController @Inject() (ws: RequestGenerator, val configuration: Configu
   def editEnterprise(
     @ApiParam(value = "An Enterprise ID", example = "1234567890", required = true) id: String
   ): Action[AnyContent] = Action.async { implicit request =>
-    val url = s"$controlEditEntURL$id"
+    val url = s"$CONTROL_EDIT_ENTERPRISE_URL$id"
     val jsonBody: Option[String] = request.body.asText
     Logger.info(s"Rerouting edit enterprise by default period request to: $url")
     rerouteEditPost(jsonBody, url)
@@ -59,7 +59,7 @@ class EditController @Inject() (ws: RequestGenerator, val configuration: Configu
     @ApiParam(value = "A period in yyyyMM format", example = "201706", required = true) period: String,
     @ApiParam(value = "An Enterprise ID", example = "1234567890", required = true) id: String
   ): Action[AnyContent] = Action.async { implicit request =>
-    val url = s"${controlEditEntURL.replace(PLACEHOLDER_PERIOD, period)}$id"
+    val url = s"${CONTROL_EDIT_ENTERPRISE_URL.replace(PLACEHOLDER_PERIOD, period)}$id"
     val jsonBody: Option[String] = request.body.asText
     Logger.info(s"Rerouting edit enterprise by specified period request to: $url")
     rerouteEditPost(jsonBody, url)

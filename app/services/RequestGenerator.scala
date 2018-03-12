@@ -28,8 +28,6 @@ import config.Properties
 class RequestGenerator @Inject() (
     ws: WSClient,
     val configuration: Configuration
-//    durationMetric: TimeUnit = MILLISECONDS,
-//    timeout: Option[Long] = None
 ) extends Results with Status with ContentTypes with Properties {
 
   private[this] val LOGGER = LoggerFactory.getLogger(getClass)
@@ -39,11 +37,11 @@ class RequestGenerator @Inject() (
   private final val TIMEOUT_REQUEST: Long = config.getString("request.timeout").toLong
   private final val INF_REQUEST: Infinite = Duration.Inf
 
-  private val TimeUnitCollection: List[TimeUnit] =
+  private val TIME_UNIT_COLLECTION: List[TimeUnit] =
     List(NANOSECONDS, MICROSECONDS, MILLISECONDS, SECONDS, MINUTES, HOURS, DAYS)
 
   final def timeUnitMapper(s: String): TimeUnit =
-    TimeUnitCollection.find(_.toString.equalsIgnoreCase(s))
+    TIME_UNIT_COLLECTION.find(_.toString.equalsIgnoreCase(s))
       .getOrElse(throw new IllegalArgumentException(s"Could not find TimeUnit + $s"))
 
   def reroute(host: String, route: String): Result = {
@@ -52,7 +50,7 @@ class RequestGenerator @Inject() (
       .flashing("redirect" -> s"You are being redirected to $route route", "status" -> "ok")
   }
 
-  def singleGETRequest(path: String, headers: Seq[(String, String)] = Seq(), params: Seq[(String, String)] = Seq()): Future[WSResponse] =
+  def singleGETRequest(path: String, headers: Seq[(String, String)] = Seq.empty, params: Seq[(String, String)] = Seq.empty): Future[WSResponse] =
     ws.url(path.toString)
       .withQueryString(params: _*)
       .withHeaders(headers: _*)
@@ -65,7 +63,7 @@ class RequestGenerator @Inject() (
   @deprecated("Migrate to singlePOSTRequest", "27 Nov 2017 - fix/tidy-up-1")
   def controlReroute(url: String, headers: (String, String), body: JsValue): Future[WSResponse] = {
     LOGGER.debug(s"Rerouting to route: $url")
-    ws.url(url).withHeaders(headers).withRequestTimeout(requestTimeout.millis).post(body)
+    ws.url(url).withHeaders(headers).withRequestTimeout(API_REQUEST_TIMEOUT.millis).post(body)
   }
 
   def singlePOSTRequest(url: String, headers: (String, String), body: JsValue): Future[WSResponse] = {

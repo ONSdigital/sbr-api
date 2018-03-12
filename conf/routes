@@ -4,19 +4,21 @@
 
 # Searching Endpoints
 
-GET     /v1/search                      controllers.v1.SearchController.searchById(id: Option[String] ?= None)
-GET     /v1/periods/:date/search         controllers.v1.SearchController.searchByReferencePeriod(id: Option[String] ?= None, date)
+#GET     /v1/search                      controllers.v1.SearchController.searchById(id: Option[String] ?= None)
+GET     /v1/search                      controllers.v1.SearchController.searchById(id: Option[String] ?= None, history: Option[Int] ?= None)
+GET     /v1/periods/:date/search        controllers.v1.SearchController.searchByReferencePeriod(id: Option[String] ?= None, date)
+
+# TODO - check and Add history arg in path routes if needed
+GET     /v1/ents/:id                    controllers.v1.SearchController.searchEnterprise(id)
 
 GET     /v1/leus/:id                    controllers.v1.SearchController.searchLeU(id)
-
-GET     /v1/ents/:id                    controllers.v1.SearchController.searchEnterprise(id)
 GET     /v1/vats/:id                    controllers.v1.SearchController.searchVat(id)
 GET     /v1/payes/:id                   controllers.v1.SearchController.searchPaye(id)
 GET     /v1/crns/:id                    controllers.v1.SearchController.searchCrn(id)
 
-GET     /v1/periods/:date/leus/:id      controllers.v1.SearchController.searchLeUWithPeriod(date, id)
-
 GET     /v1/periods/:date/ents/:id      controllers.v1.SearchController.searchEnterpriseWithPeriod(date, id)
+
+GET     /v1/periods/:date/leus/:id      controllers.v1.SearchController.searchLeUWithPeriod(date, id)
 GET     /v1/periods/:date/vats/:id      controllers.v1.SearchController.searchVatWithPeriod(date, id)
 GET     /v1/periods/:date/payes/:id     controllers.v1.SearchController.searchPayeWithPeriod(date, id)
 GET     /v1/periods/:date/crns/:id      controllers.v1.SearchController.searchCrnWithPeriod(date, id)
