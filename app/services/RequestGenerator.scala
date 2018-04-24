@@ -1,20 +1,17 @@
 package services
 
+import com.typesafe.config.{ Config, ConfigFactory }
+import config.Properties
 import javax.inject.{ Inject, Singleton }
-
-import scala.concurrent.duration.Duration.Infinite
-import scala.concurrent.duration._
-import scala.concurrent.{ Await, Future }
-
+import org.slf4j.LoggerFactory
 import play.api.Configuration
 import play.api.http.{ ContentTypes, Status }
 import play.api.libs.json.JsValue
 import play.api.libs.ws.{ WSClient, WSResponse }
 import play.api.mvc.{ Result, Results }
-import org.slf4j.LoggerFactory
-import com.typesafe.config.{ Config, ConfigFactory }
 
-import config.Properties
+import scala.concurrent.Future
+import scala.concurrent.duration._
 
 /**
  * WSRequestGenerator
@@ -35,7 +32,6 @@ class RequestGenerator @Inject() (
   private final val config: Config = ConfigFactory.load()
   private final val DURATION_METRIC: TimeUnit = MILLISECONDS
   private final val TIMEOUT_REQUEST: Long = config.getString("request.timeout").toLong
-  private final val INF_REQUEST: Infinite = Duration.Inf
 
   private val TIME_UNIT_COLLECTION: List[TimeUnit] =
     List(NANOSECONDS, MICROSECONDS, MILLISECONDS, SECONDS, MINUTES, HOURS, DAYS)
@@ -57,8 +53,10 @@ class RequestGenerator @Inject() (
       .withRequestTimeout(Duration(TIMEOUT_REQUEST, DURATION_METRIC))
       .get
 
-  def singleGETRequestWithTimeout(url: String, timeout: Duration = Duration(TIMEOUT_REQUEST, DURATION_METRIC)): WSResponse =
-    Await.result(ws.url(url.toString).get(), timeout)
+  def singleGETRequestWithTimeout(url: String, timeout: Duration = Duration(TIMEOUT_REQUEST, DURATION_METRIC)): Future[WSResponse] =
+    ws.url(url.toString)
+      .withRequestTimeout(timeout)
+      .get()
 
   @deprecated("Migrate to singlePOSTRequest", "27 Nov 2017 - fix/tidy-up-1")
   def controlReroute(url: String, headers: (String, String), body: JsValue): Future[WSResponse] = {

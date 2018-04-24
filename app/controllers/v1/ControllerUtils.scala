@@ -1,22 +1,21 @@
 package controllers.v1
 
 import java.time.format.DateTimeParseException
+
 import javax.naming.ServiceUnavailableException
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{ Future, TimeoutException }
-
 import play.api.i18n.{ I18nSupport, Messages }
 import play.api.libs.json._
 import play.api.mvc.{ Controller, Result }
 import org.slf4j.{ Logger, LoggerFactory }
 import com.netaporter.uri.Uri
 import com.typesafe.scalalogging.StrictLogging
-
 import uk.gov.ons.sbr.models._
-
 import config.Properties
+import play.api.libs.ws.WSResponse
 import utils.FutureResponse.futureSuccess
 import utils.UriBuilder._
 import utils.Utilities.{ errAsJson, orElseNull }
@@ -136,14 +135,12 @@ trait ControllerUtils extends Controller with StrictLogging with Properties with
   }
 
   // @ TODO - CHECK error control
-  protected def search[T](key: String, baseUrl: Uri, sourceType: DataSourceTypes = ENT,
-    periodParam: Option[String] = None, history: Option[Int] = None)(implicit
-    fjs: Reads[T],
-    ws: RequestGenerator): Future[Result] = {
+  protected def search[T](key: String, baseUrl: Uri, sourceType: DataSourceTypes = ENT, periodParam: Option[String] = None, history: Option[Int] = None)
+                         (implicit fjs: Reads[T], ws: RequestGenerator): Future[Result] =
     key match {
       case k if k.length >= MINIMUM_KEY_LENGTH =>
-        LOGGER.info(s"Sending request to ${baseUrl.toString} to retrieve Unit Links")
-        ws.singleGETRequest(baseUrl.toString) map {
+        LOGGER.debug(s"Sending request to ${baseUrl.toString} to retrieve Unit Links")
+        ws.singleGETRequest(baseUrl.toString) flatMap {
           case response if response.status == OK => {
             LOGGER.debug(s"Result for unit is: ${response.body}")
             // @ TODO - add to success or failure to JSON ??
@@ -153,16 +150,18 @@ trait ControllerUtils extends Controller with StrictLogging with Properties with
                 // if one UnitLinks found -> get unit
                 if (u.length == CAPPED_DISPLAY_NUMBER) {
                   val id = (u.head \ "id").as[String]
-                  LOGGER.info(s"Found a single response with $id")
+                  LOGGER.debug(s"Found a single response with $id")
                   val unitType = (u.head \ "unitType").as[String]
                   val period = (u.head \ "period").as[String]
-                  val mapOfRecordKeys = Map(unitType -> id)
-                  val respRecords = parsedRequest(mapOfRecordKeys, u.head, periodParam, history)
-                  val json: Seq[JsValue] = (u zip respRecords).map(x => toJson(x, unitType, period))
-                  Ok(Json.toJson(json)).as(JSON)
+                  val mapOfRecordKeys = Map((unitType -> id)
+                  parsedRequest(mapOfRecordKeys, u.head, periodParam, history).map { respRecords =>
+                    val json: Seq[JsValue] = (u zip respRecords).map(x => toJson(x, unitType, period))
+                    Ok(Json.toJson(json)).as(JSON)
+                  }
                 } else {
-                  LOGGER.info(s"Found multiple records matching given id, $key. Returning multiple as list.")
-                  PartialContent(unitResp.toString).as(JSON)
+                  LOGGER.debug(s"Found multiple records matching given id, $key. Returning multiple as list.")
+                  // return UnitLinks if multiple
+                  PartialContent(unitResp.toString).as(JSON).future
                 }
               case s: StatisticalUnitLinkType =>
                 val mapOfRecordKeys = if (sourceType.toString == LOU) {
@@ -171,43 +170,57 @@ trait ControllerUtils extends Controller with StrictLogging with Properties with
                   Map(sourceType.toString -> (s \ "id").as[String])
                 }
                 val period = (s \ "period").as[String]
-                val respRecords = parsedRequest(mapOfRecordKeys, s, periodParam)
-                val json = (Seq(s) zip respRecords).map(x => toJson(x, sourceType.toString, period)).head
-                Ok(json).as(JSON)
+                parsedRequest(mapOfRecordKeys, s, periodParam).map { respRecords =>
+                  val json = (Seq(s) zip respRecords).map(x => toJson(x, sourceType.toString, period)).head
+                  Ok(json).as(JSON)
+                }
             }
           }
-          case response if response.status == NOT_FOUND => NotFound(response.body).as(JSON)
+          case response if response.status == NOT_FOUND =>
+            NotFound(response.body).as(JSON).future
         } recover responseException
       case _ =>
         BadRequest(Messages("controller.invalid.id", key, MINIMUM_KEY_LENGTH)).future
     }
-  }
 
-  private def parsedRequest(searchList: Map[String, String], unitLinksData: JsValue, withPeriod: Option[String] = None,
-    limit: Option[Int] = None)(implicit ws: RequestGenerator): List[JsValue] = {
-    searchList.map {
-      case (group, id) =>
-        val unit = DataSourceTypesUtil.fromString(group)
-        val path = unit match {
-          case Some(LEU) => LEGAL_UNIT_DATA_API_URL
-          case Some(CRN) => CH_ADMIN_DATA_API_URL
-          case Some(VAT) => VAT_ADMIN_DATA_API_URL
-          case Some(PAYE) => PAYE_ADMIN_DATA_API_URL
-          case Some(ENT) => SBR_CONTROL_API_URL
-          case Some(LOU) => SBR_CONTROL_API_URL
-        }
-        // TODO - fix unit.getOrElse("").toString
-        val newPath = unit match {
-          case Some(LOU) => createLouUri(path, id, unitLinksData)
-          case _ => createUri(path, id, withPeriod, group = unit.getOrElse("").toString, history = limit)
-        }
-        LOGGER.info(s"Sending request to $newPath to get records of all variables of unit.")
-        // @TODO - Duration.Inf -> place cap
-        val resp = ws.singleGETRequestWithTimeout(newPath.toString, Duration.Inf)
+  private def parsedRequest(searchList: Map[String, String], unitLinksData: JsValue, withPeriod: Option[String] = None, limit: Option[Int] = None)
+                           (implicit ws: RequestGenerator): Future[Seq[JsValue]] = {
+    val futures = searchList.flatMap {
+      case (group, id) => lookupUnit(group, id, unitLinksData, withPeriod, limit)
+    }.map { futResponse =>
+      futResponse.map { resp =>
         LOGGER.debug(s"Result for record is: ${resp.body}")
-        // @ TODO - add to success or failrue to JSON ??
+        // @ TODO - add to success or failure to JSON ??
         resp.json
-    }.toList
+      }
+    }.toSeq
+
+    Future.sequence(futures)
   }
 
+  private def lookupUnit(group: String, id: String, unitLinksData: JsValue, withPeriod: Option[String], limit: Option[Int])
+                        (implicit ws: RequestGenerator): Option[Future[WSResponse]] = {
+    val unitOpt = DataSourceTypesUtil.fromString(group)
+    if (unitOpt.isEmpty) logger.warn(s"Unrecognised group value [$group].")
+    unitOpt.map { unit =>
+      val path = apiUrlFor(unit)
+      val newPath = unit match {
+        case LOU => createLouUri(path, id, unitLinksData)
+        case _ => createUri(path, id, withPeriod, group = unit.toString, history = limit)
+      }
+      LOGGER.info(s"Sending request to $newPath to get records of all variables of unit.")
+      // @TODO - Duration.Inf -> place cap
+      ws.singleGETRequestWithTimeout(newPath.toString, Duration.Inf)
+    }
+  }
+
+  private def apiUrlFor(unit: DataSourceTypes): String =
+    unit match {
+      case LEU => LEGAL_UNIT_DATA_API_URL
+      case CRN => CH_ADMIN_DATA_API_URL
+      case VAT => VAT_ADMIN_DATA_API_URL
+      case PAYE => PAYE_ADMIN_DATA_API_URL
+      case ENT => SBR_CONTROL_API_URL
+      case LOU => SBR_CONTROL_API_URL
+    }
 }
