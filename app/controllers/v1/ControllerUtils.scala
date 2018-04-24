@@ -2,24 +2,25 @@ package controllers.v1
 
 import java.time.format.DateTimeParseException
 
-import javax.naming.ServiceUnavailableException
-
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration.Duration
-import scala.concurrent.{ Future, TimeoutException }
-import play.api.i18n.{ I18nSupport, Messages }
-import play.api.libs.json._
-import play.api.mvc.{ Controller, Result }
-import org.slf4j.{ Logger, LoggerFactory }
 import com.netaporter.uri.Uri
 import com.typesafe.scalalogging.StrictLogging
-import uk.gov.ons.sbr.models._
 import config.Properties
+import javax.naming.ServiceUnavailableException
+import org.slf4j.{Logger, LoggerFactory}
+import play.api.i18n.{I18nSupport, Messages}
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.api.libs.json._
 import play.api.libs.ws.WSResponse
-import utils.FutureResponse.futureSuccess
-import utils.UriBuilder._
-import utils.Utilities.{ errAsJson, orElseNull }
+import play.api.mvc.{Controller, Result}
 import services.RequestGenerator
+import uk.gov.ons.sbr.models._
+import utils.FutureResponse.futureSuccess
+import utils.UriBuilder.{createUri, _}
+import utils.Utilities.{errAsJson, orElseNull}
+
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Future, TimeoutException}
+
 
 /**
  * ControllerUtils
