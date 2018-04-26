@@ -13,14 +13,6 @@ import play.api.mvc.{ Result, Results }
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-/**
- * WSRequestGenerator
- * ----------------
- * Author: haqa
- * Date: 16 November 2017 - 09:25
- * Copyright (c) 2017  Office for National Statistics
- */
-
 @Singleton
 class RequestGenerator @Inject() (
     ws: WSClient,
@@ -57,12 +49,6 @@ class RequestGenerator @Inject() (
     ws.url(url.toString)
       .withRequestTimeout(timeout)
       .get()
-
-  @deprecated("Migrate to singlePOSTRequest", "27 Nov 2017 - fix/tidy-up-1")
-  def controlReroute(url: String, headers: (String, String), body: JsValue): Future[WSResponse] = {
-    LOGGER.debug(s"Rerouting to route: $url")
-    ws.url(url).withHeaders(headers).withRequestTimeout(API_REQUEST_TIMEOUT.millis).post(body)
-  }
 
   def singlePOSTRequest(url: String, headers: (String, String), body: JsValue): Future[WSResponse] = {
     LOGGER.debug(s"Rerouting to route: $url")

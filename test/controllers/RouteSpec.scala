@@ -1,9 +1,8 @@
-package scala.server
+package controllers
 
 import play.api.test.Helpers._
 import play.api.test._
-
-import resources.TestUtils
+import support.TestUtils
 
 /**
  * Test application routes operate
@@ -43,34 +42,6 @@ class RouteSpec extends TestUtils {
       //      contentType(search) mustBe Some("application/json")
       contentAsString(search) must include("cannot be empty or too short")
     }
-
-    // @todo - make badrequest route (short key size)
-    "return BadRequest as json error 2with key size too small" ignore {
-      val shortId = "123"
-      val search = fakeRequest(s"/v1/search?id=$shortId")
-      status(search) mustBe BAD_REQUEST
-      contentType(search) mustBe Some("application/json")
-      val err_code: String = getJsValue(contentAsJson(search) \ "code")
-      err_code mustBe s""""invalid_key_size""""
-    }
-
-    "return BadRequest for a valid period and invalud id" ignore {
-      val shortId = "123"
-      val search = fakeRequest(s"/v1/searchWithPeriod?period=201706&id=$shortId")
-      status(search) mustBe BAD_REQUEST
-      contentType(search) mustBe Some("application/json")
-      val err_code: String = getJsValue(contentAsJson(search) \ "code")
-      err_code mustBe s""""invalid_key_size""""
-    }
-
-    "return BadRequest with valid period and invalid id length on specific unit search" ignore {
-      val shortId = "123"
-      val search = fakeRequest(s"/v1/periods/201706/crns/$shortId")
-      status(search) mustBe BAD_REQUEST
-      contentType(search) mustBe Some("application/json")
-      val err_code: String = getJsValue(contentAsJson(search) \ "code")
-      err_code mustBe s""""invalid_key_size""""
-    }
   }
 
   "VersionController" should {
@@ -85,18 +56,13 @@ class RouteSpec extends TestUtils {
     "display short health report as json" in {
       val health = fakeRequest("/health")
       status(health) mustEqual OK
-      //      contentType(health) mustBe Some("application/json")
-      //      contentAsString(health).toLowerCase must include("status: ok")
     }
   }
 
-  // @note - in progress route
   "LastUpdateController" should {
-    "display last modification listing" ignore {
+    "display last modification listing" in {
       val last = fakeRequest("/latest", GET)
       status(last) mustBe NOT_FOUND
-      contentType(last) mustBe Some("application/json")
     }
   }
-
 }

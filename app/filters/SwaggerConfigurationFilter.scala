@@ -1,23 +1,28 @@
+package filters
+
 import java.util
 
 import io.swagger.core.filter.SwaggerSpecFilter
 import io.swagger.model.ApiDescription
 import io.swagger.models.parameters.Parameter
-import io.swagger.models.{ Model, Operation }
 import io.swagger.models.properties.Property
+import io.swagger.models.{ Model, Operation }
 
-/**
- * SwaggerConfigurationFilter
- * ----------------
- * Author: haqa
- * Date: 24 July 2017 - 09:25
- * Copyright (c) 2017  Office for National Statistics
+/*
+ * There is no equivalent of Java's @SuppressWarnings in Scala.  However, in Scala 2.11 we can stop deprecation
+ * warnings for ApiDescription by deprecating the class that is using it ...
+ * This is discussed here: https://issues.scala-lang.org/browse/SI-7934
+ *
+ * As for the Swagger issue itself, we are using the latest version of swagger-play2 that is compatible with Play 2.5,
+ * and it is pulling in a version of swagger-core that defines SwaggerSpecFilter using the deprecated ApiDescription.
+ * We will hopefully be able to address this as part of a Play 2.6 upgrade.
+ * Details of SwaggerDefinition can be found at: https://github.com/swagger-api/swagger-core/wiki/Annotations-1.5.X#swaggerdefinition
  */
+@deprecated(message = "Swagger ApiDescription is deprecated - use SwaggerDefinition instead", since = "Swagger 1.5")
 class SwaggerConfigurationFilter extends SwaggerSpecFilter {
 
   private val parametersNotAllowed: List[String] = List()
   private val propertiesNotAllowed: List[String] = List()
-  private val opertaionsNotAllowed: List[String] = List()
 
   def isParamAllowed(
     parameter: Parameter,

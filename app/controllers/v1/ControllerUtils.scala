@@ -6,34 +6,26 @@ import com.netaporter.uri.Uri
 import com.typesafe.scalalogging.StrictLogging
 import config.Properties
 import javax.naming.ServiceUnavailableException
-import org.slf4j.{Logger, LoggerFactory}
-import play.api.i18n.{I18nSupport, Messages}
+import org.slf4j.{ Logger, LoggerFactory }
+import play.api.i18n.{ I18nSupport, Messages }
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json._
 import play.api.libs.ws.WSResponse
-import play.api.mvc.{Controller, Result}
+import play.api.mvc.{ Controller, Result }
 import services.RequestGenerator
 import uk.gov.ons.sbr.models._
 import utils.FutureResponse.futureSuccess
-import utils.UriBuilder.{createUri, _}
-import utils.Utilities.{errAsJson, orElseNull}
+import utils.UriBuilder.createUri
+import utils.Utilities.{ errAsJson, orElseNull }
 
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Future, TimeoutException}
+import scala.concurrent.{ Future, TimeoutException }
 
 
-/**
- * ControllerUtils
- * ----------------
- * Author: haqa
- * Date: 10 July 2017 - 09:25
- * Copyright (c) 2017  Office for National Statistics
- */
 // @todo - fix typedef
 trait ControllerUtils extends Controller with StrictLogging with Properties with I18nSupport {
 
   protected val PLACEHOLDER_PERIOD = "*date"
-  private val PLACEHOLDER_UNIT_TYPE = "*type"
   // number of units displayable
   private val CAPPED_DISPLAY_NUMBER = 1
   protected val FIXED_YEARMONTH_SIZE = 6
@@ -147,17 +139,22 @@ trait ControllerUtils extends Controller with StrictLogging with Properties with
             // @ TODO - add to success or failure to JSON ??
             val unitResp = response.json.as[T]
             unitResp match {
-              case u: UnitLinksListType =>
+              // UnitLinksListType is erased - the type of the content is unchecked
+              case u: Seq[_] =>
                 // if one UnitLinks found -> get unit
                 if (u.length == CAPPED_DISPLAY_NUMBER) {
-                  val id = (u.head \ "id").as[String]
-                  LOGGER.debug(s"Found a single response with $id")
-                  val unitType = (u.head \ "unitType").as[String]
-                  val period = (u.head \ "period").as[String]
-                  val mapOfRecordKeys = Map((unitType -> id)
-                  parsedRequest(mapOfRecordKeys, u.head, periodParam, history).map { respRecords =>
-                    val json: Seq[JsValue] = (u zip respRecords).map(x => toJson(x, unitType, period))
-                    Ok(Json.toJson(json)).as(JSON)
+                  u.head match {
+                    case j: JsValue =>
+                      val id = (j \ "id").as[String]
+                      LOGGER.debug(s"Found a single response with $id")
+                      val unitType = (j \ "unitType").as[String]
+                      val period = (j \ "period").as[String]
+                      val mapOfRecordKeys = Map((unitType -> id)
+                      parsedRequest(mapOfRecordKeys, j, periodParam, history).map { respRecords =>
+                        val json: Seq[JsValue] = (Seq(j) zip respRecords).map(x => toJson(x, unitType, period))
+                        Ok(Json.toJson(json)).as(JSON)
+                      }
+                    case _ => throw new AssertionError("Seq does not contain a JsValue")
                   }
                 } else {
                   LOGGER.debug(s"Found multiple records matching given id, $key. Returning multiple as list.")
@@ -184,7 +181,7 @@ trait ControllerUtils extends Controller with StrictLogging with Properties with
         BadRequest(Messages("controller.invalid.id", key, MINIMUM_KEY_LENGTH)).future
     }
 
-  private def parsedRequest(searchList: Map[String, String], unitLinksData: JsValue, withPeriod: Option[String] = None, limit: Option[Int] = None)
+  private def parsedRequest(searchList: Map[String, String], unitLinksData: JsValue, withPeriod: Option[String], limit: Option[Int] = None)
                            (implicit ws: RequestGenerator): Future[Seq[JsValue]] = {
     val futures = searchList.flatMap {
       case (group, id) => lookupUnit(group, id, unitLinksData, withPeriod, limit)
