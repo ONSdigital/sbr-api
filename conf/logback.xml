@@ -38,7 +38,7 @@
 
   <logger name="org.slf4j" level="WARN"/>
 
-  <root level="WARN">
+  <root level="INFO">
     <!--<appender-ref ref="ASYNCFILE"/>-->
     <appender-ref ref="ASYNCSTDOUT"/>
   </root>

@@ -1,7 +1,14 @@
 import java.time.Clock
 
+import com.google.inject.{ AbstractModule, TypeLiteral }
+import config.SbrCtrlUnitRepositoryConfigLoader
+import play.api.libs.json.{ Reads, Writes }
 import play.api.{ Configuration, Environment }
-import com.google.inject.AbstractModule
+import repository.sbrctrl._
+import repository.{ EnterpriseRepository, UnitLinksRepository }
+import services.EnterpriseService
+import services.sbrctrl.SbrCtrlEnterpriseService
+import uk.gov.ons.sbr.models.{ LinkedUnit, UnitLinks }
 
 /**
  * This class is a Guice module that tells Guice how to bind several
@@ -18,14 +25,20 @@ class Module(
     configuration: Configuration
 ) extends AbstractModule {
 
-  override def configure() = {
+  override def configure(): Unit = {
+    val underlyingConfig = configuration.underlying
+    val sbrCtrlUnitRepositoryConfig = SbrCtrlUnitRepositoryConfigLoader.load(underlyingConfig)
+    bind(classOf[SbrCtrlUnitRepositoryConfig]).toInstance(sbrCtrlUnitRepositoryConfig)
 
-    //    val config = SBRPropertiesConfiguration.envConfig(ConfigFactory.load())
-    //    //    val config: Config = ConfigFactory.load
-    //    bind(classOf[Config]).toInstance(config)
+    bind(new TypeLiteral[Reads[UnitLinks]]() {}).toInstance(UnitLinks.reads)
+    bind(new TypeLiteral[Writes[LinkedUnit]]() {}).toInstance(LinkedUnit.writes)
+
+    bind(classOf[UnitRepository]).to(classOf[SbrCtrlUnitRepository])
+    bind(classOf[UnitLinksRepository]).to(classOf[SbrCtrlUnitLinksRepository])
+    bind(classOf[EnterpriseRepository]).to(classOf[SbrCtrlEnterpriseRepository])
+    bind(classOf[EnterpriseService]).to(classOf[SbrCtrlEnterpriseService])
 
     // Use the system clock as the default implementation of Clock
     bind(classOf[Clock]).toInstance(Clock.systemDefaultZone)
   }
-
 }
