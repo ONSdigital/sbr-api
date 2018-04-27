@@ -12,7 +12,7 @@ import io.swagger.annotations._
 import uk.gov.ons.sbr.models._
 
 import utils.FutureResponse.futureSuccess
-import utils.UriBuilder.createUri
+import utils.UriBuilder._
 import services.RequestGenerator
 
 /**
@@ -87,63 +87,6 @@ class SearchController @Inject() (implicit ws: RequestGenerator, val configurati
       }
       res
     }
-  }
-
-  // TODO - Add swagger to other routes and updated ApiResponses annotation
-  //public api
-  @ApiOperation(
-    value = "Json Object of matching legal unit",
-    notes = "Sends request to Business Index for legal units",
-    responseContainer = "JSONObject",
-    code = 200,
-    httpMethod = "GET"
-  )
-  @ApiResponses(Array(
-    new ApiResponse(code = 200, message = "Success - Displays json list of dates for official development."),
-    new ApiResponse(code = 500, responseContainer = "Json", message = "Internal Server Error - Request timed-out."),
-    new ApiResponse(code = 500, responseContainer = "Json", message = "Internal Server Error - " +
-      "Failed to connection or timeout with endpoint.")
-  ))
-  def searchLeU(
-    @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
-  ): Action[AnyContent] = Action.async {
-    LOGGER.info(s"Sending request to Business Index for legal unit: $id")
-    val uri = createUri(SBR_CONTROL_API_URL, id, types = Some(LEU))
-    search[StatisticalUnitLinkType](id, uri, LEU)
-  }
-
-  def searchEnterprise(
-    @ApiParam(value = "An identifier of any type", example = "825039145000", required = true) id: String
-  ): Action[AnyContent] = {
-    Action.async { implicit request =>
-      LOGGER.info(s"Sending request to Control Api to retrieve enterprise with $id")
-      val uri = createUri(SBR_CONTROL_API_URL, id, types = Some(ENT))
-      search[StatisticalUnitLinkType](id, uri, ENT)
-    }
-  }
-
-  def searchVat(
-    @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
-  ): Action[AnyContent] = Action.async {
-    LOGGER.info(s"Sending request to Admin Api to retrieve VAT reference with $id")
-    val uri = createUri(SBR_CONTROL_API_URL, id, types = Some(VAT))
-    search[StatisticalUnitLinkType](id, uri, VAT)
-  }
-
-  def searchPaye(
-    @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
-  ): Action[AnyContent] = Action.async {
-    LOGGER.info(s"Sending request to Admin Api to retrieve PAYE record with $id")
-    val uri = createUri(SBR_CONTROL_API_URL, id, types = Some(PAYE))
-    search[StatisticalUnitLinkType](id, uri, PAYE)
-  }
-
-  def searchCrn(
-    @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
-  ): Action[AnyContent] = Action.async {
-    LOGGER.info(s"Sending request to Admin Api to retrieve Companies House Number with $id")
-    val uri = createUri(SBR_CONTROL_API_URL, id, types = Some(CRN))
-    search[StatisticalUnitLinkType](id, uri, CRN)
   }
 
   // equiv. with period routes

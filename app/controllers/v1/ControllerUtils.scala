@@ -18,7 +18,7 @@ import uk.gov.ons.sbr.models._
 
 import config.Properties
 import utils.FutureResponse.futureSuccess
-import utils.UriBuilder.createUri
+import utils.UriBuilder._
 import utils.Utilities.{ errAsJson, orElseNull }
 import services.RequestGenerator
 
@@ -43,14 +43,16 @@ trait ControllerUtils extends Controller with StrictLogging with Properties with
   protected type UnitLinksListType = Seq[JsValue]
   protected type StatisticalUnitLinkType = JsValue
 
-  private def toJson(record: (JsValue, JsValue), `type`: String): JsValue = {
+  private def toJson(record: (JsValue, JsValue), `type`: String, periodFromRowKey: String): JsValue = {
     Json.toJson(JsObject(record match {
       case (link, unit) =>
 
         // @ TODO PATCH - fix and remove patch
         // BI does not have period, so use an empty string
         val period = if (`type` == ENT.toString) {
-          (unit \ "period").getOrNull
+          (link \ "period").getOrNull
+        } else if (`type` == LOU.toString) {
+          Json.toJson(periodFromRowKey)
         } else {
           (unit.as[JsValue] \ "period").getOrNull
         }
@@ -60,6 +62,8 @@ trait ControllerUtils extends Controller with StrictLogging with Properties with
         //        val vars = if (`type` == ENT.toString || `type` == LEU.toString) {
         val vars = if (`type` == ENT.toString) {
           (unit \ "vars").getOrElse(unit)
+        } else if (`type` == LOU.toString) {
+          unit
         } else {
           (unit.as[JsValue] \ "variables").getOrNull
         }
@@ -103,6 +107,34 @@ trait ControllerUtils extends Controller with StrictLogging with Properties with
     case ex => InternalServerError(errAsJson(ex.toString, ex.getCause.toString))
   }
 
+  protected def louSearch(baseUrl: Uri, id: String, period: String)(implicit ws: RequestGenerator): Future[Result] = id.trim match {
+    case validId if (id.length >= MINIMUM_KEY_LENGTH) => {
+      LOGGER.info(s"Sending request to ${baseUrl.toString} to retrieve Unit Links")
+      ws.singleGETRequest(baseUrl.toString) map {
+        case response if response.status == OK => {
+          val unitResp = response.json.as[StatisticalUnitLinkType]
+          val period = (unitResp \ "period").as[String]
+          val path = createLouUri(SBR_CONTROL_API_URL, id, unitResp)
+          LOGGER.info(s"Sending request to $path to get records of all variables of unit.")
+          ws.singleGETRequestWithTimeout(path.toString, Duration.Inf) match {
+            case response if response.status == OK => {
+              val json = (Seq(unitResp) zip List(response.json)).map(x => toJson(x, LOU.toString, period)).head
+              Ok(json).as(JSON)
+            }
+            case response if response.status == NOT_FOUND => {
+              LOGGER.error(s"Found unit links for record with id [$id], but the corresponding record returns 404")
+              NotFound(response.body).as(JSON)
+            }
+            case _ => InternalServerError(Messages("controller.internal.server.error"))
+          }
+        }
+        case response if response.status == NOT_FOUND => NotFound(response.body).as(JSON)
+        case _ => InternalServerError(Messages("controller.internal.server.error"))
+      } recover responseException
+    }
+    case _ => BadRequest(Messages("controller.invalid.id", id, MINIMUM_KEY_LENGTH)).future
+  }
+
   // @ TODO - CHECK error control
   protected def search[T](key: String, baseUrl: Uri, sourceType: DataSourceTypes = ENT,
     periodParam: Option[String] = None, history: Option[Int] = None)(implicit
@@ -110,7 +142,7 @@ trait ControllerUtils extends Controller with StrictLogging with Properties with
     ws: RequestGenerator): Future[Result] = {
     key match {
       case k if k.length >= MINIMUM_KEY_LENGTH =>
-        LOGGER.debug(s"Sending request to ${baseUrl.toString} to retrieve Unit Links")
+        LOGGER.info(s"Sending request to ${baseUrl.toString} to retrieve Unit Links")
         ws.singleGETRequest(baseUrl.toString) map {
           case response if response.status == OK => {
             LOGGER.debug(s"Result for unit is: ${response.body}")
@@ -121,20 +153,26 @@ trait ControllerUtils extends Controller with StrictLogging with Properties with
                 // if one UnitLinks found -> get unit
                 if (u.length == CAPPED_DISPLAY_NUMBER) {
                   val id = (u.head \ "id").as[String]
-                  LOGGER.debug(s"Found a single response with $id")
-                  val mapOfRecordKeys = Map((u.head \ "unitType").as[String] -> id)
-                  val respRecords = parsedRequest(mapOfRecordKeys, periodParam, history)
-                  val json: Seq[JsValue] = (u zip respRecords).map(x => toJson(x, (u.head \ "unitType").as[String]))
+                  LOGGER.info(s"Found a single response with $id")
+                  val unitType = (u.head \ "unitType").as[String]
+                  val period = (u.head \ "period").as[String]
+                  val mapOfRecordKeys = Map(unitType -> id)
+                  val respRecords = parsedRequest(mapOfRecordKeys, u.head, periodParam, history)
+                  val json: Seq[JsValue] = (u zip respRecords).map(x => toJson(x, unitType, period))
                   Ok(Json.toJson(json)).as(JSON)
                 } else {
-                  LOGGER.debug(s"Found multiple records matching given id, $key. Returning multiple as list.")
-                  // return UnitLinks if multiple
+                  LOGGER.info(s"Found multiple records matching given id, $key. Returning multiple as list.")
                   PartialContent(unitResp.toString).as(JSON)
                 }
               case s: StatisticalUnitLinkType =>
-                val mapOfRecordKeys = Map(sourceType.toString -> (s \ "id").as[String])
-                val respRecords = parsedRequest(mapOfRecordKeys, periodParam)
-                val json = (Seq(s) zip respRecords).map(x => toJson(x, sourceType.toString)).head
+                val mapOfRecordKeys = if (sourceType.toString == LOU) {
+                  Map(sourceType.toString -> (s.head \ "id").as[String])
+                } else {
+                  Map(sourceType.toString -> (s \ "id").as[String])
+                }
+                val period = (s \ "period").as[String]
+                val respRecords = parsedRequest(mapOfRecordKeys, s, periodParam)
+                val json = (Seq(s) zip respRecords).map(x => toJson(x, sourceType.toString, period)).head
                 Ok(json).as(JSON)
             }
           }
@@ -145,7 +183,7 @@ trait ControllerUtils extends Controller with StrictLogging with Properties with
     }
   }
 
-  private def parsedRequest(searchList: Map[String, String], withPeriod: Option[String] = None,
+  private def parsedRequest(searchList: Map[String, String], unitLinksData: JsValue, withPeriod: Option[String] = None,
     limit: Option[Int] = None)(implicit ws: RequestGenerator): List[JsValue] = {
     searchList.map {
       case (group, id) =>
@@ -156,9 +194,13 @@ trait ControllerUtils extends Controller with StrictLogging with Properties with
           case Some(VAT) => VAT_ADMIN_DATA_API_URL
           case Some(PAYE) => PAYE_ADMIN_DATA_API_URL
           case Some(ENT) => SBR_CONTROL_API_URL
+          case Some(LOU) => SBR_CONTROL_API_URL
         }
         // TODO - fix unit.getOrElse("").toString
-        val newPath = createUri(path, id, withPeriod, group = unit.getOrElse("").toString, history = limit)
+        val newPath = unit match {
+          case Some(LOU) => createLouUri(path, id, unitLinksData)
+          case _ => createUri(path, id, withPeriod, group = unit.getOrElse("").toString, history = limit)
+        }
         LOGGER.info(s"Sending request to $newPath to get records of all variables of unit.")
         // @TODO - Duration.Inf -> place cap
         val resp = ws.singleGETRequestWithTimeout(newPath.toString, Duration.Inf)

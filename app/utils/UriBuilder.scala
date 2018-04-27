@@ -2,7 +2,7 @@ package utils
 
 import com.netaporter.uri.Uri
 import com.netaporter.uri.dsl._
-
+import play.api.libs.json.JsValue
 import uk.gov.ons.sbr.models._
 
 /**
@@ -49,5 +49,14 @@ object UriBuilder {
       case (None, Some(t), u, None) => baseUrl / TYPE_PATH / t.toString / unitTypePath / u
       case _ => baseUrl / unitTypePath / units
     }
+  }
+
+  def createLouPeriodUri(baseUrl: String, id: String, period: String): Uri =
+    baseUrl / PERIOD_PATH / period / TYPE_PATH / LOU.toString / UNIT_PATH / id
+
+  def createLouUri(baseUrl: String, id: String, unitLinks: JsValue): Uri = {
+    val entId = (unitLinks \ "parents" \ "ENT").as[String]
+    val period = (unitLinks \ "period").as[String]
+    baseUrl / "enterprises" / entId / PERIOD_PATH / period / "localunits" / id
   }
 }

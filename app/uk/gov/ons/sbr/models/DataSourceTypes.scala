@@ -18,11 +18,12 @@ case object VAT extends DataSourceTypes { val path = "records" }
 case object PAYE extends DataSourceTypes { val path = "records" }
 case object LEU extends DataSourceTypes { val path = "records" }
 case object ENT extends DataSourceTypes { val path = "enterprises" }
+case object LOU extends DataSourceTypes { val path = "enterprises" }
 
 // create DataSourceTypes.type from str
 object DataSourceTypesUtil {
   def fromString(value: String): Option[DataSourceTypes] = {
-    Vector(CRN, VAT, PAYE, LEU, ENT).find(_.toString.equalsIgnoreCase(value))
+    Vector(CRN, VAT, PAYE, LEU, ENT, LOU).find(_.toString.equalsIgnoreCase(value))
   }
 
   // returns unit reference name for CH

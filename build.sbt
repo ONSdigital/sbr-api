@@ -141,6 +141,7 @@ lazy val devDeps = Seq(
   "org.webjars"                  %%    "webjars-play"        %    "2.5.0-3",
   "com.typesafe.scala-logging"   %%    "scala-logging"       %    "3.5.0",
   "org.scalatestplus.play"       %%    "scalatestplus-play"  %    "2.0.0"           % Test,
+  "com.github.tomakehurst"       %     "wiremock"            %    "1.58"            % Test,
   "io.swagger"                   %%    "swagger-play2"       %    "1.5.3",
   "io.lemonlabs"                 %%    "scala-uri"           %    "0.5.0",
   "org.webjars"                  %     "swagger-ui"          %    "2.2.10-1",
