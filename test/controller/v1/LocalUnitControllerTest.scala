@@ -8,8 +8,8 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.libs.json._
 import play.api.test.Helpers._
+import support.TestUtils
 import uk.gov.ons.sbr.models._
-import resources.TestUtils
 
 case class Response(id: String, period: String, unitType: String, parents: Map[String, String], vars: LocalUnit)
 object Response {
