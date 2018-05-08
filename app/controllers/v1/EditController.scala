@@ -1,19 +1,17 @@
 package controllers.v1
 
+import io.swagger.annotations._
 import javax.inject.Inject
+import play.api.i18n.MessagesApi
+import play.api.libs.json._
+import play.api.mvc.{ Action, AnyContent, Result }
+import play.api.{ Configuration, Logger }
+import services.RequestGenerator
+import utils.FutureResponse.futureSuccess
+import utils.Utilities._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-
-import play.api.i18n.MessagesApi
-import play.api.{ Configuration, Logger }
-import play.api.libs.json._
-import play.api.mvc.{ Action, AnyContent, Result }
-import io.swagger.annotations._
-
-import utils.FutureResponse.futureSuccess
-import utils.Utilities._
-import services.RequestGenerator
 
 @Api("Edit")
 class EditController @Inject() (ws: RequestGenerator, val configuration: Configuration, val messagesApi: MessagesApi) extends ControllerUtils {
@@ -67,12 +65,12 @@ class EditController @Inject() (ws: RequestGenerator, val configuration: Configu
 
   def rerouteEditPost(jsonBody: Option[String], url: String): Future[Result] = {
     jsonBody.map { text =>
-      ws.controlReroute(url, "Content-Type" -> "application/json", Json.parse(text.toString)).map {
-        response => Status(response.status)(response.body)
+      ws.singlePOSTRequest(url, headers = CONTENT_TYPE -> JSON, body = Json.parse(text.toString)).map { response =>
+        Status(response.status)(response.body)
       }
     }.getOrElse {
       Logger.debug(s"Invalid JSON for redirect to url: $url")
-      BadRequest(errAsJson(BAD_REQUEST, "invalid_json", "POST body json is malformed", "Not Traced")).future
+      BadRequest(errAsJson(msg = "POST body json is malformed")).future
     }
   }
 }

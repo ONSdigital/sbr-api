@@ -1,9 +1,7 @@
-package resources
+package support
 
-import org.scalatest.FlatSpec
 import org.scalatestplus.play.PlaySpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-
 import play.api.libs.json._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._

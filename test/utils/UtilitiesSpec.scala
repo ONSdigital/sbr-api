@@ -1,15 +1,13 @@
-package unit
+package utils
 
 import com.netaporter.uri.Uri
 import play.api.libs.json._
-
+import support.TestUtils
 import uk.gov.ons.sbr.models.{ CRN, ENT }
-
 import utils.UriBuilder.createUri
 import utils.Utilities._
-import resources.TestUtils
 
-class UtilitiesTestSpec extends TestUtils {
+class UtilitiesSpec extends TestUtils {
 
   private val TEST_JS: JsValue = Json.obj(
     "name" -> "Watership Down",
@@ -18,8 +16,6 @@ class UtilitiesTestSpec extends TestUtils {
 
   "errAsJson" should {
     "create a custom err json object" in {
-      val status = 400
-      val code = "bad_request"
       val msg = "could not process request"
       val cause = "Not Traced"
       val errMsg = errAsJson(msg, cause)
@@ -32,7 +28,7 @@ class UtilitiesTestSpec extends TestUtils {
     "return a Long for Option[Long]" in {
       val expected = 5784785784L
       val get = getElement(Some(expected))
-      get must not be a[Option[Long]]
+      get must not be a[Option[_]]
       get mustEqual expected
     }
   }
@@ -109,7 +105,5 @@ class UtilitiesTestSpec extends TestUtils {
       uri mustBe a[Uri]
       uri.toString mustEqual expected
     }
-
   }
-
 }

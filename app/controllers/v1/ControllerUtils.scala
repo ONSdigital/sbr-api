@@ -1,39 +1,30 @@
 package controllers.v1
 
 import java.time.format.DateTimeParseException
-import javax.naming.ServiceUnavailableException
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import com.netaporter.uri.Uri
+import com.typesafe.scalalogging.StrictLogging
+import config.Properties
+import javax.naming.ServiceUnavailableException
+import org.slf4j.{ Logger, LoggerFactory }
+import play.api.i18n.{ I18nSupport, Messages }
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.api.libs.json._
+import play.api.libs.ws.WSResponse
+import play.api.mvc.{ Controller, Result }
+import services.RequestGenerator
+import uk.gov.ons.sbr.models._
+import utils.FutureResponse.futureSuccess
+import utils.UriBuilder.{ createLouUri, createUri }
+import utils.Utilities.{ errAsJson, orElseNull }
+
 import scala.concurrent.duration.Duration
 import scala.concurrent.{ Future, TimeoutException }
 
-import play.api.i18n.{ I18nSupport, Messages }
-import play.api.libs.json._
-import play.api.mvc.{ Controller, Result }
-import org.slf4j.{ Logger, LoggerFactory }
-import com.netaporter.uri.Uri
-import com.typesafe.scalalogging.StrictLogging
-
-import uk.gov.ons.sbr.models._
-
-import config.Properties
-import utils.FutureResponse.futureSuccess
-import utils.UriBuilder._
-import utils.Utilities.{ errAsJson, orElseNull }
-import services.RequestGenerator
-
-/**
- * ControllerUtils
- * ----------------
- * Author: haqa
- * Date: 10 July 2017 - 09:25
- * Copyright (c) 2017  Office for National Statistics
- */
 // @todo - fix typedef
 trait ControllerUtils extends Controller with StrictLogging with Properties with I18nSupport {
 
   protected val PLACEHOLDER_PERIOD = "*date"
-  private val PLACEHOLDER_UNIT_TYPE = "*type"
   // number of units displayable
   private val CAPPED_DISPLAY_NUMBER = 1
   protected val FIXED_YEARMONTH_SIZE = 6
@@ -108,106 +99,117 @@ trait ControllerUtils extends Controller with StrictLogging with Properties with
   }
 
   protected def louSearch(baseUrl: Uri, id: String, period: String)(implicit ws: RequestGenerator): Future[Result] = id.trim match {
-    case validId if (id.length >= MINIMUM_KEY_LENGTH) => {
+    case _ if id.length >= MINIMUM_KEY_LENGTH =>
       LOGGER.info(s"Sending request to ${baseUrl.toString} to retrieve Unit Links")
-      ws.singleGETRequest(baseUrl.toString) map {
-        case response if response.status == OK => {
+      ws.singleGETRequest(baseUrl.toString) flatMap {
+        case response if response.status == OK =>
           val unitResp = response.json.as[StatisticalUnitLinkType]
           val period = (unitResp \ "period").as[String]
           val path = createLouUri(SBR_CONTROL_API_URL, id, unitResp)
           LOGGER.info(s"Sending request to $path to get records of all variables of unit.")
-          ws.singleGETRequestWithTimeout(path.toString, Duration.Inf) match {
-            case response if response.status == OK => {
-              val json = (Seq(unitResp) zip List(response.json)).map(x => toJson(x, LOU.toString, period)).head
+          ws.singleGETRequestWithTimeout(path.toString, Duration.Inf).map {
+            case resp if resp.status == OK =>
+              val json = (Seq(unitResp) zip List(resp.json)).map(x => toJson(x, LOU.toString, period)).head
               Ok(json).as(JSON)
-            }
-            case response if response.status == NOT_FOUND => {
+            case resp if resp.status == NOT_FOUND =>
               LOGGER.error(s"Found unit links for record with id [$id], but the corresponding record returns 404")
-              NotFound(response.body).as(JSON)
-            }
+              NotFound(resp.body).as(JSON)
             case _ => InternalServerError(Messages("controller.internal.server.error"))
           }
-        }
-        case response if response.status == NOT_FOUND => NotFound(response.body).as(JSON)
-        case _ => InternalServerError(Messages("controller.internal.server.error"))
+        case response if response.status == NOT_FOUND =>
+          NotFound(response.body).as(JSON).future
+        case _ =>
+          InternalServerError(Messages("controller.internal.server.error")).future
       } recover responseException
-    }
-    case _ => BadRequest(Messages("controller.invalid.id", id, MINIMUM_KEY_LENGTH)).future
+    case _ =>
+      BadRequest(Messages("controller.invalid.id", id, MINIMUM_KEY_LENGTH)).future
   }
 
   // @ TODO - CHECK error control
-  protected def search[T](key: String, baseUrl: Uri, sourceType: DataSourceTypes = ENT,
-    periodParam: Option[String] = None, history: Option[Int] = None)(implicit
-    fjs: Reads[T],
-    ws: RequestGenerator): Future[Result] = {
+  protected def search[T](key: String, baseUrl: Uri, sourceType: DataSourceTypes = ENT, periodParam: Option[String] = None, history: Option[Int] = None)(implicit fjs: Reads[T], ws: RequestGenerator): Future[Result] =
     key match {
       case k if k.length >= MINIMUM_KEY_LENGTH =>
-        LOGGER.info(s"Sending request to ${baseUrl.toString} to retrieve Unit Links")
-        ws.singleGETRequest(baseUrl.toString) map {
-          case response if response.status == OK => {
+        LOGGER.debug(s"Sending request to ${baseUrl.toString} to retrieve Unit Links")
+        ws.singleGETRequest(baseUrl.toString) flatMap {
+          case response if response.status == OK =>
             LOGGER.debug(s"Result for unit is: ${response.body}")
             // @ TODO - add to success or failure to JSON ??
             val unitResp = response.json.as[T]
             unitResp match {
-              case u: UnitLinksListType =>
+              // UnitLinksListType is erased - the type of the content is unchecked
+              case u: Seq[_] =>
                 // if one UnitLinks found -> get unit
                 if (u.length == CAPPED_DISPLAY_NUMBER) {
-                  val id = (u.head \ "id").as[String]
-                  LOGGER.info(s"Found a single response with $id")
-                  val unitType = (u.head \ "unitType").as[String]
-                  val period = (u.head \ "period").as[String]
-                  val mapOfRecordKeys = Map(unitType -> id)
-                  val respRecords = parsedRequest(mapOfRecordKeys, u.head, periodParam, history)
-                  val json: Seq[JsValue] = (u zip respRecords).map(x => toJson(x, unitType, period))
-                  Ok(Json.toJson(json)).as(JSON)
+                  u.head match {
+                    case j: JsValue =>
+                      val id = (j \ "id").as[String]
+                      LOGGER.debug(s"Found a single response with $id")
+                      val unitType = (j \ "unitType").as[String]
+                      val period = (j \ "period").as[String]
+                      val mapOfRecordKeys = Map(unitType -> id)
+                      parsedRequest(mapOfRecordKeys, j, periodParam, history).map { respRecords =>
+                        val json = (Seq(j) zip respRecords).map(x => toJson(x, unitType, period))
+                        Ok(Json.toJson(json)).as(JSON)
+                      }
+                    case _ =>
+                      throw new AssertionError("Seq does not contain a JsValue")
+                  }
                 } else {
-                  LOGGER.info(s"Found multiple records matching given id, $key. Returning multiple as list.")
-                  PartialContent(unitResp.toString).as(JSON)
+                  LOGGER.debug(s"Found multiple records matching given id, $key. Returning multiple as list.")
+                  // return UnitLinks if multiple
+                  PartialContent(unitResp.toString).as(JSON).future
                 }
               case s: StatisticalUnitLinkType =>
-                val mapOfRecordKeys = if (sourceType.toString == LOU) {
-                  Map(sourceType.toString -> (s.head \ "id").as[String])
-                } else {
-                  Map(sourceType.toString -> (s \ "id").as[String])
-                }
+                val mapOfRecordKeys = Map(sourceType.toString -> (s \ "id").as[String])
                 val period = (s \ "period").as[String]
-                val respRecords = parsedRequest(mapOfRecordKeys, s, periodParam)
-                val json = (Seq(s) zip respRecords).map(x => toJson(x, sourceType.toString, period)).head
-                Ok(json).as(JSON)
+                parsedRequest(mapOfRecordKeys, s, periodParam).map { respRecords =>
+                  val json = (Seq(s) zip respRecords).map(x => toJson(x, sourceType.toString, period)).head
+                  Ok(json).as(JSON)
+                }
             }
-          }
-          case response if response.status == NOT_FOUND => NotFound(response.body).as(JSON)
+          case response if response.status == NOT_FOUND =>
+            NotFound(response.body).as(JSON).future
         } recover responseException
       case _ =>
         BadRequest(Messages("controller.invalid.id", key, MINIMUM_KEY_LENGTH)).future
     }
-  }
 
-  private def parsedRequest(searchList: Map[String, String], unitLinksData: JsValue, withPeriod: Option[String] = None,
-    limit: Option[Int] = None)(implicit ws: RequestGenerator): List[JsValue] = {
-    searchList.map {
-      case (group, id) =>
-        val unit = DataSourceTypesUtil.fromString(group)
-        val path = unit match {
-          case Some(LEU) => LEGAL_UNIT_DATA_API_URL
-          case Some(CRN) => CH_ADMIN_DATA_API_URL
-          case Some(VAT) => VAT_ADMIN_DATA_API_URL
-          case Some(PAYE) => PAYE_ADMIN_DATA_API_URL
-          case Some(ENT) => SBR_CONTROL_API_URL
-          case Some(LOU) => SBR_CONTROL_API_URL
-        }
-        // TODO - fix unit.getOrElse("").toString
-        val newPath = unit match {
-          case Some(LOU) => createLouUri(path, id, unitLinksData)
-          case _ => createUri(path, id, withPeriod, group = unit.getOrElse("").toString, history = limit)
-        }
-        LOGGER.info(s"Sending request to $newPath to get records of all variables of unit.")
-        // @TODO - Duration.Inf -> place cap
-        val resp = ws.singleGETRequestWithTimeout(newPath.toString, Duration.Inf)
+  private def parsedRequest(searchList: Map[String, String], unitLinksData: JsValue, withPeriod: Option[String], limit: Option[Int] = None)(implicit ws: RequestGenerator): Future[Seq[JsValue]] = {
+    val futures = searchList.flatMap {
+      case (group, id) => lookupUnit(group, id, unitLinksData, withPeriod, limit)
+    }.map { futResponse =>
+      futResponse.map { resp =>
         LOGGER.debug(s"Result for record is: ${resp.body}")
-        // @ TODO - add to success or failrue to JSON ??
+        // @ TODO - add to success or failure to JSON ??
         resp.json
-    }.toList
+      }
+    }.toSeq
+
+    Future.sequence(futures)
   }
 
+  private def lookupUnit(group: String, id: String, unitLinksData: JsValue, withPeriod: Option[String], limit: Option[Int])(implicit ws: RequestGenerator): Option[Future[WSResponse]] = {
+    val unitOpt = DataSourceTypesUtil.fromString(group)
+    if (unitOpt.isEmpty) logger.warn(s"Unrecognised group value [$group].")
+    unitOpt.map { unit =>
+      val path = apiUrlFor(unit)
+      val newPath = unit match {
+        case LOU => createLouUri(path, id, unitLinksData)
+        case _ => createUri(path, id, withPeriod, group = unit.toString, history = limit)
+      }
+      LOGGER.info(s"Sending request to $newPath to get records of all variables of unit.")
+      // @TODO - Duration.Inf -> place cap
+      ws.singleGETRequestWithTimeout(newPath.toString, Duration.Inf)
+    }
+  }
+
+  private def apiUrlFor(unit: DataSourceTypes): String =
+    unit match {
+      case LEU => LEGAL_UNIT_DATA_API_URL
+      case CRN => CH_ADMIN_DATA_API_URL
+      case VAT => VAT_ADMIN_DATA_API_URL
+      case PAYE => PAYE_ADMIN_DATA_API_URL
+      case ENT => SBR_CONTROL_API_URL
+      case LOU => SBR_CONTROL_API_URL
+    }
 }

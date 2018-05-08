@@ -149,6 +149,10 @@ lazy val devDeps = Seq(
     excludeAll ExclusionRule("commons-logging", "commons-logging")
 )
 
+/*
+ * -Ywarn-unused-import was removed because otherwise a large number of warnings are generated for
+ *                      sbr-api/conf/routes which is a Play issue we can do nothing about
+ */
 lazy val commonSettings: Seq[Def.Setting[_]] = Seq (
   scalacOptions in ThisBuild ++= Seq(
     "-language:experimental.macros",
@@ -165,12 +169,10 @@ lazy val commonSettings: Seq[Def.Setting[_]] = Seq (
     "-Xlint", // recommended additional warnings
     "-Xcheckinit", // runtime error when a val is not initialized due to trait hierarchies (instead of NPE somewhere else)
     "-Ywarn-adapted-args", // Warn if an argument list is modified to match the receiver
-    //"-Yno-adapted-args", // Do not adapt an argument list (either by inserting () or creating a tuple) to match the receiver
     "-Ywarn-value-discard", // Warn when non-Unit expression results are unused
     "-Ywarn-inaccessible", // Warn about inaccessible types in method signatures
     "-Ywarn-dead-code", // Warn when dead code is identified
     "-Ywarn-unused", // Warn when local and private vals, vars, defs, and types are unused
-    "-Ywarn-unused-import", //  Warn when imports are unused (don't want IntelliJ to do it automatically)
     "-Ywarn-numeric-widen" // Warn when numerics are widened
   ),
   resolvers ++= Resolvers,

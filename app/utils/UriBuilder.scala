@@ -45,7 +45,7 @@ object UriBuilder {
         baseUrl / PERIOD_PATH / p / unitTypePath / u
       }
       // TODO **WARN** ~ this will break for ENTERPRISE until history param arg route is add to sbr-control ~ **WARN**
-      case (None, None, u, Some(h)) => baseUrl / unitTypePath / u / HISTORY_PATH ? (HISTORY_MAX_ARG, h)
+      case (None, None, u, Some(h)) => baseUrl / unitTypePath / u / HISTORY_PATH ? (HISTORY_MAX_ARG -> h)
       case (None, Some(t), u, None) => baseUrl / TYPE_PATH / t.toString / unitTypePath / u
       case _ => baseUrl / unitTypePath / units
     }

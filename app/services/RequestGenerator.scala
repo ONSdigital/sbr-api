@@ -1,28 +1,17 @@
 package services
 
+import com.typesafe.config.{ Config, ConfigFactory }
+import config.Properties
 import javax.inject.{ Inject, Singleton }
-
-import scala.concurrent.duration.Duration.Infinite
-import scala.concurrent.duration._
-import scala.concurrent.{ Await, Future }
-
+import org.slf4j.LoggerFactory
 import play.api.Configuration
 import play.api.http.{ ContentTypes, Status }
 import play.api.libs.json.JsValue
 import play.api.libs.ws.{ WSClient, WSResponse }
 import play.api.mvc.{ Result, Results }
-import org.slf4j.LoggerFactory
-import com.typesafe.config.{ Config, ConfigFactory }
 
-import config.Properties
-
-/**
- * WSRequestGenerator
- * ----------------
- * Author: haqa
- * Date: 16 November 2017 - 09:25
- * Copyright (c) 2017  Office for National Statistics
- */
+import scala.concurrent.Future
+import scala.concurrent.duration._
 
 @Singleton
 class RequestGenerator @Inject() (
@@ -35,7 +24,6 @@ class RequestGenerator @Inject() (
   private final val config: Config = ConfigFactory.load()
   private final val DURATION_METRIC: TimeUnit = MILLISECONDS
   private final val TIMEOUT_REQUEST: Long = config.getString("request.timeout").toLong
-  private final val INF_REQUEST: Infinite = Duration.Inf
 
   private val TIME_UNIT_COLLECTION: List[TimeUnit] =
     List(NANOSECONDS, MICROSECONDS, MILLISECONDS, SECONDS, MINUTES, HOURS, DAYS)
@@ -57,14 +45,10 @@ class RequestGenerator @Inject() (
       .withRequestTimeout(Duration(TIMEOUT_REQUEST, DURATION_METRIC))
       .get
 
-  def singleGETRequestWithTimeout(url: String, timeout: Duration = Duration(TIMEOUT_REQUEST, DURATION_METRIC)): WSResponse =
-    Await.result(ws.url(url.toString).get(), timeout)
-
-  @deprecated("Migrate to singlePOSTRequest", "27 Nov 2017 - fix/tidy-up-1")
-  def controlReroute(url: String, headers: (String, String), body: JsValue): Future[WSResponse] = {
-    LOGGER.debug(s"Rerouting to route: $url")
-    ws.url(url).withHeaders(headers).withRequestTimeout(API_REQUEST_TIMEOUT.millis).post(body)
-  }
+  def singleGETRequestWithTimeout(url: String, timeout: Duration = Duration(TIMEOUT_REQUEST, DURATION_METRIC)): Future[WSResponse] =
+    ws.url(url.toString)
+      .withRequestTimeout(timeout)
+      .get()
 
   def singlePOSTRequest(url: String, headers: (String, String), body: JsValue): Future[WSResponse] = {
     LOGGER.debug(s"Rerouting to route: $url")
