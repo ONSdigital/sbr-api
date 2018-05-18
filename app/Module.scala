@@ -1,5 +1,3 @@
-import java.time.Clock
-
 import com.google.inject.{ AbstractModule, TypeLiteral }
 import config.SbrCtrlUnitRepositoryConfigLoader
 import play.api.libs.json.{ Reads, Writes }
@@ -30,6 +28,11 @@ class Module(
     val sbrCtrlUnitRepositoryConfig = SbrCtrlUnitRepositoryConfigLoader.load(underlyingConfig)
     bind(classOf[SbrCtrlUnitRepositoryConfig]).toInstance(sbrCtrlUnitRepositoryConfig)
 
+    /*
+     * Because of JVM type erasure, we need to use TypeLiteral to resolve generic types.
+     * See: https://github.com/google/guice/wiki/FrequentlyAskedQuestions#how-to-inject-class-with-generic-type
+     *      https://google.github.io/guice/api-docs/latest/javadoc/com/google/inject/TypeLiteral.html
+     */
     bind(new TypeLiteral[Reads[UnitLinks]]() {}).toInstance(UnitLinks.reads)
     bind(new TypeLiteral[Writes[LinkedUnit]]() {}).toInstance(LinkedUnit.writes)
 
@@ -38,7 +41,13 @@ class Module(
     bind(classOf[EnterpriseRepository]).to(classOf[SbrCtrlEnterpriseRepository])
     bind(classOf[EnterpriseService]).to(classOf[SbrCtrlEnterpriseService])
 
-    // Use the system clock as the default implementation of Clock
-    bind(classOf[Clock]).toInstance(Clock.systemDefaultZone)
+    /*
+     * Explicitly return unit to avoid warning about discarded non-Unit value.
+     * This is because a .to(classOf[...]) invocation returns a ScopedBindingBuilder which is
+     * currently ignored (in contrast to .toInstance(...) which returns void).
+     * If such a line is the last line in this method, a ScopedBindingBuilder would be the return value of this
+     * method - generating a discard warning because the method is declared to return unit.
+     */
+    ()
   }
 }
