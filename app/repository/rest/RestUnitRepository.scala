@@ -1,4 +1,4 @@
-package repository.sbrctrl
+package repository.rest
 
 import java.util.concurrent.TimeoutException
 
@@ -10,16 +10,16 @@ import play.api.libs.json.JsValue
 import play.api.libs.ws.{ WSClient, WSRequest, WSResponse }
 import play.mvc.Http.HeaderNames.ACCEPT
 import play.mvc.Http.MimeTypes.JSON
-import repository.sbrctrl.UnitRepository.ErrorMessage
+import repository.ErrorMessage
 import utils.TrySupport
 import utils.url.{ BaseUrl, Url }
 
 import scala.concurrent.Future
 import scala.util.Try
 
-case class SbrCtrlUnitRepositoryConfig(baseUrl: BaseUrl)
+case class RestUnitRepositoryConfig(baseUrl: BaseUrl)
 
-class SbrCtrlUnitRepository @Inject() (config: SbrCtrlUnitRepositoryConfig, wsClient: WSClient) extends UnitRepository with LazyLogging {
+class RestUnitRepository @Inject() (config: RestUnitRepositoryConfig, wsClient: WSClient) extends UnitRepository with LazyLogging {
 
   override def getJson(path: String): Future[Either[ErrorMessage, Option[JsValue]]] = {
     val url = Url(withBase = config.baseUrl, withPath = path)
@@ -42,7 +42,7 @@ class SbrCtrlUnitRepository @Inject() (config: SbrCtrlUnitRepositoryConfig, wsCl
 
   private def bodyAsJson(response: WSResponse): Either[ErrorMessage, JsValue] =
     TrySupport.fold(Try(response.json))(
-      err => Left(s"Unable to create JsValue from sbr-control-api response [${err.getMessage}]"),
+      err => Left(s"Unable to create JsValue from unit response [${err.getMessage}]"),
       json => Right(json)
     )
 
@@ -53,7 +53,7 @@ class SbrCtrlUnitRepository @Inject() (config: SbrCtrlUnitRepositoryConfig, wsCl
     override def isDefinedAt(cause: Throwable): Boolean = true
 
     override def apply(cause: Throwable): Either[ErrorMessage, B] = {
-      logger.error(s"Translating sbr-control-api request failure [$cause].")
+      logger.error(s"Translating unit request failure [$cause].")
       cause match {
         case t: TimeoutException => Left(s"Timeout.  ${t.getMessage}")
         case t: Throwable => Left(t.getMessage)

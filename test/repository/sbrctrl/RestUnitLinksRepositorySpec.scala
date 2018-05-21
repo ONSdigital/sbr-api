@@ -6,11 +6,12 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{ EitherValues, FreeSpec, Matchers }
 import play.api.libs.json.{ JsError, JsSuccess, Json, Reads }
+import repository.rest.UnitRepository
 import uk.gov.ons.sbr.models.{ Period, UnitId, UnitLinks, UnitType }
 
 import scala.concurrent.Future
 
-class SbrCtrlUnitLinksRepositorySpec extends FreeSpec with Matchers with MockFactory with ScalaFutures with EitherValues {
+class RestUnitLinksRepositorySpec extends FreeSpec with Matchers with MockFactory with ScalaFutures with EitherValues {
 
   private trait Fixture {
     val TargetEnterpriseId = UnitId("1234567890")
@@ -20,6 +21,7 @@ class SbrCtrlUnitLinksRepositorySpec extends FreeSpec with Matchers with MockFac
       id = UnitId(TargetEnterpriseId.value),
       unitType = UnitType.Enterprise,
       period = TargetPeriod,
+      parents = None,
       children = Some(Map(
         UnitId("987654321") -> UnitType.LocalUnit
       ))
@@ -27,7 +29,7 @@ class SbrCtrlUnitLinksRepositorySpec extends FreeSpec with Matchers with MockFac
 
     val unitRepository = mock[UnitRepository]
     val readsUnitLinks = mock[Reads[UnitLinks]]
-    val unitLinksRepository = new SbrCtrlUnitLinksRepository(unitRepository, readsUnitLinks)
+    val unitLinksRepository = new RestUnitLinksRepository(unitRepository, readsUnitLinks)
   }
 
   "A Unit Links repository" - {

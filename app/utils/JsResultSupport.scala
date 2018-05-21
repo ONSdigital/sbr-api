@@ -15,4 +15,13 @@ object JsResultSupport {
     optA.fold[JsResult[A]](JsError()) { a =>
       JsSuccess(a)
     }
+
+  def sequence[A](results: Seq[JsResult[A]]): JsResult[Seq[A]] = {
+    val zeroAcc: JsResult[Seq[A]] = JsSuccess(Seq.empty[A])
+    results.foldRight(zeroAcc) { (jr, acc) =>
+      acc.flatMap { as =>
+        jr.map(a => a +: as)
+      }
+    }
+  }
 }

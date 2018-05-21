@@ -1,6 +1,5 @@
 package repository
 
-import repository.sbrctrl.UnitRepository.ErrorMessage
 import uk.gov.ons.sbr.models._
 
 import scala.concurrent.Future

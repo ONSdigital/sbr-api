@@ -1,15 +1,18 @@
 import java.time.Month.MARCH
 
 import fixture.ServerAcceptanceSpec
-import org.scalatest.OptionValues
+import org.scalatest.{ OptionValues, Outcome }
 import play.api.http.HeaderNames.CONTENT_TYPE
+import play.api.http.Port
 import play.api.http.Status.{ BAD_REQUEST, INTERNAL_SERVER_ERROR, NOT_FOUND, OK }
 import play.api.libs.json.Json
+import play.api.libs.ws.WSClient
+import play.api.test.WsTestClient
 import play.mvc.Http.MimeTypes.JSON
-import support.WithWireMockSbrControlApi
+import support.wiremock.WireMockSbrControlApi
 import uk.gov.ons.sbr.models._
 
-class EnterpriseAcceptanceSpec extends ServerAcceptanceSpec with WithWireMockSbrControlApi with OptionValues {
+class EnterpriseAcceptanceSpec extends ServerAcceptanceSpec with WireMockSbrControlApi with OptionValues {
   private val TargetErn = Ern("1000000012")
   private val TargetPeriod = Period.fromYearMonth(2018, MARCH)
 
@@ -50,6 +53,15 @@ class EnterpriseAcceptanceSpec extends ServerAcceptanceSpec with WithWireMockSbr
        |  }
        |}"
      """.stripMargin
+
+  override type FixtureParam = WSClient
+
+  override protected def withFixture(test: OneArgTest): Outcome =
+    withWireMockSbrControlApi { () =>
+      WsTestClient.withClient { wsClient =>
+        withFixture(test.toNoArgTest(wsClient))
+      }(new Port(port))
+    }
 
   info("As a SBR user")
   info("I want to retrieve an enterprise for a period in time")

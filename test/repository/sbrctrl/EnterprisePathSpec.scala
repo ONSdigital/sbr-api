@@ -12,7 +12,7 @@ class EnterprisePathSpec extends FreeSpec with Matchers {
     val TargetPeriod = Period.fromYearMonth(2018, MARCH)
   }
 
-  "An relative path" - {
+  "A relative path" - {
     "can be built to identify an enterprise and period" in new Fixture {
       EnterprisePath(TargetPeriod, TargetErn) shouldBe "v1/periods/201803/enterprises/1000000012"
     }

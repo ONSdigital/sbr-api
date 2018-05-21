@@ -1,7 +1,6 @@
 package repository
 
 import play.api.libs.json.JsObject
-import repository.sbrctrl.UnitRepository.ErrorMessage
 import uk.gov.ons.sbr.models.{ Ern, Period }
 
 import scala.concurrent.Future

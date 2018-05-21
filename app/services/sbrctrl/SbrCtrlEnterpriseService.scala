@@ -4,8 +4,7 @@ import com.typesafe.scalalogging.LazyLogging
 import javax.inject.Inject
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import repository.{ EnterpriseRepository, UnitLinksRepository }
-import services.EnterpriseService
-import services.EnterpriseService.ErrorMessage
+import services.{ EnterpriseService, ErrorMessage }
 import uk.gov.ons.sbr.models._
 
 import scala.concurrent.Future
