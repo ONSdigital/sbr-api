@@ -138,13 +138,15 @@ lazy val assemblySettings: Seq[Def.Setting[_]] = Seq(
 lazy val devDeps = Seq(
   ws,
   filters,
+  "org.scalatestplus.play"       %%    "scalatestplus-play"  %    "2.0.0"           % Test,
+  "org.scalatest"                %%    "scalatest"           %    "3.0.4"           % Test,
+  "com.github.tomakehurst"       %     "wiremock"            %    "1.58"            % Test,
+  "org.scalamock"                %%    "scalamock"           %    "4.1.0"           % Test,
   "org.webjars"                  %%    "webjars-play"        %    "2.5.0-3",
   "com.typesafe.scala-logging"   %%    "scala-logging"       %    "3.5.0",
-  "org.scalatestplus.play"       %%    "scalatestplus-play"  %    "2.0.0"           % Test,
-  "com.github.tomakehurst"       %     "wiremock"            %    "1.58"            % Test,
   "io.swagger"                   %%    "swagger-play2"       %    "1.5.3",
   "io.lemonlabs"                 %%    "scala-uri"           %    "0.5.0",
-  "org.webjars"                  %     "swagger-ui"          %    "2.2.10-1",
+  "org.webjars"                  %     "swagger-ui"          %    "3.1.4",
   "com.typesafe"                 %      "config"             %    "1.3.1"
     excludeAll ExclusionRule("commons-logging", "commons-logging")
 )

@@ -1,4 +1,4 @@
-package controller.v1
+package controllers.v1
 
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock
@@ -16,7 +16,7 @@ object Response {
   implicit val unitFormat: OFormat[Response] = Json.format[Response]
 }
 
-class LocalUnitControllerTest extends TestUtils with BeforeAndAfterEach with GuiceOneAppPerSuite {
+class LocalUnitControllerSpec extends TestUtils with BeforeAndAfterEach with GuiceOneAppPerSuite {
 
   private val version = "v1"
   private val port = 9001
