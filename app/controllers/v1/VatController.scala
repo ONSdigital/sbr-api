@@ -23,7 +23,7 @@ class VatController @Inject() (vatService: VatService, linkedUnitRetrievalHandle
     }
   }
 
-  def badRequest(periodStr: String, vatrefStr: String) = Action {
+  def badRequest(periodStr: String, vatrefStr: String): Action[AnyContent] = Action {
     BadRequest
   }
 }

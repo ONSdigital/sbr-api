@@ -23,7 +23,7 @@ class EnterpriseController @Inject() (enterpriseService: EnterpriseService, link
     }
   }
 
-  def badRequest(periodStr: String, ernStr: String) = Action {
+  def badRequest(periodStr: String, ernStr: String): Action[AnyContent] = Action {
     BadRequest
   }
 }
