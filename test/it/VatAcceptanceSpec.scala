@@ -9,6 +9,8 @@ import play.api.libs.json.Json
 import play.api.libs.ws.WSClient
 import play.api.test.WsTestClient
 import play.mvc.Http.MimeTypes.JSON
+import support.matchers.HttpServerErrorStatusCodeMatcher
+import support.matchers.HttpServerErrorStatusCodeMatcher.aServerError
 import support.wiremock.{ WireMockAdminDataApi, WireMockSbrControlApi }
 import uk.gov.ons.sbr.models._
 
@@ -208,8 +210,8 @@ class VatAcceptanceSpec extends ServerAcceptanceSpec with WireMockSbrControlApi 
       When(s"the VAT unit data with reference $TargetVatRef is requested for $TargetPeriod")
       val response = await(wsClient.url(s"/v1/periods/${Period.asString(TargetPeriod)}/vats/${TargetVatRef.value}").get())
 
-      Then("a GATEWAY_TIMEOUT response is returned")
-      response.status shouldBe GATEWAY_TIMEOUT
+      Then("a server error is returned")
+      response.status shouldBe aServerError
     }
 
     scenario("the sbr_control_api service is unavailable") { wsClient =>
@@ -219,8 +221,8 @@ class VatAcceptanceSpec extends ServerAcceptanceSpec with WireMockSbrControlApi 
       When(s"the VAT unit data with reference $TargetVatRef is requested for $TargetPeriod")
       val response = await(wsClient.url(s"/v1/periods/${Period.asString(TargetPeriod)}/vats/${TargetVatRef.value}").get())
 
-      Then("a GATEWAY_TIMEOUT response is returned")
-      response.status shouldBe GATEWAY_TIMEOUT
+      Then("a server error is returned")
+      response.status shouldBe aServerError
     }
   }
 

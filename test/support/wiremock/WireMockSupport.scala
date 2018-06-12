@@ -15,7 +15,8 @@ object WireMockSupport {
   }
 
   def stop(wireMockSupport: WireMockSupport): Unit =
-    wireMockSupport.wireMockServer.stop()
+    try wireMockSupport.wireMock.shutdown()
+    finally wireMockSupport.wireMockServer.stop()
 
   def registerMapping(wireMockSupport: WireMockSupport)(mappingBuilder: MappingBuilder): WireMockSupport = {
     wireMockSupport.wireMock.register(mappingBuilder)
