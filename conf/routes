@@ -10,12 +10,14 @@ GET     /v1/periods/:date/search        controllers.v1.SearchController.searchBy
 
 # TODO - check and Add history arg in path routes if needed
 
-GET     /v1/periods/$period<\d{4}(0[1-9]|1[0-2])>/ents/$ern<\d{10}>   controllers.v1.EnterpriseController.retrieveEnterprise(period, ern)
-GET     /v1/periods/:period/ents/:ern                                 controllers.v1.EnterpriseController.badRequest(period, ern)
+GET     /v1/periods/$period<\d{4}(0[1-9]|1[0-2])>/ents/$ern<\d{10}>     controllers.v1.EnterpriseController.retrieveEnterprise(period, ern)
+GET     /v1/periods/:period/ents/:ern                                   controllers.v1.EnterpriseController.badRequest(period, ern)
+
+GET     /v1/periods/$period<\d{4}(0[1-9]|1[0-2])>/vats/$vatref<\d{12}>  controllers.v1.VatController.retrieveVat(period, vatref)
+GET     /v1/periods/:period/vats/:vatref                                controllers.v1.VatController.badRequest(period, vatref)
 
 GET     /v1/periods/:date/leus/:id      controllers.v1.SearchController.searchLeUWithPeriod(date, id)
 GET     /v1/periods/:date/lous/:id      controllers.v1.LocalUnitController.searchLoUWithPeriod(date, id)
-GET     /v1/periods/:date/vats/:id      controllers.v1.SearchController.searchVatWithPeriod(date, id)
 GET     /v1/periods/:date/payes/:id     controllers.v1.SearchController.searchPayeWithPeriod(date, id)
 GET     /v1/periods/:date/crns/:id      controllers.v1.SearchController.searchCrnWithPeriod(date, id)
 

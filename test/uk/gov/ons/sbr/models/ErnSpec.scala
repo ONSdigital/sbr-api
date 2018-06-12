@@ -7,5 +7,9 @@ class ErnSpec extends FreeSpec with Matchers {
     "can be converted to a unit Identifier and unit Type pair" in {
       Ern.toIdTypePair(Ern("1234567890")) shouldBe UnitId("1234567890") -> UnitType.Enterprise
     }
+
+    "can be converted to a generic unit identifier" in {
+      Ern.asUnitId(Ern("1234567890")) shouldBe UnitId("1234567890")
+    }
   }
 }

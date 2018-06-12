@@ -6,12 +6,13 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{ EitherValues, FreeSpec, Matchers }
 import play.api.libs.json.Json
+import repository.rest.UnitRepository
 import support.sample.SampleEnterprise
 import uk.gov.ons.sbr.models.{ Ern, Period }
 
 import scala.concurrent.Future
 
-class SbrCtrlEnterpriseRepositorySpec extends FreeSpec with Matchers with MockFactory with ScalaFutures with EitherValues {
+class RestEnterpriseRepositorySpec extends FreeSpec with Matchers with MockFactory with ScalaFutures with EitherValues {
 
   private trait Fixture {
     val TargetPeriod = Period.fromYearMonth(2018, APRIL)
@@ -19,7 +20,7 @@ class SbrCtrlEnterpriseRepositorySpec extends FreeSpec with Matchers with MockFa
     val EnterpriseJson = SampleEnterprise.asJson(TargetErn)
 
     val unitRepository = mock[UnitRepository]
-    val enterpriseRepository = new SbrCtrlEnterpriseRepository(unitRepository)
+    val enterpriseRepository = new RestEnterpriseRepository(unitRepository)
   }
 
   "An Enterprise repository" - {

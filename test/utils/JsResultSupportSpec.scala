@@ -34,4 +34,20 @@ class JsResultSupportSpec extends FreeSpec with Matchers {
       }
     }
   }
+
+  "A sequence of JsResults" - {
+    "can be transformed into a single" - {
+      "success containing an empty sequence when empty" in {
+        JsResultSupport.sequence(Seq.empty) shouldBe JsSuccess(Seq.empty)
+      }
+
+      "success containing a sequence of values when all are successes" in {
+        JsResultSupport.sequence(Seq(JsSuccess("a"), JsSuccess("b"), JsSuccess("c"))) shouldBe JsSuccess(Seq("a", "b", "c"))
+      }
+
+      "failure when any is a failure" in {
+        JsResultSupport.sequence(Seq(JsSuccess("a"), JsError("invalid json"), JsSuccess("c"))) shouldBe JsError("invalid json")
+      }
+    }
+  }
 }

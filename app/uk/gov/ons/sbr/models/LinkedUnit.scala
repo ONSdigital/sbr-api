@@ -1,24 +1,21 @@
 package uk.gov.ons.sbr.models
 
-import io.swagger.annotations.ApiModelProperty
 import play.api.libs.json.{ JsObject, JsValue, Json, Writes }
 
 /*
-* DO NOT USE.
-* This only exists to help Swagger generate a correct example of a LinkedUnit with children.
-*/
-@deprecated(message = "This is just for Swagger example purposes - do not use in real code", since = "")
-private[models] case class ExampleChildrenForSwagger(
-  @ApiModelProperty(value = "the unique identifier of the child followed by the child's type", dataType = "string", example = "LEU", required = true) `10205415`: UnitType,
-  @ApiModelProperty(value = "the unique identifier of the child followed by the child's type", dataType = "string", example = "LOU", required = true) `900000011`: UnitType
-)
-
+ * If you change this, see whether you need to change any of the Swagger "example" models under controllers.v1.api.
+ * Ideally they would extend this class in order to prevent the Swagger examples from diverging from the real
+ * implementation.  Unfortunately, the inability of Swagger to omit an optional Map field means that currently the
+ * only way to get a good "example" is to use a "similar" class for the Swagger models that simply does not have the
+ * fields you don't want to see.
+ */
 case class LinkedUnit(
-  @ApiModelProperty(value = "the unique identifier of the unit (such as the ERN or LURN)", dataType = "string", example = "1234567890", required = true) id: UnitId,
-  @ApiModelProperty(value = "the type of unit such as ENT or LOU", dataType = "string", example = "ENT", required = true) unitType: UnitType,
-  @ApiModelProperty(value = "Period (unit load date) - in YYYYMM format", dataType = "string", example = "201803", required = true) period: Period,
-  @ApiModelProperty(value = "the identifiers of child units along with the associated unit type", dataType = "uk.gov.ons.sbr.models.ExampleChildrenForSwagger", required = false) children: Option[Map[UnitId, UnitType]],
-  @ApiModelProperty(value = "the representation of the unit itself", dataType = "object", required = true) vars: JsObject
+  id: UnitId,
+  unitType: UnitType,
+  period: Period,
+  parents: Option[Map[UnitType, UnitId]],
+  children: Option[Map[UnitId, UnitType]],
+  vars: JsObject
 )
 
 object LinkedUnit {
@@ -30,7 +27,14 @@ object LinkedUnit {
    * convert the result.
    */
   private object WritesLinkedUnit extends Writes[LinkedUnit] {
-    private case class ExternalForm(id: UnitId, unitType: UnitType, period: Period, children: Option[Map[String, UnitType]], vars: JsObject)
+    private case class ExternalForm(
+      id: UnitId,
+      unitType: UnitType,
+      period: Period,
+      parents: Option[Map[String, UnitId]],
+      children: Option[Map[String, UnitType]],
+      vars: JsObject
+    )
 
     private implicit val writesUnitId: Writes[UnitId] = UnitId.JsonFormat
     private implicit val writesUnitType: Writes[UnitType] = UnitType.JsonFormat
@@ -41,7 +45,20 @@ object LinkedUnit {
       writesExternalForm.writes(toExternalForm(lu))
 
     private def toExternalForm(lu: LinkedUnit): ExternalForm =
-      ExternalForm(lu.id, lu.unitType, lu.period, lu.children.map(toExternalChildren), lu.vars)
+      ExternalForm(
+        lu.id,
+        lu.unitType,
+        lu.period,
+        lu.parents.map(toExternalParents),
+        lu.children.map(toExternalChildren),
+        lu.vars
+      )
+
+    private def toExternalParents(parents: Map[UnitType, UnitId]): Map[String, UnitId] =
+      parents.map {
+        case (unitType, id) =>
+          UnitType.toAcronym(unitType) -> id
+      }
 
     private def toExternalChildren(children: Map[UnitId, UnitType]): Map[String, UnitType] =
       children.map {
@@ -51,5 +68,5 @@ object LinkedUnit {
   }
 
   def wrap(unitLinks: UnitLinks, unit: JsObject): LinkedUnit =
-    LinkedUnit(unitLinks.id, unitLinks.unitType, unitLinks.period, unitLinks.children, unit)
+    LinkedUnit(unitLinks.id, unitLinks.unitType, unitLinks.period, unitLinks.parents, unitLinks.children, unit)
 }
