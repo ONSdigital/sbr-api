@@ -4,15 +4,16 @@ import com.typesafe.scalalogging.LazyLogging
 import javax.inject.Inject
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import repository.{ EnterpriseRepository, UnitLinksRepository }
-import services.{ EnterpriseService, ErrorMessage }
+import services.{ ErrorMessage, LinkedUnitService }
 import uk.gov.ons.sbr.models._
+import unitref.EnterpriseUnitRef
 
 import scala.concurrent.Future
 
-class SbrCtrlEnterpriseService @Inject() (unitLinksRepository: UnitLinksRepository, enterpriseRepository: EnterpriseRepository) extends EnterpriseService with LazyLogging {
+class SbrCtrlEnterpriseService @Inject() (unitLinksRepository: UnitLinksRepository, enterpriseRepository: EnterpriseRepository) extends LinkedUnitService[Ern] with LazyLogging {
 
   override def retrieve(period: Period, ern: Ern): Future[Either[ErrorMessage, Option[LinkedUnit]]] = {
-    val (unitId, unitType) = Ern.toIdTypePair(ern)
+    val (unitId, unitType) = EnterpriseUnitRef.toIdTypePair(ern)
     unitLinksRepository.retrieveUnitLinks(unitId, unitType, period).flatMap { errorOrUnitLinks =>
       errorOrUnitLinks.fold(
         err => Future.successful(Left(err)),

@@ -3,26 +3,25 @@
 # ~~~~
 
 # Searching Endpoints
-
-#GET     /v1/search                      controllers.v1.SearchController.searchById(id: Option[String] ?= None)
 GET     /v1/search                      controllers.v1.SearchController.searchById(id: Option[String] ?= None, history: Option[Int] ?= None)
 GET     /v1/periods/:date/search        controllers.v1.SearchController.searchByReferencePeriod(id: Option[String] ?= None, date)
 
 # TODO - check and Add history arg in path routes if needed
 
-GET     /v1/periods/$period<\d{4}(0[1-9]|1[0-2])>/ents/$ern<\d{10}>     controllers.v1.EnterpriseController.retrieveEnterprise(period, ern)
-GET     /v1/periods/:period/ents/:ern                                   controllers.v1.EnterpriseController.badRequest(period, ern)
+GET     /v1/periods/$period<\d{4}(0[1-9]|1[0-2])>/ents/$ern<\d{10}>     controllers.v1.EnterpriseController.retrieveEnterpriseLinkedUnit(period, ern)
+GET     /v1/periods/:period/ents/:ern                                   controllers.BadRequestController.badRequest(period, ern)
 
-GET     /v1/periods/$period<\d{4}(0[1-9]|1[0-2])>/vats/$vatref<\d{12}>  controllers.v1.VatController.retrieveVat(period, vatref)
-GET     /v1/periods/:period/vats/:vatref                                controllers.v1.VatController.badRequest(period, vatref)
+GET     /v1/periods/$period<\d{4}(0[1-9]|1[0-2])>/vats/$vatref<\d{12}>  controllers.v1.VatController.retrieveVatLinkedUnit(period, vatref)
+GET     /v1/periods/:period/vats/:vatref                                controllers.BadRequestController.badRequest(period, vatref)
+
+GET     /v1/periods/$period<\d{4}(0[1-9]|1[0-2])>/payes/$payeref<[0-9a-zA-Z]{4,12}> controllers.v1.PayeController.retrievePayeLinkedUnit(period, payeref)
+GET     /v1/periods/:period/payes/:payeref                                          controllers.BadRequestController.badRequest(period, payeref)
 
 GET     /v1/periods/:date/leus/:id      controllers.v1.SearchController.searchLeUWithPeriod(date, id)
 GET     /v1/periods/:date/lous/:id      controllers.v1.LocalUnitController.searchLoUWithPeriod(date, id)
-GET     /v1/periods/:date/payes/:id     controllers.v1.SearchController.searchPayeWithPeriod(date, id)
 GET     /v1/periods/:date/crns/:id      controllers.v1.SearchController.searchCrnWithPeriod(date, id)
 
 # Editing Endpoints
-
 POST    /v1/enterprises/:id                  controllers.v1.EditController.editEnterprise(id)
 POST    /v1/periods/:period/enterprises/:id  controllers.v1.EditController.editEnterpriseForPeriod(period, id)
 
@@ -42,7 +41,6 @@ GET     /health                         controllers.HealthController.health
 # api documentation
 GET     /swagger.json                   controllers.ApiHelpController.getResources
 GET     /docs                           controllers.HomeController.swagger
-
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file                   controllers.Assets.versioned(path="/public", file: Asset)

@@ -8,6 +8,7 @@ import org.scalatest.{ EitherValues, FreeSpec, Matchers }
 import repository.{ EnterpriseRepository, UnitLinksRepository }
 import support.sample.SampleEnterprise
 import uk.gov.ons.sbr.models._
+import unitref.EnterpriseUnitRef
 
 import scala.concurrent.Future
 
@@ -25,7 +26,7 @@ class SbrCtrlEnterpriseServiceSpec extends FreeSpec with Matchers with MockFacto
 
     def enterpriseUnitLinks(withErn: Ern, withPeriod: Period, withChildren: Option[Map[UnitId, UnitType]]): UnitLinks =
       UnitLinks(
-        Ern.asUnitId(withErn),
+        EnterpriseUnitRef.toUnitId(withErn),
         UnitType.Enterprise,
         withPeriod,
         parents = None,
@@ -36,7 +37,7 @@ class SbrCtrlEnterpriseServiceSpec extends FreeSpec with Matchers with MockFacto
   "An Enterprise Service" - {
     "assembles an enterprise with its associated links" - {
       "when both the unit link and enterprise entries are found for the target Enterprise reference (ERN) and period" in new Fixture {
-        (unitLinksRepository.retrieveUnitLinks _).expects(Ern.asUnitId(TargetErn), UnitType.Enterprise, TargetPeriod).returning(Future.successful(
+        (unitLinksRepository.retrieveUnitLinks _).expects(EnterpriseUnitRef.toUnitId(TargetErn), UnitType.Enterprise, TargetPeriod).returning(Future.successful(
           Right(Some(enterpriseUnitLinks(withErn = TargetErn, withPeriod = TargetPeriod, withChildren = EnterpriseChildLinks)))
         ))
         (enterpriseRepository.retrieveEnterprise _).expects(TargetPeriod, TargetErn).returning(
@@ -58,7 +59,7 @@ class SbrCtrlEnterpriseServiceSpec extends FreeSpec with Matchers with MockFacto
 
     "returns nothing" - {
       "when a unit links entry for the enterprise cannot be found" in new Fixture {
-        (unitLinksRepository.retrieveUnitLinks _).expects(Ern.asUnitId(TargetErn), UnitType.Enterprise, TargetPeriod).returning(
+        (unitLinksRepository.retrieveUnitLinks _).expects(EnterpriseUnitRef.toUnitId(TargetErn), UnitType.Enterprise, TargetPeriod).returning(
           Future.successful(Right(None))
         )
 
@@ -68,7 +69,7 @@ class SbrCtrlEnterpriseServiceSpec extends FreeSpec with Matchers with MockFacto
       }
 
       "when an enterprise entry cannot be found" in new Fixture {
-        (unitLinksRepository.retrieveUnitLinks _).expects(Ern.asUnitId(TargetErn), UnitType.Enterprise, TargetPeriod).returning(Future.successful(
+        (unitLinksRepository.retrieveUnitLinks _).expects(EnterpriseUnitRef.toUnitId(TargetErn), UnitType.Enterprise, TargetPeriod).returning(Future.successful(
           Right(Some(enterpriseUnitLinks(withErn = TargetErn, withPeriod = TargetPeriod, withChildren = EnterpriseChildLinks)))
         ))
         (enterpriseRepository.retrieveEnterprise _).expects(TargetPeriod, TargetErn).returning(
@@ -84,7 +85,7 @@ class SbrCtrlEnterpriseServiceSpec extends FreeSpec with Matchers with MockFacto
     "returns an error message" - {
       "when a unit links retrieval fails" in new Fixture {
         val failureMessage = "unitLinks retrieval failure"
-        (unitLinksRepository.retrieveUnitLinks _).expects(Ern.asUnitId(TargetErn), UnitType.Enterprise, TargetPeriod).returning(
+        (unitLinksRepository.retrieveUnitLinks _).expects(EnterpriseUnitRef.toUnitId(TargetErn), UnitType.Enterprise, TargetPeriod).returning(
           Future.successful(Left(failureMessage))
         )
 
@@ -95,7 +96,7 @@ class SbrCtrlEnterpriseServiceSpec extends FreeSpec with Matchers with MockFacto
 
       "when an enterprise retrieval fails" in new Fixture {
         val failureMessage = "enterprise retrieval failure"
-        (unitLinksRepository.retrieveUnitLinks _).expects(Ern.asUnitId(TargetErn), UnitType.Enterprise, TargetPeriod).returning(Future.successful(
+        (unitLinksRepository.retrieveUnitLinks _).expects(EnterpriseUnitRef.toUnitId(TargetErn), UnitType.Enterprise, TargetPeriod).returning(Future.successful(
           Right(Some(enterpriseUnitLinks(withErn = TargetErn, withPeriod = TargetPeriod, withChildren = EnterpriseChildLinks)))
         ))
         (enterpriseRepository.retrieveEnterprise _).expects(TargetPeriod, TargetErn).returning(

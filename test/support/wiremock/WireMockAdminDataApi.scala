@@ -3,7 +3,7 @@ package support.wiremock
 import com.github.tomakehurst.wiremock.client.MappingBuilder
 import com.github.tomakehurst.wiremock.client.WireMock.{ get, urlEqualTo }
 import com.typesafe.scalalogging.LazyLogging
-import uk.gov.ons.sbr.models.{ Period, VatRef }
+import uk.gov.ons.sbr.models.{ PayeRef, Period, VatRef }
 
 trait WireMockAdminDataApi extends ApiResponse with LazyLogging {
   val DefaultAdminDataApiPort = 9005
@@ -35,4 +35,7 @@ trait WireMockAdminDataApi extends ApiResponse with LazyLogging {
 
   def aVatForPeriodRequest(withVatRef: VatRef, withPeriod: Period): MappingBuilder =
     get(urlEqualTo(s"/v1/records/${withVatRef.value}/periods/${Period.asString(withPeriod)}"))
+
+  def aPayeForPeriodRequest(withPayeRef: PayeRef, withPeriod: Period): MappingBuilder =
+    get(urlEqualTo(s"/v1/records/${withPayeRef.value}/periods/${Period.asString(withPeriod)}"))
 }

@@ -7,10 +7,10 @@ import uk.gov.ons.sbr.models.VatRef
  * We should be passing the VAT admin data variables through "as-is", and hence do not require a realistic model.
  */
 object SampleVat {
-  def apply(vatref: VatRef): String =
+  def apply(vatRef: VatRef): String =
     s"""|{
         | "entref":"1000012345",
-        | "vatref":"${vatref.value}",
+        | "vatref":"${vatRef.value}",
         | "sic92":"73120",
         | "postcode":"NG14 5AR"
         |}""".stripMargin

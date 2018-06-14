@@ -26,7 +26,7 @@ class HttpLinkedUnitRetrievalHandlerSpec extends FreeSpec with Matchers with Moc
     "returns a JSON representation of the retrieved LinkedUnit when found" in new Fixture {
       (writesLinkedUnit.writes _).expects(ALinkedUnit).returning(LinkedUnitJsonRepresentation)
 
-      val result = httpHandler.handleOutcome(Right(Some(ALinkedUnit)))
+      val result = httpHandler(Right(Some(ALinkedUnit)))
 
       val futResult = Future.successful(result)
       status(futResult) shouldBe OK
@@ -35,19 +35,19 @@ class HttpLinkedUnitRetrievalHandlerSpec extends FreeSpec with Matchers with Moc
     }
 
     "returns NOT_FOUND when the retrieval cannot find either the unit or its associated links" in new Fixture {
-      val result = httpHandler.handleOutcome(Right(None))
+      val result = httpHandler(Right(None))
 
       result.header.status shouldBe NOT_FOUND
     }
 
     "returns GATEWAY_TIMEOUT when the retrieval time exceeds the configured time out" in new Fixture {
-      val result = httpHandler.handleOutcome(Left("Timeout"))
+      val result = httpHandler(Left("Timeout"))
 
       result.header.status shouldBe GATEWAY_TIMEOUT
     }
 
     "returns INTERNAL_SERVER_ERROR when the retrieval fails" in new Fixture {
-      val result = httpHandler.handleOutcome(Left("Retrieval failed"))
+      val result = httpHandler(Left("Retrieval failed"))
 
       result.header.status shouldBe INTERNAL_SERVER_ERROR
     }

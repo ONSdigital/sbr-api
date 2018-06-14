@@ -23,7 +23,7 @@ import support.matchers.HttpServerErrorStatusCodeMatcher.aServerError
  * For example, in order to fully test the period regex, we test that each and every possible month is considered
  * valid.  These are downsides of this "router based validation" approach ...
  */
-class VatRoutingSpec extends FreeSpec with Matchers with GuiceOneAppPerSuite with ScalaFutures {
+class PayeRoutingSpec extends FreeSpec with Matchers with GuiceOneAppPerSuite with ScalaFutures {
 
   /*
    * When valid arguments are routed to the retrieve... actions, an attempt will be made to make a call to
@@ -34,33 +34,33 @@ class VatRoutingSpec extends FreeSpec with Matchers with GuiceOneAppPerSuite wit
   override def fakeApplication(): Application = new GuiceApplicationBuilder().configure(Map("play.ws.timeout.connection" -> "50")).build()
 
   private trait Fixture {
-    val ValidVatRef = "397585634298"
-    val ValidPeriod = "201803"
+    val ValidPayeRef = "125H7A71620"
+    val ValidPeriod = "201804"
   }
 
-  "A request to retrieve a VAT unit by VAT reference and period" - {
+  "A request to retrieve a PAYE unit by PAYE reference and period" - {
     "is rejected when" - {
       "the VAT reference" - {
-        "has fewer than twelve digits" in new Fixture {
-          val VatRefTooFewDigits = ValidVatRef.drop(1)
+        "has fewer than four characters" in new Fixture {
+          val PayeRefTooFewChars = ValidPayeRef.take(3)
 
-          val Some(result) = route(app, FakeRequest(GET, s"/v1/periods/$ValidPeriod/vats/$VatRefTooFewDigits"))
-
-          status(result) shouldBe BAD_REQUEST
-        }
-
-        "has more than twelve digits" in new Fixture {
-          val VatRefTooManyDigits = ValidVatRef + "9"
-
-          val Some(result) = route(app, FakeRequest(GET, s"/v1/periods/$ValidPeriod/vats/$VatRefTooManyDigits"))
+          val Some(result) = route(app, FakeRequest(GET, s"/v1/periods/$ValidPeriod/payes/$PayeRefTooFewChars"))
 
           status(result) shouldBe BAD_REQUEST
         }
 
-        "is non-numeric" in new Fixture {
-          val VatRefNonNumeric = new String(Array.fill(12)('A'))
+        "has more than twelve characters" in new Fixture {
+          val PayeRefTooManyDigits = ValidPayeRef.padTo(13, '9')
 
-          val Some(result) = route(app, FakeRequest(GET, s"/v1/periods/$ValidPeriod/vats/$VatRefNonNumeric"))
+          val Some(result) = route(app, FakeRequest(GET, s"/v1/periods/$ValidPeriod/payes/$PayeRefTooManyDigits"))
+
+          status(result) shouldBe BAD_REQUEST
+        }
+
+        "contains a non alphanumeric character" in new Fixture {
+          val PayeRefNonAlphanumeric = "-" + ValidPayeRef.drop(1)
+
+          val Some(result) = route(app, FakeRequest(GET, s"/v1/periods/$ValidPeriod/payes/$PayeRefNonAlphanumeric"))
 
           status(result) shouldBe BAD_REQUEST
         }
@@ -70,7 +70,7 @@ class VatRoutingSpec extends FreeSpec with Matchers with GuiceOneAppPerSuite wit
         "has fewer than six digits" in new Fixture {
           val PeriodTooFewDigits = ValidPeriod.drop(1)
 
-          val Some(result) = route(app, FakeRequest(GET, s"/v1/periods/$PeriodTooFewDigits/vats/$ValidVatRef"))
+          val Some(result) = route(app, FakeRequest(GET, s"/v1/periods/$PeriodTooFewDigits/payes/$ValidPayeRef"))
 
           status(result) shouldBe BAD_REQUEST
         }
@@ -78,7 +78,7 @@ class VatRoutingSpec extends FreeSpec with Matchers with GuiceOneAppPerSuite wit
         "has more than six digits" in new Fixture {
           val PeriodTooManyDigits = ValidPeriod + "1"
 
-          val Some(result) = route(app, FakeRequest(GET, s"/v1/periods/$PeriodTooManyDigits/vats/$ValidVatRef"))
+          val Some(result) = route(app, FakeRequest(GET, s"/v1/periods/$PeriodTooManyDigits/payes/$ValidPayeRef"))
 
           status(result) shouldBe BAD_REQUEST
         }
@@ -86,7 +86,7 @@ class VatRoutingSpec extends FreeSpec with Matchers with GuiceOneAppPerSuite wit
         "is non-numeric" in new Fixture {
           val PeriodNonNumeric = new String(Array.fill(6)('A'))
 
-          val Some(result) = route(app, FakeRequest(GET, s"/v1/periods/$PeriodNonNumeric/vats/$ValidVatRef"))
+          val Some(result) = route(app, FakeRequest(GET, s"/v1/periods/$PeriodNonNumeric/payes/$ValidPayeRef"))
 
           status(result) shouldBe BAD_REQUEST
         }
@@ -94,7 +94,7 @@ class VatRoutingSpec extends FreeSpec with Matchers with GuiceOneAppPerSuite wit
         "is negative" in new Fixture {
           val PeriodNegative = "-01801"
 
-          val Some(result) = route(app, FakeRequest(GET, s"/v1/periods/$PeriodNegative/vats/$ValidVatRef"))
+          val Some(result) = route(app, FakeRequest(GET, s"/v1/periods/$PeriodNegative/payes/$ValidPayeRef"))
 
           status(result) shouldBe BAD_REQUEST
         }
@@ -103,7 +103,7 @@ class VatRoutingSpec extends FreeSpec with Matchers with GuiceOneAppPerSuite wit
           "that is too low" in new Fixture {
             val PeriodInvalidBeforeCalendarMonth = "201800"
 
-            val Some(result) = route(app, FakeRequest(GET, s"/v1/periods/$PeriodInvalidBeforeCalendarMonth/vats/$ValidVatRef"))
+            val Some(result) = route(app, FakeRequest(GET, s"/v1/periods/$PeriodInvalidBeforeCalendarMonth/payes/$ValidPayeRef"))
 
             status(result) shouldBe BAD_REQUEST
           }
@@ -111,7 +111,7 @@ class VatRoutingSpec extends FreeSpec with Matchers with GuiceOneAppPerSuite wit
           "that is too high" in new Fixture {
             val PeriodInvalidAfterCalendarMonth = "201813"
 
-            val Some(result) = route(app, FakeRequest(GET, s"/v1/periods/$PeriodInvalidAfterCalendarMonth/vats/$ValidVatRef"))
+            val Some(result) = route(app, FakeRequest(GET, s"/v1/periods/$PeriodInvalidAfterCalendarMonth/payes/$ValidPayeRef"))
 
             status(result) shouldBe BAD_REQUEST
           }
@@ -131,7 +131,7 @@ class VatRoutingSpec extends FreeSpec with Matchers with GuiceOneAppPerSuite wit
       Months.foreach { month =>
         withClue(s"for month $month") {
           val validPeriod = Year + month
-          val Some(futureResult) = route(app, FakeRequest(GET, s"/v1/periods/$validPeriod/vats/$ValidVatRef"))
+          val Some(futureResult) = route(app, FakeRequest(GET, s"/v1/periods/$validPeriod/payes/$ValidPayeRef"))
 
           status(futureResult) should be(aServerError)
         }
