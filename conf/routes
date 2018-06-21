@@ -17,9 +17,11 @@ GET     /v1/periods/:period/vats/:vatref                                controll
 GET     /v1/periods/$period<\d{4}(0[1-9]|1[0-2])>/payes/$payeref<[0-9a-zA-Z]{4,12}> controllers.v1.PayeController.retrievePayeLinkedUnit(period, payeref)
 GET     /v1/periods/:period/payes/:payeref                                          controllers.BadRequestController.badRequest(period, payeref)
 
+GET     /v1/periods/$period<\d{4}(0[1-9]|1[0-2])>/crns/$crn<\d{8}>      controllers.v1.CompaniesHouseController.retrieveCompaniesHouseLinkedUnit(period, crn)
+GET     /v1/periods/:period/crns/:crn                                   controllers.BadRequestController.badRequest(period, crn)
+
 GET     /v1/periods/:date/leus/:id      controllers.v1.SearchController.searchLeUWithPeriod(date, id)
 GET     /v1/periods/:date/lous/:id      controllers.v1.LocalUnitController.searchLoUWithPeriod(date, id)
-GET     /v1/periods/:date/crns/:id      controllers.v1.SearchController.searchCrnWithPeriod(date, id)
 
 # Editing Endpoints
 POST    /v1/enterprises/:id                  controllers.v1.EditController.editEnterprise(id)

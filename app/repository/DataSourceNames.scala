@@ -8,4 +8,5 @@ object DataSourceNames {
   final val SbrCtrl = "sbr-ctrl"
   final val Vat = "vat"
   final val Paye = "paye"
+  final val CompaniesHouse = "ch"
 }
