@@ -1,18 +1,18 @@
-package services.admindata
+package services
 
 import com.typesafe.scalalogging.LazyLogging
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import repository.{ AdminDataRepository, UnitLinksRepository }
-import services.{ ErrorMessage, LinkedUnitService }
+import repository.UnitLinksRepository
+import services.finder.UnitFinder
 import uk.gov.ons.sbr.models.{ LinkedUnit, Period, UnitLinks }
 import unitref.UnitRef
 
 import scala.concurrent.Future
 
-class AdminDataService[T](
+class RestLinkedUnitService[T](
     unitRefType: UnitRef[T],
     unitLinksRepository: UnitLinksRepository,
-    adminDataRepository: AdminDataRepository
+    unitFinder: UnitFinder[T]
 ) extends LinkedUnitService[T] with LazyLogging {
 
   override def retrieve(period: Period, unitRef: T): Future[Either[ErrorMessage, Option[LinkedUnit]]] = {
@@ -33,12 +33,12 @@ class AdminDataService[T](
   }
 
   private def onUnitLinksFound(period: Period, unitRef: T, unitLinks: UnitLinks): Future[Either[ErrorMessage, Option[LinkedUnit]]] = {
-    logger.debug(s"Found Unit Links for [$period] and [$unitRef].  Requesting admin data ...")
-    adminDataRepository.retrieveAdminData(unitRefType.toUnitId(unitRef), period).map { errorOrAdminData =>
-      errorOrAdminData.right.map { optAdminData =>
-        if (optAdminData.isEmpty) logger.warn(s"Inconsistent Database.  No admin data found for [$period] and [$unitRef] that has Unit Links [$unitLinks].")
-        optAdminData.map { adminData =>
-          val linkedUnit = LinkedUnit.wrap(unitLinks, adminData.variables)
+    logger.debug(s"Found Unit Links for [$period] and [$unitRef].  Attempting to find unit ...")
+    unitFinder.find(period, unitRef, unitLinks).map { errorOrJson =>
+      errorOrJson.right.map { optJson =>
+        if (optJson.isEmpty) logger.warn(s"Inconsistent Database.  No unit found for [$period] and [$unitRef] that has Unit Links [$unitLinks].")
+        optJson.map { json =>
+          val linkedUnit = LinkedUnit.wrap(unitLinks, json)
           logger.debug(s"LinkedUnit for [$period] and [$unitRef] is [$linkedUnit].")
           linkedUnit
         }

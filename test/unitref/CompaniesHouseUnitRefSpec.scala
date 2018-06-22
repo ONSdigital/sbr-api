@@ -7,8 +7,8 @@ import uk.gov.ons.sbr.models.{ CompanyRefNumber, UnitId }
 class CompaniesHouseUnitRefSpec extends FreeSpec with Matchers {
 
   "A Company Reference Number (CRN)" - {
-    "can be created from a string parameter" in {
-      CompaniesHouseUnitRef.fromString("12345678") shouldBe CompanyRefNumber("12345678")
+    "can be created from a generic unit identifier" in {
+      CompaniesHouseUnitRef.fromUnitId(UnitId("12345678")) shouldBe CompanyRefNumber("12345678")
     }
 
     "can be converted to a unit Identifier and unit Type pair" in {

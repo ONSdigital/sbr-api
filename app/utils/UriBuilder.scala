@@ -51,9 +51,6 @@ object UriBuilder {
     }
   }
 
-  def createLouPeriodUri(baseUrl: String, id: String, period: String): Uri =
-    baseUrl / PERIOD_PATH / period / TYPE_PATH / LOU.toString / UNIT_PATH / id
-
   def createLouUri(baseUrl: String, id: String, unitLinks: JsValue): Uri = {
     val entId = (unitLinks \ "parents" \ "ENT").as[String]
     val period = (unitLinks \ "period").as[String]

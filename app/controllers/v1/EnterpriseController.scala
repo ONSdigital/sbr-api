@@ -7,14 +7,15 @@ import javax.inject.{ Inject, Singleton }
 import play.api.libs.json.JsObject
 import play.api.mvc.{ Action, AnyContent, _ }
 import uk.gov.ons.sbr.models.{ Ern, Period, UnitId, UnitType }
-import unitref.EnterpriseUnitRef
+import unitref.UnitRef
 
 @Api("Enterprise")
 @Singleton
 class EnterpriseController @Inject() (
+    unitRefType: UnitRef[Ern],
     retrieveLinkedUnitAction: LinkedUnitRequestActionBuilderMaker[Ern],
     handleLinkedUnitRetrievalResult: LinkedUnitRetrievalHandler[Result]
-) extends LinkedUnitController[Ern](EnterpriseUnitRef, retrieveLinkedUnitAction, handleLinkedUnitRetrievalResult) {
+) extends LinkedUnitController[Ern](unitRefType, retrieveLinkedUnitAction, handleLinkedUnitRetrievalResult) {
   @ApiOperation(
     value = "Json representation of the enterprise along with its links to other units",
     notes = "children represents a mapping from each child's unique identifier to the associated unitType; " +

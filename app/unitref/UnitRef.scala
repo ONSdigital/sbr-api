@@ -3,8 +3,9 @@ package unitref
 import uk.gov.ons.sbr.models.{ UnitId, UnitType }
 
 trait UnitRef[T] {
-  def fromString(value: String): T
-
+  def fromUnitId(unitId: UnitId): T
   def toIdTypePair(ref: T): (UnitId, UnitType)
-  def toUnitId(ref: T): UnitId
+
+  final def toUnitId(ref: T): UnitId =
+    toIdTypePair(ref)._1
 }
