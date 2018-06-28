@@ -47,7 +47,6 @@ class CompaniesHouseController @Inject() (
 package ch.examples {
   @deprecated(message = "This is just for Swagger example purposes - do not use in real code", since = "")
   case class CompaniesHouseParentForSwagger(
-    @ApiModelProperty(value = "the unit type of the parent followed by the parent's unique identifier", dataType = "string", example = "1020541592", required = true) ENT: String,
     @ApiModelProperty(value = "the unit type of the parent followed by the parent's unique identifier", dataType = "string", example = "1234567890123456", required = true) LEU: String
   )
 

@@ -20,7 +20,6 @@ class CompaniesHouseAcceptanceSpec extends ServerAcceptanceSpec with WireMockSbr
   private val CompaniesHouseUnitLinksResponseBody =
     s"""|{"id":"${TargetCompanyRefNumber.value}",
         | "parents": {
-        |   "ENT":"1000000012",
         |   "LEU":"1111111110123456"
         | },
         | "unitType":"CH",
@@ -94,7 +93,6 @@ class CompaniesHouseAcceptanceSpec extends ServerAcceptanceSpec with WireMockSbr
     s"""
        |{"id":"${TargetCompanyRefNumber.value}",
        | "parents": {
-       |   "ENT":"1000000012",
        |   "LEU":"1111111110123456"
        | },
        | "unitType":"CH",
