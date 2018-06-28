@@ -15,7 +15,7 @@ import support.wiremock.WireMockSbrControlApi
 import utils.url.BaseUrl
 import utils.url.BaseUrl.Protocol.Http
 
-class RestUnitRepository_WiremockSpec extends org.scalatest.fixture.FreeSpec with GuiceOneAppPerSuite with WireMockSbrControlApi with Matchers with ScalaFutures with EitherValues with MockFactory {
+class RestRepository_WiremockSpec extends org.scalatest.fixture.FreeSpec with GuiceOneAppPerSuite with WireMockSbrControlApi with Matchers with ScalaFutures with EitherValues with MockFactory {
 
   private val SomePath = "foo/bar/baz"
   private val SomeJsonStr = s"""{"message":"Hello World!"}"""
@@ -27,7 +27,7 @@ class RestUnitRepository_WiremockSpec extends org.scalatest.fixture.FreeSpec wit
   // test patience must exceed the configured fixedDelay to properly test client-side timeout handling
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(timeout = scaled(Span(1, Second)), interval = scaled(Span(100, Millis)))
 
-  protected case class FixtureParam(repository: RestUnitRepository)
+  protected case class FixtureParam(repository: RestRepository)
 
   override protected def withFixture(test: OneArgTest): Outcome =
     withWireMockSbrControlApi { () =>
@@ -39,9 +39,9 @@ class RestUnitRepository_WiremockSpec extends org.scalatest.fixture.FreeSpec wit
    * and we want to test timeout handling behaviour.
    */
   private def newFixtureParam: FixtureParam = {
-    val config = RestUnitRepositoryConfig(BaseUrl(Http, "localhost", DefaultSbrControlApiPort))
+    val config = RestRepositoryConfig(BaseUrl(Http, "localhost", DefaultSbrControlApiPort))
     val wsClient = app.injector.instanceOf[WSClient]
-    FixtureParam(new RestUnitRepository(config, wsClient))
+    FixtureParam(new RestRepository(config, wsClient))
   }
 
   "A unit repository" - {

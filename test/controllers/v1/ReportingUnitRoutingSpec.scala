@@ -23,7 +23,7 @@ import support.matchers.HttpServerErrorStatusCodeMatcher.aServerError
  * For example, in order to fully test the period regex, we test that each and every possible month is considered
  * valid.  These are downsides of this "router based validation" approach ...
  */
-class PayeRoutingSpec extends FreeSpec with Matchers with GuiceOneAppPerSuite with ScalaFutures {
+class ReportingUnitRoutingSpec extends FreeSpec with Matchers with GuiceOneAppPerSuite with ScalaFutures {
 
   /*
    * When valid arguments are routed to the retrieve... actions, an attempt will be made to make a call to
@@ -34,34 +34,33 @@ class PayeRoutingSpec extends FreeSpec with Matchers with GuiceOneAppPerSuite wi
   override def fakeApplication(): Application = new GuiceApplicationBuilder().configure(Map("play.ws.timeout.connection" -> "50")).build()
 
   private trait Fixture {
-    val ValidMinLengthPayeRef = "125H"
-    val ValidMaxLengthPayeRef = "125H7A716207"
+    val ValidRurn = "33000000053"
     val ValidPeriod = "201804"
   }
 
-  "A request to retrieve a PAYE unit by PAYE reference and period" - {
+  "A request to retrieve a reporting unit by Reporting Unit reference (RURN) and period" - {
     "is rejected when" - {
-      "the PAYE reference" - {
-        "has fewer than four characters" in new Fixture {
-          val PayeRefTooFewChars = ValidMinLengthPayeRef.drop(1)
+      "the RURN" - {
+        "has fewer than eleven digits" in new Fixture {
+          val RurnTooFewDigits = ValidRurn.drop(1)
 
-          val Some(result) = route(app, FakeRequest(GET, s"/v1/periods/$ValidPeriod/payes/$PayeRefTooFewChars"))
-
-          status(result) shouldBe BAD_REQUEST
-        }
-
-        "has more than twelve characters" in new Fixture {
-          val PayeRefTooManyDigits = ValidMaxLengthPayeRef + "9"
-
-          val Some(result) = route(app, FakeRequest(GET, s"/v1/periods/$ValidPeriod/payes/$PayeRefTooManyDigits"))
+          val Some(result) = route(app, FakeRequest(GET, s"/v1/periods/$ValidPeriod/reus/$RurnTooFewDigits"))
 
           status(result) shouldBe BAD_REQUEST
         }
 
-        "contains a non alphanumeric character" in new Fixture {
-          val PayeRefNonAlphanumeric = "-" + ValidMaxLengthPayeRef.drop(1)
+        "has more than eleven digits" in new Fixture {
+          val RurnTooManyDigits = ValidRurn + "9"
 
-          val Some(result) = route(app, FakeRequest(GET, s"/v1/periods/$ValidPeriod/payes/$PayeRefNonAlphanumeric"))
+          val Some(result) = route(app, FakeRequest(GET, s"/v1/periods/$ValidPeriod/reus/$RurnTooManyDigits"))
+
+          status(result) shouldBe BAD_REQUEST
+        }
+
+        "is non-numeric" in new Fixture {
+          val RurnNonNumeric = new String(Array.fill(11)('A'))
+
+          val Some(result) = route(app, FakeRequest(GET, s"/v1/periods/$ValidPeriod/reus/$RurnNonNumeric"))
 
           status(result) shouldBe BAD_REQUEST
         }
@@ -71,7 +70,7 @@ class PayeRoutingSpec extends FreeSpec with Matchers with GuiceOneAppPerSuite wi
         "has fewer than six digits" in new Fixture {
           val PeriodTooFewDigits = ValidPeriod.drop(1)
 
-          val Some(result) = route(app, FakeRequest(GET, s"/v1/periods/$PeriodTooFewDigits/payes/$ValidMaxLengthPayeRef"))
+          val Some(result) = route(app, FakeRequest(GET, s"/v1/periods/$PeriodTooFewDigits/reus/$ValidRurn"))
 
           status(result) shouldBe BAD_REQUEST
         }
@@ -79,7 +78,7 @@ class PayeRoutingSpec extends FreeSpec with Matchers with GuiceOneAppPerSuite wi
         "has more than six digits" in new Fixture {
           val PeriodTooManyDigits = ValidPeriod + "1"
 
-          val Some(result) = route(app, FakeRequest(GET, s"/v1/periods/$PeriodTooManyDigits/payes/$ValidMaxLengthPayeRef"))
+          val Some(result) = route(app, FakeRequest(GET, s"/v1/periods/$PeriodTooManyDigits/reus/$ValidRurn"))
 
           status(result) shouldBe BAD_REQUEST
         }
@@ -87,7 +86,7 @@ class PayeRoutingSpec extends FreeSpec with Matchers with GuiceOneAppPerSuite wi
         "is non-numeric" in new Fixture {
           val PeriodNonNumeric = new String(Array.fill(6)('A'))
 
-          val Some(result) = route(app, FakeRequest(GET, s"/v1/periods/$PeriodNonNumeric/payes/$ValidMaxLengthPayeRef"))
+          val Some(result) = route(app, FakeRequest(GET, s"/v1/periods/$PeriodNonNumeric/reus/$ValidRurn"))
 
           status(result) shouldBe BAD_REQUEST
         }
@@ -95,7 +94,7 @@ class PayeRoutingSpec extends FreeSpec with Matchers with GuiceOneAppPerSuite wi
         "is negative" in new Fixture {
           val PeriodNegative = "-01801"
 
-          val Some(result) = route(app, FakeRequest(GET, s"/v1/periods/$PeriodNegative/payes/$ValidMaxLengthPayeRef"))
+          val Some(result) = route(app, FakeRequest(GET, s"/v1/periods/$PeriodNegative/reus/$ValidRurn"))
 
           status(result) shouldBe BAD_REQUEST
         }
@@ -104,7 +103,7 @@ class PayeRoutingSpec extends FreeSpec with Matchers with GuiceOneAppPerSuite wi
           "that is too low" in new Fixture {
             val PeriodInvalidBeforeCalendarMonth = "201800"
 
-            val Some(result) = route(app, FakeRequest(GET, s"/v1/periods/$PeriodInvalidBeforeCalendarMonth/payes/$ValidMaxLengthPayeRef"))
+            val Some(result) = route(app, FakeRequest(GET, s"/v1/periods/$PeriodInvalidBeforeCalendarMonth/reus/$ValidRurn"))
 
             status(result) shouldBe BAD_REQUEST
           }
@@ -112,7 +111,7 @@ class PayeRoutingSpec extends FreeSpec with Matchers with GuiceOneAppPerSuite wi
           "that is too high" in new Fixture {
             val PeriodInvalidAfterCalendarMonth = "201813"
 
-            val Some(result) = route(app, FakeRequest(GET, s"/v1/periods/$PeriodInvalidAfterCalendarMonth/payes/$ValidMaxLengthPayeRef"))
+            val Some(result) = route(app, FakeRequest(GET, s"/v1/periods/$PeriodInvalidAfterCalendarMonth/reus/$ValidRurn"))
 
             status(result) shouldBe BAD_REQUEST
           }
@@ -126,30 +125,16 @@ class PayeRoutingSpec extends FreeSpec with Matchers with GuiceOneAppPerSuite wi
      * The key for this test is that we accepted the arguments and attempted to perform a REST call - thereby
      * generating a "server error" rather than a "client error".
      */
-    "is processed when valid" - {
-      "supporting all period months" in new Fixture {
-        val Year = "2018"
-        val Months = Seq("01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12")
-        Months.foreach { month =>
-          withClue(s"for month $month") {
-            val validPeriod = Year + month
-            val Some(futureResult) = route(app, FakeRequest(GET, s"/v1/periods/$validPeriod/payes/${ValidMaxLengthPayeRef.drop(1)}"))
+    "is processed when valid" in new Fixture {
+      val Year = "2018"
+      val Months = Seq("01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12")
+      Months.foreach { month =>
+        withClue(s"for month $month") {
+          val validPeriod = Year + month
+          val Some(futureResult) = route(app, FakeRequest(GET, s"/v1/periods/$validPeriod/reus/$ValidRurn"))
 
-            status(futureResult) should be(aServerError)
-          }
+          status(futureResult) should be(aServerError)
         }
-      }
-
-      "supporting the minimum Paye reference length" in new Fixture {
-        val Some(futureResult) = route(app, FakeRequest(GET, s"/v1/periods/201801/payes/$ValidMinLengthPayeRef"))
-
-        status(futureResult) should be(aServerError)
-      }
-
-      "supporting the maximum Paye reference length" in new Fixture {
-        val Some(futureResult) = route(app, FakeRequest(GET, s"/v1/periods/201801/payes/$ValidMaxLengthPayeRef"))
-
-        status(futureResult) should be(aServerError)
       }
     }
   }

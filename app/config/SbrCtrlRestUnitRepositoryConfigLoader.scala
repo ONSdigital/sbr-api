@@ -2,7 +2,7 @@ package config
 
 import com.typesafe.config.Config
 import com.typesafe.sslconfig.util.ConfigLoader
-import repository.rest.RestUnitRepositoryConfig
+import repository.rest.RestRepositoryConfig
 
 /*
  * We want a misconfigured server to "fail fast".
@@ -11,6 +11,6 @@ import repository.rest.RestUnitRepositoryConfig
  * which will fail the startup of the service (at deployment time).
  */
 object SbrCtrlRestUnitRepositoryConfigLoader {
-  def apply(restUnitRepositoryConfigLoader: ConfigLoader[RestUnitRepositoryConfig], rootConfig: Config): RestUnitRepositoryConfig =
+  def apply(restUnitRepositoryConfigLoader: ConfigLoader[RestRepositoryConfig], rootConfig: Config): RestRepositoryConfig =
     restUnitRepositoryConfigLoader.load(config = rootConfig, path = "api.sbr.control")
 }

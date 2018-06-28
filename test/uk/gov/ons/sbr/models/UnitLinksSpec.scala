@@ -2,14 +2,17 @@ package uk.gov.ons.sbr.models
 
 import java.time.Month.FEBRUARY
 
+import org.scalamock.scalatest.MockFactory
 import org.scalatest.{ FreeSpec, Matchers }
 import play.api.libs.json.JsResultException
 import play.api.libs.json.Json.parse
 import support.JsonString.{ optionalString, string, withObject }
+import uk.gov.ons.sbr.models.UnitType.{ Enterprise, LocalUnit, ReportingUnit }
+import unitref.UnitRef
 
-class UnitLinksSpec extends FreeSpec with Matchers {
+class UnitLinksSpec extends FreeSpec with Matchers with MockFactory {
 
-  private trait Fixture {
+  private trait JsonFixture {
     implicit val readsUnitLinks = UnitLinks.reads
     val Id = "1234567890"
     val SampleParents = Map("ENT" -> "9988776655")
@@ -58,53 +61,66 @@ class UnitLinksSpec extends FreeSpec with Matchers {
     }
   }
 
+  private trait ReferenceFixture {
+    val ernType = stub[UnitRef[Ern]]
+
+    def unitLinks(withParents: Option[Map[UnitType, UnitId]]): UnitLinks =
+      UnitLinks(
+        UnitId("112233445"),
+        LocalUnit,
+        Period.fromYearMonth(2018, FEBRUARY),
+        withParents,
+        children = None
+      )
+  }
+
   "Unit Links" - {
     "can be read from a Json representation of unit links" - {
-      "containing no parent and no children" in new Fixture {
+      "containing no parent and no children" in new JsonFixture {
         val unitLinks = parse(unitLinksJsonResponse(SampleUnitLinksDefinition.copy(withParents = None, withChildren = None))).as[UnitLinks]
 
         unitLinks shouldBe UnitLinks(
           id = UnitId(Id),
-          unitType = UnitType.Enterprise,
+          unitType = Enterprise,
           period = Period.fromYearMonth(2018, FEBRUARY),
           parents = None,
           children = None
         )
       }
 
-      "containing empty parents and no children" in new Fixture {
+      "containing empty parents and no children" in new JsonFixture {
         val emptyParentsJson = unitLinksJsonResponse(SampleUnitLinksDefinition.copy(withParents = Some(Map.empty), withChildren = None))
 
         parse(emptyParentsJson).as[UnitLinks] shouldBe UnitLinks(
           id = UnitId(Id),
-          unitType = UnitType.Enterprise,
+          unitType = Enterprise,
           period = Period.fromYearMonth(2018, FEBRUARY),
           parents = None,
           children = None
         )
       }
 
-      "containing no parent and empty children" in new Fixture {
+      "containing no parent and empty children" in new JsonFixture {
         val emptyChildrenJson = unitLinksJsonResponse(SampleUnitLinksDefinition.copy(withParents = None, withChildren = Some(Map.empty)))
 
         parse(emptyChildrenJson).as[UnitLinks] shouldBe UnitLinks(
           id = UnitId(Id),
-          unitType = UnitType.Enterprise,
+          unitType = Enterprise,
           period = Period.fromYearMonth(2018, FEBRUARY),
           parents = None,
           children = None
         )
       }
 
-      "containing both parent and child links" in new Fixture {
+      "containing both parent and child links" in new JsonFixture {
         val unitLinks = parse(unitLinksJsonResponse(SampleUnitLinksDefinition)).as[UnitLinks]
 
         unitLinks shouldBe UnitLinks(
           id = UnitId(Id),
-          unitType = UnitType.Enterprise,
+          unitType = Enterprise,
           period = Period.fromYearMonth(2018, FEBRUARY),
           parents = Some(Map(
-            UnitType.Enterprise -> UnitId("9988776655")
+            Enterprise -> UnitId("9988776655")
           )),
           children = Some(Map(
             UnitId("123456789") -> UnitType.LocalUnit,
@@ -113,26 +129,26 @@ class UnitLinksSpec extends FreeSpec with Matchers {
         )
       }
 
-      "containing only parent links" in new Fixture {
+      "containing only parent links" in new JsonFixture {
         val unitLinks = parse(unitLinksJsonResponse(SampleUnitLinksDefinition.copy(withChildren = None))).as[UnitLinks]
 
         unitLinks shouldBe UnitLinks(
           id = UnitId(Id),
-          unitType = UnitType.Enterprise,
+          unitType = Enterprise,
           period = Period.fromYearMonth(2018, FEBRUARY),
           parents = Some(Map(
-            UnitType.Enterprise -> UnitId("9988776655")
+            Enterprise -> UnitId("9988776655")
           )),
           children = None
         )
       }
 
-      "containing only child links" in new Fixture {
+      "containing only child links" in new JsonFixture {
         val unitLinks = parse(unitLinksJsonResponse(SampleUnitLinksDefinition.copy(withParents = None))).as[UnitLinks]
 
         unitLinks shouldBe UnitLinks(
           id = UnitId(Id),
-          unitType = UnitType.Enterprise,
+          unitType = Enterprise,
           period = Period.fromYearMonth(2018, FEBRUARY),
           parents = None,
           children = Some(Map(
@@ -145,7 +161,7 @@ class UnitLinksSpec extends FreeSpec with Matchers {
 
     "cannot be read from the Json representation of unit links when" - {
       "the unit Id" - {
-        "is missing" in new Fixture {
+        "is missing" in new JsonFixture {
           val definition = SampleUnitLinksDefinition.copy(withId = None)
 
           a[JsResultException] should be thrownBy {
@@ -153,7 +169,7 @@ class UnitLinksSpec extends FreeSpec with Matchers {
           }
         }
 
-        "is not a string value" in new Fixture {
+        "is not a string value" in new JsonFixture {
           val baseJson = unitLinksJsonResponse(SampleUnitLinksDefinition.copy(withId = None, withParents = None, withChildren = None))
           val jsonWithNumericId = baseJson.replace("}", s""","id":123}""")
 
@@ -164,7 +180,7 @@ class UnitLinksSpec extends FreeSpec with Matchers {
       }
 
       "the unit Type" - {
-        "is missing" in new Fixture {
+        "is missing" in new JsonFixture {
           val definition = SampleUnitLinksDefinition.copy(withUnitType = None)
 
           a[JsResultException] should be thrownBy {
@@ -172,7 +188,7 @@ class UnitLinksSpec extends FreeSpec with Matchers {
           }
         }
 
-        "is unrecognised" in new Fixture {
+        "is unrecognised" in new JsonFixture {
           val definition = SampleUnitLinksDefinition.copy(withUnitType = Some("UNKNOWN"))
 
           a[JsResultException] should be thrownBy {
@@ -180,7 +196,7 @@ class UnitLinksSpec extends FreeSpec with Matchers {
           }
         }
 
-        "is not a string value" in new Fixture {
+        "is not a string value" in new JsonFixture {
           val baseJson = unitLinksJsonResponse(SampleUnitLinksDefinition.copy(withUnitType = None, withParents = None, withChildren = None))
           val jsonWithObjectType = baseJson.replace("}", s""","unitType":{"value":"ENT"}}""")
 
@@ -191,7 +207,7 @@ class UnitLinksSpec extends FreeSpec with Matchers {
       }
 
       "the period" - {
-        "is missing" in new Fixture {
+        "is missing" in new JsonFixture {
           val definition = SampleUnitLinksDefinition.copy(withPeriod = None)
 
           a[JsResultException] should be thrownBy {
@@ -199,7 +215,7 @@ class UnitLinksSpec extends FreeSpec with Matchers {
           }
         }
 
-        "has non-numeric content" in new Fixture {
+        "has non-numeric content" in new JsonFixture {
           val definition = SampleUnitLinksDefinition.copy(withPeriod = Some("2018/3"))
 
           a[JsResultException] should be thrownBy {
@@ -207,7 +223,7 @@ class UnitLinksSpec extends FreeSpec with Matchers {
           }
         }
 
-        "has less than 6 digits" in new Fixture {
+        "has less than 6 digits" in new JsonFixture {
           val definition = SampleUnitLinksDefinition.copy(withPeriod = Some("2018"))
 
           a[JsResultException] should be thrownBy {
@@ -215,7 +231,7 @@ class UnitLinksSpec extends FreeSpec with Matchers {
           }
         }
 
-        "has a month value of 00" in new Fixture {
+        "has a month value of 00" in new JsonFixture {
           val definition = SampleUnitLinksDefinition.copy(withPeriod = Some("201800"))
 
           a[JsResultException] should be thrownBy {
@@ -223,7 +239,7 @@ class UnitLinksSpec extends FreeSpec with Matchers {
           }
         }
 
-        "has a month value greater than 12" in new Fixture {
+        "has a month value greater than 12" in new JsonFixture {
           val definition = SampleUnitLinksDefinition.copy(withPeriod = Some("201813"))
 
           a[JsResultException] should be thrownBy {
@@ -231,7 +247,7 @@ class UnitLinksSpec extends FreeSpec with Matchers {
           }
         }
 
-        "is not a string value" in new Fixture {
+        "is not a string value" in new JsonFixture {
           val baseJson = unitLinksJsonResponse(SampleUnitLinksDefinition.copy(withPeriod = None, withParents = None, withChildren = None))
           val jsonWithNumericPeriod = baseJson.replace("}", s""","period":201803}""")
 
@@ -243,7 +259,7 @@ class UnitLinksSpec extends FreeSpec with Matchers {
 
       "a child" - {
         "has a unit Type" - {
-          "that is not a string value" in new Fixture {
+          "that is not a string value" in new JsonFixture {
             val baseJson = unitLinksJsonResponse(SampleUnitLinksDefinition.copy(withParents = None, withChildren = None))
             val jsonWithNonStringChildType = baseJson.replace("}", s""","children":{"childid":{}}}""")
 
@@ -252,7 +268,7 @@ class UnitLinksSpec extends FreeSpec with Matchers {
             }
           }
 
-          "that is unrecognised" in new Fixture {
+          "that is unrecognised" in new JsonFixture {
             val baseJson = unitLinksJsonResponse(SampleUnitLinksDefinition.copy(withParents = None, withChildren = None))
             val jsonWithUnrecognisedChildUnitType = baseJson.replace("}", s""","children":{"childid":"UNKNOWN"}}""")
 
@@ -265,7 +281,7 @@ class UnitLinksSpec extends FreeSpec with Matchers {
 
       "a parent" - {
         "has a unit Type" - {
-          "that is unrecognised" in new Fixture {
+          "that is unrecognised" in new JsonFixture {
             val baseJson = unitLinksJsonResponse(SampleUnitLinksDefinition.copy(withParents = None, withChildren = None))
             val jsonWithUnrecognisedParentType = baseJson.replace("}", s""","parents":{"UNKNOWN":"parent-id"}}""")
 
@@ -276,7 +292,7 @@ class UnitLinksSpec extends FreeSpec with Matchers {
         }
 
         "has a unit Id" - {
-          "that is not a string value" in new Fixture {
+          "that is not a string value" in new JsonFixture {
             val baseJson = unitLinksJsonResponse(SampleUnitLinksDefinition.copy(withParents = None, withChildren = None))
             val jsonWithNumericParentId = baseJson.replace("}", s""","parents":{"ENT":9876543210}}""")
 
@@ -286,6 +302,33 @@ class UnitLinksSpec extends FreeSpec with Matchers {
           }
         }
       }
+    }
+  }
+
+  "A parent Enterprise reference" - {
+    "can be extracted from Unit Links when a parent Enterprise link exists" in new ReferenceFixture {
+      val EnterpriseUnitId = UnitId("1234567890")
+      val EnterpriseReference = Ern("1234567890")
+      (ernType.fromUnitId _).when(EnterpriseUnitId).returns(EnterpriseReference)
+
+      val parents: Option[Map[UnitType, UnitId]] = Some(Map(
+        Enterprise -> EnterpriseUnitId,
+        ReportingUnit -> UnitId("98765432101")
+      ))
+
+      UnitLinks.parentErnFrom(ernType)(unitLinks(parents)) shouldBe Some(EnterpriseReference)
+    }
+
+    "cannot be extracted from Unit Links when a parent Enterprise link does not exist" in new ReferenceFixture {
+      val parents: Option[Map[UnitType, UnitId]] = Some(Map(
+        ReportingUnit -> UnitId("98765432101")
+      ))
+
+      UnitLinks.parentErnFrom(ernType)(unitLinks(parents)) shouldBe None
+    }
+
+    "cannot be extracted from Unit Links when there are no parent links" in new ReferenceFixture {
+      UnitLinks.parentErnFrom(ernType)(unitLinks(withParents = None)) shouldBe None
     }
   }
 }

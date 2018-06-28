@@ -6,7 +6,7 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{ EitherValues, FreeSpec, Matchers }
 import play.api.libs.json.Json
-import repository.rest.UnitRepository
+import repository.rest.Repository
 import support.sample.SampleLocalUnit
 import uk.gov.ons.sbr.models.{ Ern, Lurn, Period }
 
@@ -20,7 +20,7 @@ class RestLocalUnitRepositorySpec extends FreeSpec with Matchers with MockFactor
     val TargetLurn = Lurn("123456789")
     val LocalUnitJson = SampleLocalUnit.asJson(TargetErn, TargetLurn)
 
-    val unitRepository = mock[UnitRepository]
+    val unitRepository = mock[Repository]
     val localUnitRepository = new RestLocalUnitRepository(unitRepository)
   }
 
@@ -64,7 +64,7 @@ class RestLocalUnitRepositorySpec extends FreeSpec with Matchers with MockFactor
         )
 
         whenReady(localUnitRepository.retrieveLocalUnit(TargetPeriod, TargetErn, TargetLurn)) { result =>
-          result.left.value should startWith("Json returned for Local Unit does not define an object")
+          result.left.value should startWith("Unable to parse json response")
         }
       }
     }

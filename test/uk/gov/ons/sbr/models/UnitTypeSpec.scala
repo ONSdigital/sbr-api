@@ -19,6 +19,10 @@ class UnitTypeSpec extends FreeSpec with Matchers {
         UnitType.toAcronym(UnitType.LocalUnit) shouldBe "LOU"
       }
 
+      "when a Reporting Unit" in {
+        UnitType.toAcronym(UnitType.ReportingUnit) shouldBe "REU"
+      }
+
       "when a Value Added Tax" in {
         UnitType.toAcronym(UnitType.ValueAddedTax) shouldBe "VAT"
       }
@@ -43,6 +47,10 @@ class UnitTypeSpec extends FreeSpec with Matchers {
 
       "when a Local Unit" in {
         UnitType.fromAcronym("LOU") shouldBe Some(UnitType.LocalUnit)
+      }
+
+      "when a Reporting Unit" in {
+        UnitType.fromAcronym("REU") shouldBe Some(UnitType.ReportingUnit)
       }
 
       "when a Value Added Tax" in {
@@ -77,6 +85,10 @@ class UnitTypeSpec extends FreeSpec with Matchers {
         UnitType.JsonFormat.writes(UnitType.LocalUnit) shouldBe JsString("LOU")
       }
 
+      "when a Reporting Unit" in {
+        UnitType.JsonFormat.writes(UnitType.ReportingUnit) shouldBe JsString("REU")
+      }
+
       "when a Value Added Tax" in {
         UnitType.JsonFormat.writes(UnitType.ValueAddedTax) shouldBe JsString("VAT")
       }
@@ -101,6 +113,10 @@ class UnitTypeSpec extends FreeSpec with Matchers {
 
       "when a Local Unit" in {
         UnitType.JsonFormat.reads(JsString("LOU")) shouldBe JsSuccess(UnitType.LocalUnit)
+      }
+
+      "when a Reporting Unit" in {
+        UnitType.JsonFormat.reads(JsString("REU")) shouldBe JsSuccess(UnitType.ReportingUnit)
       }
 
       "when a Value Added Tax" in {

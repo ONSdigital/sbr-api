@@ -6,7 +6,7 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{ EitherValues, FreeSpec, Matchers }
 import play.api.libs.json.{ JsError, JsSuccess, Json, Reads }
-import repository.rest.UnitRepository
+import repository.rest.Repository
 import uk.gov.ons.sbr.models.{ Period, UnitId, UnitLinks, UnitType }
 
 import scala.concurrent.Future
@@ -27,7 +27,7 @@ class RestUnitLinksRepositorySpec extends FreeSpec with Matchers with MockFactor
       ))
     )
 
-    val unitRepository = mock[UnitRepository]
+    val unitRepository = mock[Repository]
     val readsUnitLinks = mock[Reads[UnitLinks]]
     val unitLinksRepository = new RestUnitLinksRepository(unitRepository, readsUnitLinks)
   }
@@ -78,7 +78,7 @@ class RestUnitLinksRepositorySpec extends FreeSpec with Matchers with MockFactor
           )
 
           whenReady(unitLinksRepository.retrieveUnitLinks(TargetEnterpriseId, UnitType.Enterprise, TargetPeriod)) { result =>
-            result.left.value should startWith("Unable to parse UnitLinks response")
+            result.left.value should startWith("Unable to parse json response")
           }
         }
       }

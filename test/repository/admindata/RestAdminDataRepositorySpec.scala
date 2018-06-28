@@ -6,7 +6,7 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{ EitherValues, FreeSpec, Matchers }
 import play.api.libs.json.{ JsError, JsSuccess, Json, Reads }
-import repository.rest.UnitRepository
+import repository.rest.Repository
 import support.sample.SampleVat
 import uk.gov.ons.sbr.models.{ AdminData, Period, UnitId, VatRef }
 
@@ -24,7 +24,7 @@ class RestAdminDataRepositorySpec extends FreeSpec with Matchers with MockFactor
       variables = SampleVat.asJson(VatRef(TargetUnitId.value))
     )
 
-    val unitRepository = mock[UnitRepository]
+    val unitRepository = mock[Repository]
     val readsAdminData = mock[Reads[AdminData]]
     val adminDataRepository = new RestAdminDataRepository(unitRepository, readsAdminData)
   }
@@ -70,7 +70,7 @@ class RestAdminDataRepositorySpec extends FreeSpec with Matchers with MockFactor
         (readsAdminData.reads _).expects(AdminDataJson).returning(JsError("unexpected json format"))
 
         whenReady(adminDataRepository.retrieveAdminData(TargetUnitId, TargetPeriod)) { result =>
-          result.left.value should startWith("Unable to parse AdminData response")
+          result.left.value should startWith("Unable to parse json response")
         }
       }
     }

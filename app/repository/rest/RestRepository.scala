@@ -17,9 +17,9 @@ import utils.url.{ BaseUrl, Url }
 import scala.concurrent.Future
 import scala.util.Try
 
-case class RestUnitRepositoryConfig(baseUrl: BaseUrl)
+case class RestRepositoryConfig(baseUrl: BaseUrl)
 
-class RestUnitRepository @Inject() (config: RestUnitRepositoryConfig, wsClient: WSClient) extends UnitRepository with LazyLogging {
+class RestRepository @Inject() (config: RestRepositoryConfig, wsClient: WSClient) extends Repository with LazyLogging {
 
   override def getJson(path: String): Future[Either[ErrorMessage, Option[JsValue]]] = {
     val url = Url(withBase = config.baseUrl, withPath = path)

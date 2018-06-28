@@ -56,4 +56,10 @@ trait WireMockSbrControlApi extends ApiResponse with LazyLogging {
 
   def aLocalUnitForPeriodRequest(withErn: Ern, withLurn: Lurn, withPeriod: Period): MappingBuilder =
     get(urlEqualTo(s"/v1/enterprises/${withErn.value}/periods/${Period.asString(withPeriod)}/localunits/${withLurn.value}"))
+
+  def aReportingUnitUnitLinksRequest(withRurn: Rurn, withPeriod: Period): MappingBuilder =
+    get(urlEqualTo(s"/v1/periods/${Period.asString(withPeriod)}/types/REU/units/${withRurn.value}"))
+
+  def aReportingUnitForPeriodRequest(withErn: Ern, withRurn: Rurn, withPeriod: Period): MappingBuilder =
+    get(urlEqualTo(s"/v1/enterprises/${withErn.value}/periods/${Period.asString(withPeriod)}/reportingunits/${withRurn.value}"))
 }

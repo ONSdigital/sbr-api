@@ -21,7 +21,8 @@ class LocalUnitAcceptanceSpec extends ServerAcceptanceSpec with WireMockSbrContr
   private val LocalUnitUnitLinksResponseBody =
     s"""|{"id":"${TargetLurn.value}",
         | "parents": {
-        |   "ENT":"${ParentErn.value}"
+        |   "ENT":"${ParentErn.value}",
+        |   "REU":"33000000052"
         | },
         | "unitType":"LOU",
         | "period":"${Period.asString(TargetPeriod)}"
@@ -53,7 +54,8 @@ class LocalUnitAcceptanceSpec extends ServerAcceptanceSpec with WireMockSbrContr
   private val ExpectedDetailsBody =
     s"""|{"id":"${TargetLurn.value}",
         | "parents": {
-        |   "ENT":"${ParentErn.value}"
+        |   "ENT":"${ParentErn.value}",
+        |   "REU":"33000000052"
         | },
         | "unitType":"LOU",
         | "period":"${Period.asString(TargetPeriod)}",
