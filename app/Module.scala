@@ -1,20 +1,25 @@
-import com.google.inject.name.Names
-import com.google.inject.{ AbstractModule, TypeLiteral }
-import config.providers.{ SbrCtrlUnitRepositoryProvider, VatAdminDataRepositoryProvider }
-import config.{ BaseUrlConfigLoader, SbrCtrlRestUnitRepositoryConfigLoader, VatRestAdminDataRepositoryConfigLoader }
+import actions.RetrieveLinkedUnitAction
+import actions.RetrieveLinkedUnitAction.LinkedUnitRequestActionBuilderMaker
+import com.google.inject.name.Names.named
+import com.google.inject.{ AbstractModule, Provides, TypeLiteral }
+import config.{ BaseUrlConfigLoader, RestAdminDataRepositoryConfigLoader, SbrCtrlRestUnitRepositoryConfigLoader }
 import handlers.LinkedUnitRetrievalHandler
 import handlers.http.HttpLinkedUnitRetrievalHandler
+import javax.inject.{ Inject, Named }
 import play.api.libs.json.{ Reads, Writes }
+import play.api.libs.ws.WSClient
 import play.api.mvc.Result
 import play.api.{ Configuration, Environment }
-import repository.DataSourceNames.{ SbrCtrl, Vat }
+import repository.DataSourceNames.{ Paye, SbrCtrl, Vat }
 import repository._
-import repository.rest.{ RestUnitRepositoryConfig, UnitRepository }
+import repository.admindata.RestAdminDataRepository
+import repository.rest.{ RestUnitRepository, RestUnitRepositoryConfig, UnitRepository }
 import repository.sbrctrl._
-import services.admindata.AdminDataVatService
+import services.LinkedUnitService
+import services.admindata.AdminDataService
 import services.sbrctrl.SbrCtrlEnterpriseService
-import services.{ EnterpriseService, VatService }
-import uk.gov.ons.sbr.models.{ AdminData, LinkedUnit, UnitLinks }
+import uk.gov.ons.sbr.models._
+import unitref.{ PayeUnitRef, VatUnitRef }
 
 /**
  * This class is a Guice module that tells Guice how to bind several
@@ -43,20 +48,17 @@ class Module(
     val restRepositoryConfigLoader = BaseUrlConfigLoader.map(RestUnitRepositoryConfig)
 
     // sbr repositories
-    val sbrCtrlRestRepositoryConfig = SbrCtrlRestUnitRepositoryConfigLoader(restRepositoryConfigLoader)(underlyingConfig)
-    bind(classOf[RestUnitRepositoryConfig]).annotatedWith(Names.named(SbrCtrl)).toInstance(sbrCtrlRestRepositoryConfig)
-    bind(classOf[UnitRepository]).annotatedWith(Names.named(SbrCtrl)).toProvider(classOf[SbrCtrlUnitRepositoryProvider])
+    val sbrCtrlRestRepositoryConfig = SbrCtrlRestUnitRepositoryConfigLoader(restRepositoryConfigLoader, underlyingConfig)
+    bind(classOf[RestUnitRepositoryConfig]).annotatedWith(named(SbrCtrl)).toInstance(sbrCtrlRestRepositoryConfig)
     bind(classOf[UnitLinksRepository]).to(classOf[RestUnitLinksRepository])
     bind(classOf[EnterpriseRepository]).to(classOf[RestEnterpriseRepository])
 
-    // admin data repositories
-    val vatRestRepositoryConfig = VatRestAdminDataRepositoryConfigLoader(restRepositoryConfigLoader)(underlyingConfig)
-    bind(classOf[RestUnitRepositoryConfig]).annotatedWith(Names.named(Vat)).toInstance(vatRestRepositoryConfig)
-    bind(classOf[AdminDataRepository]).annotatedWith(Names.named(Vat)).toProvider(classOf[VatAdminDataRepositoryProvider])
+    // config for admin data repositories
+    val vatRestRepositoryConfig = RestAdminDataRepositoryConfigLoader.vat(restRepositoryConfigLoader, underlyingConfig)
+    bind(classOf[RestUnitRepositoryConfig]).annotatedWith(named(Vat)).toInstance(vatRestRepositoryConfig)
 
-    // services
-    bind(classOf[EnterpriseService]).to(classOf[SbrCtrlEnterpriseService])
-    bind(classOf[VatService]).to(classOf[AdminDataVatService])
+    val payeRestRepositoryConfig = RestAdminDataRepositoryConfigLoader.paye(restRepositoryConfigLoader, underlyingConfig)
+    bind(classOf[RestUnitRepositoryConfig]).annotatedWith(named(Paye)).toInstance(payeRestRepositoryConfig)
 
     // generics
     /*
@@ -68,7 +70,7 @@ class Module(
     bind(new TypeLiteral[Reads[AdminData]]() {}).toInstance(AdminData.reads)
     bind(new TypeLiteral[Writes[LinkedUnit]]() {}).toInstance(LinkedUnit.writes)
     bind(new TypeLiteral[LinkedUnitRetrievalHandler[Result]]() {}).to(classOf[HttpLinkedUnitRetrievalHandler])
-
+    bind(new TypeLiteral[LinkedUnitService[Ern]]() {}).to(classOf[SbrCtrlEnterpriseService])
     /*
      * Explicitly return unit to avoid warning about discarded non-Unit value.
      * This is because a .to(classOf[...]) invocation returns a ScopedBindingBuilder which is
@@ -78,4 +80,43 @@ class Module(
      */
     ()
   }
+
+  // repositories
+  @Provides @Named(SbrCtrl)
+  def providesSbrCtrlUnitRepository(@Inject()@Named(SbrCtrl) sbrCtrlUnitRepositoryConfig: RestUnitRepositoryConfig, wSClient: WSClient): UnitRepository =
+    new RestUnitRepository(sbrCtrlUnitRepositoryConfig, wSClient)
+
+  @Provides @Named(Vat)
+  def providesVatAdminDataRepository(@Inject()@Named(Vat) vatUnitRepositoryConfig: RestUnitRepositoryConfig, wSClient: WSClient, readsAdminData: Reads[AdminData]): AdminDataRepository = {
+    val unitRepository = new RestUnitRepository(vatUnitRepositoryConfig, wSClient)
+    new RestAdminDataRepository(unitRepository, readsAdminData)
+  }
+
+  @Provides @Named(Paye)
+  def providesPayeAdminDataRepository(@Inject()@Named(Paye) payeUnitRepositoryConfig: RestUnitRepositoryConfig, wSClient: WSClient, readsAdminData: Reads[AdminData]): AdminDataRepository = {
+    val unitRepository = new RestUnitRepository(payeUnitRepositoryConfig, wSClient)
+    new RestAdminDataRepository(unitRepository, readsAdminData)
+  }
+
+  // services
+  @Provides
+  def providesVatService(@Inject() unitLinksRepository: UnitLinksRepository, @Named(Vat) vatRepository: AdminDataRepository): LinkedUnitService[VatRef] =
+    new AdminDataService[VatRef](VatUnitRef, unitLinksRepository, vatRepository)
+
+  @Provides
+  def providesPayeService(@Inject() unitLinksRepository: UnitLinksRepository, @Named(Paye) payeRepository: AdminDataRepository): LinkedUnitService[PayeRef] =
+    new AdminDataService[PayeRef](PayeUnitRef, unitLinksRepository, payeRepository)
+
+  // controller actions
+  @Provides
+  def providesEnterpriseLinkedUnitRequestActionBuilderMaker(@Inject() enterpriseService: LinkedUnitService[Ern]): LinkedUnitRequestActionBuilderMaker[Ern] =
+    new RetrieveLinkedUnitAction[Ern](enterpriseService)
+
+  @Provides
+  def providesVatLinkedUnitRequestActionBuilderMaker(@Inject() vatService: LinkedUnitService[VatRef]): LinkedUnitRequestActionBuilderMaker[VatRef] =
+    new RetrieveLinkedUnitAction[VatRef](vatService)
+
+  @Provides
+  def providesPayeLinkedUnitRequestActionBuilderMaker(@Inject() payeService: LinkedUnitService[PayeRef]): LinkedUnitRequestActionBuilderMaker[PayeRef] =
+    new RetrieveLinkedUnitAction[PayeRef](payeService)
 }

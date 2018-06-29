@@ -11,6 +11,6 @@ import repository.rest.RestUnitRepositoryConfig
  * which will fail the startup of the service (at deployment time).
  */
 object SbrCtrlRestUnitRepositoryConfigLoader {
-  def apply(restUnitRepositoryConfigLoader: ConfigLoader[RestUnitRepositoryConfig])(rootConfig: Config): RestUnitRepositoryConfig =
+  def apply(restUnitRepositoryConfigLoader: ConfigLoader[RestUnitRepositoryConfig], rootConfig: Config): RestUnitRepositoryConfig =
     restUnitRepositoryConfigLoader.load(config = rootConfig, path = "api.sbr.control")
 }

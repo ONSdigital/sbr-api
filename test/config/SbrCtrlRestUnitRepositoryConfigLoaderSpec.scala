@@ -23,14 +23,14 @@ class SbrCtrlRestUnitRepositoryConfigLoaderSpec extends FreeSpec with Matchers w
     "can be successfully loaded when it contains a valid configuration" in new Fixture {
       (restUnitRepositoryConfigLoader.load _).expects(SomeConfig, ExpectedConfigPath).returning(SomeRestUnitRepositoryConfig)
 
-      SbrCtrlRestUnitRepositoryConfigLoader(restUnitRepositoryConfigLoader)(SomeConfig) shouldBe SomeRestUnitRepositoryConfig
+      SbrCtrlRestUnitRepositoryConfigLoader(restUnitRepositoryConfigLoader, SomeConfig) shouldBe SomeRestUnitRepositoryConfig
     }
 
     "cannot be loaded when it contains an invalid configuration" in new Fixture {
       (restUnitRepositoryConfigLoader.load _).expects(SomeConfig, ExpectedConfigPath).throwing(new Missing(ExpectedConfigPath))
 
       a[ConfigException] shouldBe thrownBy {
-        SbrCtrlRestUnitRepositoryConfigLoader(restUnitRepositoryConfigLoader)(SomeConfig)
+        SbrCtrlRestUnitRepositoryConfigLoader(restUnitRepositoryConfigLoader, SomeConfig)
       }
     }
   }

@@ -9,7 +9,7 @@ import services.ErrorMessage
 import uk.gov.ons.sbr.models.LinkedUnit
 
 class HttpLinkedUnitRetrievalHandler @Inject() (writesLinkedUnit: Writes[LinkedUnit]) extends LinkedUnitRetrievalHandler[Result] {
-  override def handleOutcome(outcome: Either[ErrorMessage, Option[LinkedUnit]]): Result =
+  override def apply(outcome: Either[ErrorMessage, Option[LinkedUnit]]): Result =
     outcome.fold(resultOnFailure, resultOnSuccess)
 
   private def resultOnFailure(errorMessage: ErrorMessage): Result =

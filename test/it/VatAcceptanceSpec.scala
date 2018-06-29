@@ -4,12 +4,11 @@ import fixture.ServerAcceptanceSpec
 import org.scalatest.{ OptionValues, Outcome }
 import play.api.http.HeaderNames.CONTENT_TYPE
 import play.api.http.Port
-import play.api.http.Status.{ BAD_REQUEST, GATEWAY_TIMEOUT, INTERNAL_SERVER_ERROR, NOT_FOUND, OK }
+import play.api.http.Status.{ BAD_REQUEST, INTERNAL_SERVER_ERROR, NOT_FOUND, OK }
 import play.api.libs.json.Json
 import play.api.libs.ws.WSClient
 import play.api.test.WsTestClient
 import play.mvc.Http.MimeTypes.JSON
-import support.matchers.HttpServerErrorStatusCodeMatcher
 import support.matchers.HttpServerErrorStatusCodeMatcher.aServerError
 import support.wiremock.{ WireMockAdminDataApi, WireMockSbrControlApi }
 import uk.gov.ons.sbr.models._
