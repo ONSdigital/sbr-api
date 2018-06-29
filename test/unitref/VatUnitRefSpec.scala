@@ -6,8 +6,8 @@ import uk.gov.ons.sbr.models.{ UnitId, VatRef }
 
 class VatUnitRefSpec extends FreeSpec with Matchers {
   "A VAT Reference" - {
-    "can be created from a String parameter" in {
-      VatUnitRef.fromString("346942023239") shouldBe VatRef("346942023239")
+    "can be created from a generic unit identifier" in {
+      VatUnitRef.fromUnitId(UnitId("346942023239")) shouldBe VatRef("346942023239")
     }
 
     "can be converted to a unit Identifier and unit Type pair" in {

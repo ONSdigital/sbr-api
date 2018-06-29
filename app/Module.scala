@@ -15,11 +15,10 @@ import repository._
 import repository.admindata.RestAdminDataRepository
 import repository.rest.{ RestUnitRepository, RestUnitRepositoryConfig, UnitRepository }
 import repository.sbrctrl._
-import services.LinkedUnitService
-import services.admindata.AdminDataService
-import services.sbrctrl.SbrCtrlEnterpriseService
+import services._
+import services.finder.{ AdminDataFinder, EnterpriseFinder, LocalUnitFinder }
 import uk.gov.ons.sbr.models._
-import unitref.{ CompaniesHouseUnitRef, PayeUnitRef, VatUnitRef }
+import unitref._
 
 /**
  * This class is a Guice module that tells Guice how to bind several
@@ -53,6 +52,7 @@ class Module(
     )
     bind(classOf[UnitLinksRepository]).to(classOf[RestUnitLinksRepository])
     bind(classOf[EnterpriseRepository]).to(classOf[RestEnterpriseRepository])
+    bind(classOf[LocalUnitRepository]).to(classOf[RestLocalUnitRepository])
 
     // config for admin data repositories
     bind(classOf[RestUnitRepositoryConfig]).annotatedWith(named(Vat)).toInstance(
@@ -74,9 +74,14 @@ class Module(
     bind(new TypeLiteral[Reads[UnitLinks]]() {}).toInstance(UnitLinks.reads)
     bind(new TypeLiteral[Reads[AdminData]]() {}).toInstance(AdminData.reads)
     bind(new TypeLiteral[Writes[LinkedUnit]]() {}).toInstance(LinkedUnit.writes)
-    bind(new TypeLiteral[LinkedUnitRetrievalHandler[Result]]() {}).to(classOf[HttpLinkedUnitRetrievalHandler])
-    bind(new TypeLiteral[LinkedUnitService[Ern]]() {}).to(classOf[SbrCtrlEnterpriseService])
 
+    bind(new TypeLiteral[UnitRef[CompanyRefNumber]]() {}).toInstance(CompaniesHouseUnitRef)
+    bind(new TypeLiteral[UnitRef[Ern]]() {}).toInstance(EnterpriseUnitRef)
+    bind(new TypeLiteral[UnitRef[Lurn]]() {}).toInstance(LocalUnitRef)
+    bind(new TypeLiteral[UnitRef[PayeRef]]() {}).toInstance(PayeUnitRef)
+    bind(new TypeLiteral[UnitRef[VatRef]]() {}).toInstance(VatUnitRef)
+
+    bind(new TypeLiteral[LinkedUnitRetrievalHandler[Result]]() {}).to(classOf[HttpLinkedUnitRetrievalHandler])
     /*
      * Explicitly return unit to avoid warning about discarded non-Unit value.
      * This is because a .to(classOf[...]) invocation returns a ScopedBindingBuilder which is
@@ -89,44 +94,83 @@ class Module(
 
   // repositories
   @Provides @Named(SbrCtrl)
-  def providesSbrCtrlUnitRepository(@Inject()@Named(SbrCtrl) sbrCtrlUnitRepositoryConfig: RestUnitRepositoryConfig, wSClient: WSClient): UnitRepository =
+  def providesSbrCtrlUnitRepository(
+    @Inject()@Named(SbrCtrl) sbrCtrlUnitRepositoryConfig: RestUnitRepositoryConfig,
+    wSClient: WSClient
+  ): UnitRepository =
     new RestUnitRepository(sbrCtrlUnitRepositoryConfig, wSClient)
 
   @Provides @Named(Vat)
-  def providesVatAdminDataRepository(@Inject()@Named(Vat) vatUnitRepositoryConfig: RestUnitRepositoryConfig, wSClient: WSClient, readsAdminData: Reads[AdminData]): AdminDataRepository = {
+  def providesVatAdminDataRepository(
+    @Inject()@Named(Vat) vatUnitRepositoryConfig: RestUnitRepositoryConfig,
+    wSClient: WSClient, readsAdminData: Reads[AdminData]
+  ): AdminDataRepository = {
     val unitRepository = new RestUnitRepository(vatUnitRepositoryConfig, wSClient)
     new RestAdminDataRepository(unitRepository, readsAdminData)
   }
 
   @Provides @Named(Paye)
-  def providesPayeAdminDataRepository(@Inject()@Named(Paye) payeUnitRepositoryConfig: RestUnitRepositoryConfig, wSClient: WSClient, readsAdminData: Reads[AdminData]): AdminDataRepository = {
+  def providesPayeAdminDataRepository(
+    @Inject()@Named(Paye) payeUnitRepositoryConfig: RestUnitRepositoryConfig,
+    wSClient: WSClient, readsAdminData: Reads[AdminData]
+  ): AdminDataRepository = {
     val unitRepository = new RestUnitRepository(payeUnitRepositoryConfig, wSClient)
     new RestAdminDataRepository(unitRepository, readsAdminData)
   }
 
   @Provides @Named(CompaniesHouse)
-  def providesCompaniesHouseAdminDataRepository(@Inject()@Named(CompaniesHouse) chUnitRepositoryConfig: RestUnitRepositoryConfig, wSClient: WSClient, readsAdminData: Reads[AdminData]): AdminDataRepository = {
+  def providesCompaniesHouseAdminDataRepository(
+    @Inject()@Named(CompaniesHouse) chUnitRepositoryConfig: RestUnitRepositoryConfig,
+    wSClient: WSClient, readsAdminData: Reads[AdminData]
+  ): AdminDataRepository = {
     val unitRepository = new RestUnitRepository(chUnitRepositoryConfig, wSClient)
     new RestAdminDataRepository(unitRepository, readsAdminData)
   }
 
   // services
   @Provides
-  def providesVatService(@Inject() unitLinksRepository: UnitLinksRepository, @Named(Vat) vatRepository: AdminDataRepository): LinkedUnitService[VatRef] =
-    new AdminDataService[VatRef](VatUnitRef, unitLinksRepository, vatRepository)
+  def providesVatService(@Inject() unitRefType: UnitRef[VatRef], unitLinksRepository: UnitLinksRepository,
+    @Named(Vat) vatRepository: AdminDataRepository): LinkedUnitService[VatRef] = {
+    val vatFinder = new AdminDataFinder[VatRef](unitRefType, vatRepository)
+    new RestLinkedUnitService[VatRef](unitRefType, unitLinksRepository, vatFinder)
+  }
 
   @Provides
-  def providesPayeService(@Inject() unitLinksRepository: UnitLinksRepository, @Named(Paye) payeRepository: AdminDataRepository): LinkedUnitService[PayeRef] =
-    new AdminDataService[PayeRef](PayeUnitRef, unitLinksRepository, payeRepository)
+  def providesPayeService(@Inject() unitRefType: UnitRef[PayeRef], unitLinksRepository: UnitLinksRepository,
+    @Named(Paye) payeRepository: AdminDataRepository): LinkedUnitService[PayeRef] = {
+    val payeFinder = new AdminDataFinder[PayeRef](unitRefType, payeRepository)
+    new RestLinkedUnitService[PayeRef](unitRefType, unitLinksRepository, payeFinder)
+  }
 
   @Provides
-  def providesCompaniesHouseService(@Inject() unitLinksRepository: UnitLinksRepository, @Named(CompaniesHouse) chRepository: AdminDataRepository): LinkedUnitService[CompanyRefNumber] =
-    new AdminDataService[CompanyRefNumber](CompaniesHouseUnitRef, unitLinksRepository, chRepository)
+  def providesCompaniesHouseService(@Inject() unitRefType: UnitRef[CompanyRefNumber], unitLinksRepository: UnitLinksRepository,
+    @Named(CompaniesHouse) chRepository: AdminDataRepository): LinkedUnitService[CompanyRefNumber] = {
+    val chFinder = new AdminDataFinder[CompanyRefNumber](unitRefType, chRepository)
+    new RestLinkedUnitService[CompanyRefNumber](unitRefType, unitLinksRepository, chFinder)
+  }
+
+  @Provides
+  def providesEnterpriseService(@Inject() enterpriseRefType: UnitRef[Ern], unitLinksRepository: UnitLinksRepository,
+    enterpriseRepository: EnterpriseRepository): LinkedUnitService[Ern] = {
+    val enterpriseFinder = new EnterpriseFinder(enterpriseRepository)
+    new RestLinkedUnitService[Ern](enterpriseRefType, unitLinksRepository, enterpriseFinder)
+  }
+
+  @Provides
+  def providesLocalUnitService(@Inject() localUnitRefType: UnitRef[Lurn], enterpriseUnitRefType: UnitRef[Ern],
+    unitLinksRepository: UnitLinksRepository, localUnitRepository: LocalUnitRepository): LinkedUnitService[Lurn] = {
+    val localUnitFinder = new LocalUnitFinder(localUnitRepository, enterpriseUnitRefType)
+    new RestLinkedUnitService[Lurn](localUnitRefType, unitLinksRepository, localUnitFinder)
+  }
 
   // controller actions
   @Provides
   def providesEnterpriseLinkedUnitRequestActionBuilderMaker(@Inject() enterpriseService: LinkedUnitService[Ern]): LinkedUnitRequestActionBuilderMaker[Ern] =
     new RetrieveLinkedUnitAction[Ern](enterpriseService)
+
+  @Provides
+  def providesLocalLinkedUnitRequestActionBuilderMaker(@Inject() localUnitService: LinkedUnitService[Lurn]): LinkedUnitRequestActionBuilderMaker[Lurn] =
+    new RetrieveLinkedUnitAction[Lurn](localUnitService)
 
   @Provides
   def providesVatLinkedUnitRequestActionBuilderMaker(@Inject() vatService: LinkedUnitService[VatRef]): LinkedUnitRequestActionBuilderMaker[VatRef] =

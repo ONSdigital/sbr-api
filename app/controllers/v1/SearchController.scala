@@ -1,27 +1,17 @@
 package controllers.v1
 
+import io.swagger.annotations._
 import javax.inject.{ Inject, Singleton }
-
-import scala.util.Try
-
 import play.api.Configuration
 import play.api.i18n.{ I18nSupport, Messages, MessagesApi }
 import play.api.mvc.{ Action, AnyContent }
-import io.swagger.annotations._
-
+import services.RequestGenerator
 import uk.gov.ons.sbr.models._
-
 import utils.FutureResponse.futureSuccess
 import utils.UriBuilder._
-import services.RequestGenerator
 
-/**
- * SearchController
- * ----------------
- * Author: haqa
- * Date: 10 July 2017 - 09:25
- * Copyright (c) 2017  Office for National Statistics
- */
+import scala.util.Try
+
 @Api("Search")
 @Singleton
 class SearchController @Inject() (implicit ws: RequestGenerator, val configuration: Configuration,
@@ -97,41 +87,5 @@ class SearchController @Inject() (implicit ws: RequestGenerator, val configurati
     LOGGER.info(s"Sending request to Control Api to retrieve legal unit with $id and $date")
     val uri = createUri(SBR_CONTROL_API_URL, id, Some(date), Some(LEU))
     search[StatisticalUnitLinkType](id, uri, LEU, Some(date))
-  }
-
-  def searchEnterpriseWithPeriod(
-    @ApiParam(value = "Identifier creation date", example = "2017/07", required = true) date: String,
-    @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
-  ): Action[AnyContent] = Action.async {
-    LOGGER.info(s"Sending request to Control Api to retrieve enterprise with $id and $date")
-    val uri = createUri(SBR_CONTROL_API_URL, id, Some(date), Some(ENT))
-    search[StatisticalUnitLinkType](id, uri, ENT, Some(date))
-  }
-
-  def searchVatWithPeriod(
-    @ApiParam(value = "Identifier creation date", example = "2017/07", required = true) date: String,
-    @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
-  ): Action[AnyContent] = Action.async {
-    LOGGER.info(s"Sending request to Admin Api to retrieve VAT reference with $id and $date")
-    val uri = createUri(SBR_CONTROL_API_URL, id, Some(date), Some(VAT))
-    search[StatisticalUnitLinkType](id, uri, VAT, Some(date))
-  }
-
-  def searchPayeWithPeriod(
-    @ApiParam(value = "Identifier creation date", example = "2017/07", required = true) date: String,
-    @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
-  ): Action[AnyContent] = Action.async {
-    LOGGER.info(s"Sending request to Admin Api to retrieve PAYE record with $id and $date")
-    val uri = createUri(SBR_CONTROL_API_URL, id, Some(date), Some(PAYE))
-    search[StatisticalUnitLinkType](id, uri, PAYE, Some(date))
-  }
-
-  def searchCrnWithPeriod(
-    @ApiParam(value = "Identifier creation date", example = "2017/07", required = true) date: String,
-    @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
-  ): Action[AnyContent] = Action.async {
-    LOGGER.info(s"Sending request to Admin Api to retrieve Companies House Number with $id and $date")
-    val uri = createUri(SBR_CONTROL_API_URL, id, Some(date), Some(CRN))
-    search[StatisticalUnitLinkType](id, uri, CRN, Some(date))
   }
 }

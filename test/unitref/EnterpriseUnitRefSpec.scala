@@ -6,8 +6,8 @@ import uk.gov.ons.sbr.models.{ Ern, UnitId }
 
 class EnterpriseUnitRefSpec extends FreeSpec with Matchers {
   "An Enterprise reference (ERN)" - {
-    "can be created from a string parameter" in {
-      EnterpriseUnitRef.fromString("1234567890") shouldBe Ern("1234567890")
+    "can be created from a generic unit identifier" in {
+      EnterpriseUnitRef.fromUnitId(UnitId("1234567890")) shouldBe Ern("1234567890")
     }
 
     "can be converted to a unit Identifier and unit Type pair" in {

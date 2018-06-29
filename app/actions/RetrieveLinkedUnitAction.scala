@@ -1,7 +1,6 @@
 package actions
 
 import actions.RetrieveLinkedUnitAction.LinkedUnitRequestActionBuilderMaker
-import javax.inject.Inject
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc._
 import services.{ ErrorMessage, LinkedUnitService }
@@ -15,7 +14,7 @@ object RetrieveLinkedUnitAction {
   type LinkedUnitRequestActionBuilderMaker[T] = (Period, T) => ActionBuilder[LinkedUnitRequest]
 }
 
-class RetrieveLinkedUnitAction[T] @Inject() (linkedUnitService: LinkedUnitService[T]) extends LinkedUnitRequestActionBuilderMaker[T] {
+class RetrieveLinkedUnitAction[T](linkedUnitService: LinkedUnitService[T]) extends LinkedUnitRequestActionBuilderMaker[T] {
   def apply(period: Period, unitRef: T): ActionBuilder[LinkedUnitRequest] =
     new ActionBuilder[LinkedUnitRequest] {
       override def invokeBlock[A](request: Request[A], block: LinkedUnitRequest[A] => Future[Result]): Future[Result] =
