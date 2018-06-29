@@ -31,6 +31,12 @@ class RestAdminDataRepositoryConfigLoaderSpec extends FreeSpec with Matchers wit
 
         RestAdminDataRepositoryConfigLoader.paye(restUnitRepositoryConfigLoader, TheConfig) shouldBe SomeRestUnitRepositoryConfig
       }
+
+      "can be loaded for Companies House" in new Fixture {
+        (restUnitRepositoryConfigLoader.load _).expects(TheConfig, "api.admin.data.ch").returning(SomeRestUnitRepositoryConfig)
+
+        RestAdminDataRepositoryConfigLoader.companiesHouse(restUnitRepositoryConfigLoader, TheConfig) shouldBe SomeRestUnitRepositoryConfig
+      }
     }
 
     "cannot be loaded when it contains an invalid configuration" in new Fixture {

@@ -18,4 +18,7 @@ object RestAdminDataRepositoryConfigLoader {
 
   def paye(restUnitRepositoryConfigLoader: ConfigLoader[RestUnitRepositoryConfig], rootConfig: Config): RestUnitRepositoryConfig =
     restUnitRepositoryConfigLoader.load(config = rootConfig, path = s"$adminDataPath.paye")
+
+  def companiesHouse(restUnitRepositoryConfigLoader: ConfigLoader[RestUnitRepositoryConfig], rootConfig: Config): RestUnitRepositoryConfig =
+    restUnitRepositoryConfigLoader.load(config = rootConfig, path = s"$adminDataPath.ch")
 }
