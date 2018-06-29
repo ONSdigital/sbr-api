@@ -11,7 +11,7 @@ import play.api.mvc.Results.NotFound
 import play.api.mvc._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import uk.gov.ons.sbr.models.Period
+import uk.gov.ons.sbr.models.{ Period, UnitId }
 import unitref.UnitRef
 
 import scala.concurrent.Future
@@ -38,7 +38,8 @@ class LinkedUnitControllerSpec extends FreeSpec with Matchers with MockFactory {
       }
     }
 
-    class FakeUnitController(retrieveLinkedUnitAction: LinkedUnitRequestActionBuilderMaker[FakeUnitRef], handleLinkedUnitRetrievalResult: LinkedUnitRetrievalHandler[Result]) extends LinkedUnitController[FakeUnitRef](unitRefType, retrieveLinkedUnitAction, handleLinkedUnitRetrievalResult) {
+    class FakeUnitController(retrieveLinkedUnitAction: LinkedUnitRequestActionBuilderMaker[FakeUnitRef], handleLinkedUnitRetrievalResult: LinkedUnitRetrievalHandler[Result])
+        extends LinkedUnitController[FakeUnitRef](unitRefType, retrieveLinkedUnitAction, handleLinkedUnitRetrievalResult) {
       // make the method public so that we can invoke it from a test
       override def retrieveLinkedUnit(periodStr: String, unitRefStr: String): Action[AnyContent] =
         super.retrieveLinkedUnit(periodStr, unitRefStr)
@@ -55,7 +56,7 @@ class LinkedUnitControllerSpec extends FreeSpec with Matchers with MockFactory {
        * the result handler unchanged.
        */
       "invokes the LinkedUnit retrieval action and handler" in new Fixture {
-        (unitRefType.fromString _).when(TargetUnitRef.value).returns(TargetUnitRef)
+        (unitRefType.fromUnitId _).when(UnitId(TargetUnitRef.value)).returns(TargetUnitRef)
         actionBuilderMaker.expects(TargetPeriod, TargetUnitRef).returning(fakeActionBuilder)
         (linkedUnitRetrievalHandler.apply _).expects(TargetUnitRetrievalResult).returning(NotFound)
 

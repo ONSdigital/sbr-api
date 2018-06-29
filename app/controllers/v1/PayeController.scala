@@ -7,14 +7,15 @@ import javax.inject.{ Inject, Singleton }
 import play.api.libs.json.JsObject
 import play.api.mvc.{ Action, AnyContent, Result }
 import uk.gov.ons.sbr.models.{ PayeRef, Period, UnitId, UnitType }
-import unitref.PayeUnitRef
+import unitref.UnitRef
 
 @Api("PAYE")
 @Singleton
 class PayeController @Inject() (
+    unitRefType: UnitRef[PayeRef],
     retrieveLinkedUnitAction: LinkedUnitRequestActionBuilderMaker[PayeRef],
     handleLinkedUnitRetrievalResult: LinkedUnitRetrievalHandler[Result]
-) extends LinkedUnitController[PayeRef](PayeUnitRef, retrieveLinkedUnitAction, handleLinkedUnitRetrievalResult) {
+) extends LinkedUnitController[PayeRef](unitRefType, retrieveLinkedUnitAction, handleLinkedUnitRetrievalResult) {
   @ApiOperation(
     value = "Json representation of the PAYE unit along with its links to other units",
     notes = "parents represent a mapping from a parent unitType to the associated unit identifier; " +

@@ -7,14 +7,15 @@ import javax.inject.{ Inject, Singleton }
 import play.api.libs.json.JsObject
 import play.api.mvc.{ Action, AnyContent, Result }
 import uk.gov.ons.sbr.models.{ Period, UnitId, UnitType, _ }
-import unitref.VatUnitRef
+import unitref.UnitRef
 
 @Api("VAT")
 @Singleton
 class VatController @Inject() (
+    unitRefType: UnitRef[VatRef],
     retrieveLinkedUnitAction: LinkedUnitRequestActionBuilderMaker[VatRef],
     handleLinkedUnitRetrievalResult: LinkedUnitRetrievalHandler[Result]
-) extends LinkedUnitController[VatRef](VatUnitRef, retrieveLinkedUnitAction, handleLinkedUnitRetrievalResult) {
+) extends LinkedUnitController[VatRef](unitRefType, retrieveLinkedUnitAction, handleLinkedUnitRetrievalResult) {
   @ApiOperation(
     value = "Json representation of the VAT unit along with its links to other units",
     notes = "parents represent a mapping from a parent unitType to the associated unit identifier; " +

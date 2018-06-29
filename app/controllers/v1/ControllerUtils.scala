@@ -98,33 +98,6 @@ trait ControllerUtils extends Controller with StrictLogging with Properties with
     case ex => InternalServerError(errAsJson(ex.toString, ex.getCause.toString))
   }
 
-  protected def louSearch(baseUrl: Uri, id: String, period: String)(implicit ws: RequestGenerator): Future[Result] = id.trim match {
-    case _ if id.length >= MINIMUM_KEY_LENGTH =>
-      LOGGER.info(s"Sending request to ${baseUrl.toString} to retrieve Unit Links")
-      ws.singleGETRequest(baseUrl.toString) flatMap {
-        case response if response.status == OK =>
-          val unitResp = response.json.as[StatisticalUnitLinkType]
-          val period = (unitResp \ "period").as[String]
-          val path = createLouUri(SBR_CONTROL_API_URL, id, unitResp)
-          LOGGER.info(s"Sending request to $path to get records of all variables of unit.")
-          ws.singleGETRequestWithTimeout(path.toString, Duration.Inf).map {
-            case resp if resp.status == OK =>
-              val json = (Seq(unitResp) zip List(resp.json)).map(x => toJson(x, LOU.toString, period)).head
-              Ok(json).as(JSON)
-            case resp if resp.status == NOT_FOUND =>
-              LOGGER.error(s"Found unit links for record with id [$id], but the corresponding record returns 404")
-              NotFound(resp.body).as(JSON)
-            case _ => InternalServerError(Messages("controller.internal.server.error"))
-          }
-        case response if response.status == NOT_FOUND =>
-          NotFound(response.body).as(JSON).future
-        case _ =>
-          InternalServerError(Messages("controller.internal.server.error")).future
-      } recover responseException
-    case _ =>
-      BadRequest(Messages("controller.invalid.id", id, MINIMUM_KEY_LENGTH)).future
-  }
-
   // @ TODO - CHECK error control
   protected def search[T](key: String, baseUrl: Uri, sourceType: DataSourceTypes = ENT, periodParam: Option[String] = None, history: Option[Int] = None)(implicit fjs: Reads[T], ws: RequestGenerator): Future[Result] =
     key match {
