@@ -9,7 +9,10 @@ import utils.JsResultSupport
 
 import scala.util.Try
 
-case class Period(value: YearMonth)
+case class Period(value: YearMonth) {
+  override def toString: String =
+    this.getClass.getSimpleName + "(" + Period.asString(this) + ")"
+}
 
 object Period {
   private val FormatPattern = "uuuuMM"

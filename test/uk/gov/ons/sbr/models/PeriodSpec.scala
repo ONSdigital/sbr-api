@@ -51,6 +51,10 @@ class PeriodSpec extends FreeSpec with Matchers {
     "can be represented as a string" in {
       Period.asString(Period.fromYearMonth(2018, FEBRUARY)) shouldBe "201802"
     }
+
+    "has a helpful debug representation" in {
+      Period.fromYearMonth(2018, FEBRUARY).toString shouldBe "Period(201802)"
+    }
   }
 
   "A Period JSON Format" - {
