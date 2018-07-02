@@ -28,7 +28,7 @@ class LocalUnitFinder(localUnitRepository: LocalUnitRepository, enterpriseUnitRe
     }
 
   private def onMissingParentEnterprise(lurn: Lurn): Either[ErrorMessage, Option[JsObject]] = {
-    logger.warn(s"No parent Enterprise found in the unit links for local unit [$lurn].  Unable to retrieve the Local Unit!")
+    logger.warn(s"Invalid data.  The local unit [$lurn] has Unit Links that do not contain a parent Enterprise.")
     Left(s"Unit Links for Local Unit [$lurn] is missing a parent Enterprise.")
   }
 }
