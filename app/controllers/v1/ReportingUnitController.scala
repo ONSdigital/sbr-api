@@ -18,9 +18,8 @@ class ReportingUnitController @Inject() (
 ) extends LinkedUnitController[Rurn](unitRefType, retrieveLinkedUnitAction, handleLinkedUnitRetrievalResult) {
   @ApiOperation(
     value = "Json representation of the reporting unit along with its links to other units",
-    notes = "parents represent a mapping from the parent unitType to its associated unique identifier; " +
-    "children represent a mapping from a unique identifier to the associated child unitType; " +
-    "vars simply passes through the representation of the unit received from the control API (and so is not defined here)",
+    notes = "parents represent a mapping from the parent unitType to its associated unique identifier; children represent a mapping from a unique identifier to the associated child unitType; " +
+      "vars simply passes through the representation of the unit received from the control API (and so is not defined here)",
     response = classOf[reportingunit.examples.ReportingLinkedUnitForSwagger],
     code = 200,
     httpMethod = "GET"
