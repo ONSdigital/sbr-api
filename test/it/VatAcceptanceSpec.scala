@@ -20,7 +20,7 @@ class VatAcceptanceSpec extends ServerAcceptanceSpec with WireMockSbrControlApi 
   private val VatUnitLinksResponseBody =
     s"""|{"id":"${TargetVatRef.value}",
         | "parents": {
-        |   "ENT":"1000000012"
+        |   "LEU":"1234567890123456"
         | },
         | "unitType":"VAT",
         | "period":"${Period.asString(TargetPeriod)}"
@@ -64,7 +64,7 @@ class VatAcceptanceSpec extends ServerAcceptanceSpec with WireMockSbrControlApi 
     s"""
        |{"id":"${TargetVatRef.value}",
        | "parents": {
-       |   "ENT":"1000000012"
+       |   "LEU":"1234567890123456"
        | },
        | "unitType":"VAT",
        | "period":"${Period.asString(TargetPeriod)}",
