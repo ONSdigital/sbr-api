@@ -7,15 +7,16 @@ import play.api.libs.json.{ JsObject, Reads }
 import repository.DataSourceNames.SbrCtrl
 import repository.rest.{ Repository, RepositoryResult }
 import repository.{ ErrorMessage, LocalUnitRepository }
+import tracing.TraceData
 import uk.gov.ons.sbr.models.{ Ern, Lurn, Period }
 
 import scala.concurrent.Future
 
 class RestLocalUnitRepository @Inject() (@Named(SbrCtrl) unitRepository: Repository) extends LocalUnitRepository with LazyLogging {
-  override def retrieveLocalUnit(period: Period, ern: Ern, lurn: Lurn): Future[Either[ErrorMessage, Option[JsObject]]] = {
+  override def retrieveLocalUnit(period: Period, ern: Ern, lurn: Lurn, traceData: TraceData): Future[Either[ErrorMessage, Option[JsObject]]] = {
     val path = LocalUnitPath(period, ern, lurn)
     logger.debug(s"Requesting local unit with path [$path]")
-    unitRepository.getJson(path).map {
+    unitRepository.getJson(path, spanName = "get-local-unit", traceData).map {
       RepositoryResult.as(Reads.JsObjectReads)(_)
     }
   }

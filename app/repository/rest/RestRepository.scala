@@ -7,10 +7,11 @@ import javax.inject.Inject
 import play.api.http.Status.{ NOT_FOUND, OK }
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.JsValue
-import play.api.libs.ws.{ WSClient, WSRequest, WSResponse }
+import play.api.libs.ws.{ WSRequest, WSResponse }
 import play.mvc.Http.HeaderNames.ACCEPT
 import play.mvc.Http.MimeTypes.JSON
 import repository.ErrorMessage
+import tracing.{ TraceData, TraceWSClient }
 import utils.TrySupport
 import utils.url.{ BaseUrl, Url }
 
@@ -19,18 +20,18 @@ import scala.util.Try
 
 case class RestRepositoryConfig(baseUrl: BaseUrl)
 
-class RestRepository @Inject() (config: RestRepositoryConfig, wsClient: WSClient) extends Repository with LazyLogging {
+class RestRepository @Inject() (config: RestRepositoryConfig, wsClient: TraceWSClient) extends Repository with LazyLogging {
 
-  override def getJson(path: String): Future[Either[ErrorMessage, Option[JsValue]]] = {
+  override def getJson(path: String, spanName: String, traceData: TraceData): Future[Either[ErrorMessage, Option[JsValue]]] = {
     val url = Url(withBase = config.baseUrl, withPath = path)
-    requestFor(url).get().map {
+    requestFor(url, spanName, traceData).get().map {
       fromResponseToErrorOrJson
     }.recover(withTranslationOfFailureToError)
   }
 
-  private def requestFor(url: String): WSRequest =
+  private def requestFor(url: String, spanName: String, traceData: TraceData): WSRequest =
     wsClient.
-      url(url).
+      url(url, spanName, traceData).
       withHeaders(ACCEPT -> JSON)
 
   private def fromResponseToErrorOrJson(response: WSResponse): Either[ErrorMessage, Option[JsValue]] =

@@ -7,6 +7,7 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{ EitherValues, FreeSpec, Matchers }
 import play.api.libs.json.{ JsObject, Json }
 import repository.AdminDataRepository
+import tracing.TraceData
 import uk.gov.ons.sbr.models.UnitType.{ LegalUnit, ValueAddedTax }
 import uk.gov.ons.sbr.models._
 import unitref.UnitRef
@@ -21,7 +22,7 @@ class AdminDataFinderSpec extends FreeSpec with Matchers with MockFactory with S
     val TargetPeriod = Period.fromYearMonth(2018, JUNE)
     val TargetUnitRef = FakeAdminDataRef("1234")
     val TargetUnitId = UnitId(TargetUnitRef.value)
-    val TargetUnitType = ValueAddedTax // this test is not VAT specific - we just a valid AdminData unit type
+    val TargetUnitType = ValueAddedTax // this test is not VAT specific - we just need a valid AdminData unit type
     val AdminDataUnitLinks = UnitLinks(
       id = TargetUnitId,
       unitType = TargetUnitType,
@@ -34,6 +35,7 @@ class AdminDataFinderSpec extends FreeSpec with Matchers with MockFactory with S
       period = TargetPeriod,
       variables = Json.parse(s"""{"fake":"json"}""").as[JsObject]
     )
+    val traceData = stub[TraceData]
 
     val unitRefType = stub[UnitRef[FakeAdminDataRef]]
     (unitRefType.toIdTypePair _).when(TargetUnitRef).returns(TargetUnitId -> TargetUnitType)
@@ -44,32 +46,32 @@ class AdminDataFinderSpec extends FreeSpec with Matchers with MockFactory with S
   "An AdminData finder" - {
     "retrieves the admin data via the repository" - {
       "returning the admin data variables when the admin data is found" in new Fixture {
-        (adminDatarepository.retrieveAdminData _).expects(TargetUnitId, TargetPeriod).returning(
+        (adminDatarepository.retrieveAdminData _).expects(TargetUnitId, TargetPeriod, traceData).returning(
           Future.successful(Right(Some(TheAdminData)))
         )
 
-        whenReady(finder.find(TargetPeriod, TargetUnitRef, AdminDataUnitLinks)) { result =>
+        whenReady(finder.find(TargetPeriod, TargetUnitRef, AdminDataUnitLinks, traceData)) { result =>
           result.right.value shouldBe Some(TheAdminData.variables)
         }
       }
 
       "returning nothing when the admin data is not found" in new Fixture {
-        (adminDatarepository.retrieveAdminData _).expects(TargetUnitId, TargetPeriod).returning(
+        (adminDatarepository.retrieveAdminData _).expects(TargetUnitId, TargetPeriod, traceData).returning(
           Future.successful(Right(None))
         )
 
-        whenReady(finder.find(TargetPeriod, TargetUnitRef, AdminDataUnitLinks)) { result =>
+        whenReady(finder.find(TargetPeriod, TargetUnitRef, AdminDataUnitLinks, traceData)) { result =>
           result.right.value shouldBe empty
         }
       }
 
       "returning the failure message when the retrieval fails" in new Fixture {
         val failureMessage = "retrieval failed"
-        (adminDatarepository.retrieveAdminData _).expects(TargetUnitId, TargetPeriod).returning(
+        (adminDatarepository.retrieveAdminData _).expects(TargetUnitId, TargetPeriod, traceData).returning(
           Future.successful(Left(failureMessage))
         )
 
-        whenReady(finder.find(TargetPeriod, TargetUnitRef, AdminDataUnitLinks)) { result =>
+        whenReady(finder.find(TargetPeriod, TargetUnitRef, AdminDataUnitLinks, traceData)) { result =>
           result.left.value shouldBe failureMessage
         }
       }

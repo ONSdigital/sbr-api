@@ -1,11 +1,12 @@
 package controllers.v1
 
-import actions.RetrieveLinkedUnitAction.LinkedUnitRequestActionBuilderMaker
+import actions.RetrieveLinkedUnitAction.LinkedUnitTracedRequestActionFunctionMaker
+import actions.TracedRequest
 import handlers.LinkedUnitRetrievalHandler
 import io.swagger.annotations._
 import javax.inject.{ Inject, Singleton }
 import play.api.libs.json.JsObject
-import play.api.mvc.{ Action, AnyContent, Result }
+import play.api.mvc.{ Action, ActionBuilder, AnyContent, Result }
 import uk.gov.ons.sbr.models.{ Period, Rurn, UnitId, UnitType }
 import unitref.UnitRef
 
@@ -13,13 +14,14 @@ import unitref.UnitRef
 @Singleton
 class ReportingUnitController @Inject() (
     unitRefType: UnitRef[Rurn],
-    retrieveLinkedUnitAction: LinkedUnitRequestActionBuilderMaker[Rurn],
+    tracingAction: ActionBuilder[TracedRequest],
+    retrieveLinkedUnitAction: LinkedUnitTracedRequestActionFunctionMaker[Rurn],
     handleLinkedUnitRetrievalResult: LinkedUnitRetrievalHandler[Result]
-) extends LinkedUnitController[Rurn](unitRefType, retrieveLinkedUnitAction, handleLinkedUnitRetrievalResult) {
+) extends LinkedUnitController[Rurn](unitRefType, tracingAction, retrieveLinkedUnitAction, handleLinkedUnitRetrievalResult) {
   @ApiOperation(
     value = "Json representation of the reporting unit along with its links to other units",
     notes = "parents represent a mapping from the parent unitType to its associated unique identifier; children represent a mapping from a unique identifier to the associated child unitType; " +
-      "vars simply passes through the representation of the unit received from the control API (and so is not defined here)",
+    "vars simply passes through the representation of the unit received from the control API (and so is not defined here)",
     response = classOf[reportingunit.examples.ReportingLinkedUnitForSwagger],
     code = 200,
     httpMethod = "GET"

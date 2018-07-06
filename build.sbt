@@ -147,8 +147,9 @@ lazy val devDeps = Seq(
   "io.swagger"                   %%    "swagger-play2"       %    "1.5.3",
   "io.lemonlabs"                 %%    "scala-uri"           %    "0.5.0",
   "org.webjars"                  %     "swagger-ui"          %    "3.1.4",
-  "com.typesafe"                 %      "config"             %    "1.3.1"
-    excludeAll ExclusionRule("commons-logging", "commons-logging")
+  "com.typesafe"                 %     "config"              %    "1.3.1"
+    excludeAll ExclusionRule("commons-logging", "commons-logging"),
+  "jp.co.bizreach"               %%    "play-zipkin-tracing-play25" % "1.2.0"       // Zipkin v1 support (not v2)
 )
 
 /*

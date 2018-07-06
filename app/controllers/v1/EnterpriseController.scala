@@ -1,6 +1,7 @@
 package controllers.v1
 
-import actions.RetrieveLinkedUnitAction.LinkedUnitRequestActionBuilderMaker
+import actions.RetrieveLinkedUnitAction.LinkedUnitTracedRequestActionFunctionMaker
+import actions.TracedRequest
 import handlers.LinkedUnitRetrievalHandler
 import io.swagger.annotations._
 import javax.inject.{ Inject, Singleton }
@@ -13,9 +14,10 @@ import unitref.UnitRef
 @Singleton
 class EnterpriseController @Inject() (
     unitRefType: UnitRef[Ern],
-    retrieveLinkedUnitAction: LinkedUnitRequestActionBuilderMaker[Ern],
+    tracingAction: ActionBuilder[TracedRequest],
+    retrieveLinkedUnitAction: LinkedUnitTracedRequestActionFunctionMaker[Ern],
     handleLinkedUnitRetrievalResult: LinkedUnitRetrievalHandler[Result]
-) extends LinkedUnitController[Ern](unitRefType, retrieveLinkedUnitAction, handleLinkedUnitRetrievalResult) {
+) extends LinkedUnitController[Ern](unitRefType, tracingAction, retrieveLinkedUnitAction, handleLinkedUnitRetrievalResult) {
   @ApiOperation(
     value = "Json representation of the enterprise along with its links to other units",
     notes = "children represents a mapping from each child's unique identifier to the associated unitType; " +

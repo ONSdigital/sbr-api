@@ -7,6 +7,7 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{ EitherValues, FreeSpec, Matchers }
 import play.api.libs.json.{ JsObject, Json }
 import repository.EnterpriseRepository
+import tracing.TraceData
 import uk.gov.ons.sbr.models.UnitType.{ Enterprise, LegalUnit, LocalUnit }
 import uk.gov.ons.sbr.models._
 
@@ -25,6 +26,7 @@ class EnterpriseFinderSpec extends FreeSpec with Matchers with MockFactory with 
       children = Some(Map(UnitId("1234567890123456") -> LegalUnit, UnitId("987654321") -> LocalUnit))
     )
     val UnitJson = Json.parse(s"""{"some":"json"}""").as[JsObject]
+    val traceData = stub[TraceData]
 
     val enterpriseRepository = mock[EnterpriseRepository]
     val finder = new EnterpriseFinder(enterpriseRepository)
@@ -33,32 +35,32 @@ class EnterpriseFinderSpec extends FreeSpec with Matchers with MockFactory with 
   "An Enterprise finder" - {
     "retrieves an enterprise via the repository" - {
       "returning the JSON representation when the enterprise is found" in new Fixture {
-        (enterpriseRepository.retrieveEnterprise _).expects(TargetPeriod, TargetErn).returning(
+        (enterpriseRepository.retrieveEnterprise _).expects(TargetPeriod, TargetErn, traceData).returning(
           Future.successful(Right(Some(UnitJson)))
         )
 
-        whenReady(finder.find(TargetPeriod, TargetErn, EnterpriseUnitLinks)) { result =>
+        whenReady(finder.find(TargetPeriod, TargetErn, EnterpriseUnitLinks, traceData)) { result =>
           result.right.value shouldBe Some(UnitJson)
         }
       }
 
       "returning nothing when the enterprise is not found" in new Fixture {
-        (enterpriseRepository.retrieveEnterprise _).expects(TargetPeriod, TargetErn).returning(
+        (enterpriseRepository.retrieveEnterprise _).expects(TargetPeriod, TargetErn, traceData).returning(
           Future.successful(Right(None))
         )
 
-        whenReady(finder.find(TargetPeriod, TargetErn, EnterpriseUnitLinks)) { result =>
+        whenReady(finder.find(TargetPeriod, TargetErn, EnterpriseUnitLinks, traceData)) { result =>
           result.right.value shouldBe empty
         }
       }
 
       "returning the failure message when the retrieval fails" in new Fixture {
         val failureMessage = "retrieval failed"
-        (enterpriseRepository.retrieveEnterprise _).expects(TargetPeriod, TargetErn).returning(
+        (enterpriseRepository.retrieveEnterprise _).expects(TargetPeriod, TargetErn, traceData).returning(
           Future.successful(Left(failureMessage))
         )
 
-        whenReady(finder.find(TargetPeriod, TargetErn, EnterpriseUnitLinks)) { result =>
+        whenReady(finder.find(TargetPeriod, TargetErn, EnterpriseUnitLinks, traceData)) { result =>
           result.left.value shouldBe failureMessage
         }
       }
