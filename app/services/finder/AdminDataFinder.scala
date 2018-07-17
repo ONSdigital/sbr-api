@@ -1,4 +1,5 @@
 package services.finder
+
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.JsObject
 import repository.AdminDataRepository

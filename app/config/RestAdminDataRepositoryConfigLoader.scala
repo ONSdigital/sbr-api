@@ -2,7 +2,7 @@ package config
 
 import com.typesafe.config.Config
 import com.typesafe.sslconfig.util.ConfigLoader
-import repository.rest.RestUnitRepositoryConfig
+import repository.rest.RestRepositoryConfig
 
 /*
  * We want a misconfigured server to "fail fast".
@@ -13,12 +13,12 @@ import repository.rest.RestUnitRepositoryConfig
 object RestAdminDataRepositoryConfigLoader {
   private val adminDataPath = "api.admin.data"
 
-  def vat(restUnitRepositoryConfigLoader: ConfigLoader[RestUnitRepositoryConfig], rootConfig: Config): RestUnitRepositoryConfig =
+  def vat(restUnitRepositoryConfigLoader: ConfigLoader[RestRepositoryConfig], rootConfig: Config): RestRepositoryConfig =
     restUnitRepositoryConfigLoader.load(config = rootConfig, path = s"$adminDataPath.vat")
 
-  def paye(restUnitRepositoryConfigLoader: ConfigLoader[RestUnitRepositoryConfig], rootConfig: Config): RestUnitRepositoryConfig =
+  def paye(restUnitRepositoryConfigLoader: ConfigLoader[RestRepositoryConfig], rootConfig: Config): RestRepositoryConfig =
     restUnitRepositoryConfigLoader.load(config = rootConfig, path = s"$adminDataPath.paye")
 
-  def companiesHouse(restUnitRepositoryConfigLoader: ConfigLoader[RestUnitRepositoryConfig], rootConfig: Config): RestUnitRepositoryConfig =
+  def companiesHouse(restUnitRepositoryConfigLoader: ConfigLoader[RestRepositoryConfig], rootConfig: Config): RestRepositoryConfig =
     restUnitRepositoryConfigLoader.load(config = rootConfig, path = s"$adminDataPath.ch")
 }

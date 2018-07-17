@@ -5,6 +5,6 @@ import repository.ErrorMessage
 
 import scala.concurrent.Future
 
-trait UnitRepository {
+trait Repository {
   def getJson(path: String): Future[Either[ErrorMessage, Option[JsValue]]]
 }

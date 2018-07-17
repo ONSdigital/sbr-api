@@ -13,10 +13,10 @@ import play.api.{ Configuration, Environment }
 import repository.DataSourceNames.{ CompaniesHouse, Paye, SbrCtrl, Vat }
 import repository._
 import repository.admindata.RestAdminDataRepository
-import repository.rest.{ RestUnitRepository, RestUnitRepositoryConfig, UnitRepository }
+import repository.rest.{ RestRepository, RestRepositoryConfig, Repository }
 import repository.sbrctrl._
 import services._
-import services.finder.{ AdminDataFinder, EnterpriseFinder, LocalUnitFinder }
+import services.finder._
 import uk.gov.ons.sbr.models._
 import unitref._
 
@@ -44,24 +44,25 @@ class Module(
    */
   override def configure(): Unit = {
     val underlyingConfig = configuration.underlying
-    val restRepositoryConfigLoader = BaseUrlConfigLoader.map(RestUnitRepositoryConfig)
+    val restRepositoryConfigLoader = BaseUrlConfigLoader.map(RestRepositoryConfig)
 
     // sbr repositories
-    bind(classOf[RestUnitRepositoryConfig]).annotatedWith(named(SbrCtrl)).toInstance(
+    bind(classOf[RestRepositoryConfig]).annotatedWith(named(SbrCtrl)).toInstance(
       SbrCtrlRestUnitRepositoryConfigLoader(restRepositoryConfigLoader, underlyingConfig)
     )
     bind(classOf[UnitLinksRepository]).to(classOf[RestUnitLinksRepository])
     bind(classOf[EnterpriseRepository]).to(classOf[RestEnterpriseRepository])
     bind(classOf[LocalUnitRepository]).to(classOf[RestLocalUnitRepository])
+    bind(classOf[ReportingUnitRepository]).to(classOf[RestReportingUnitRepository])
 
     // config for admin data repositories
-    bind(classOf[RestUnitRepositoryConfig]).annotatedWith(named(Vat)).toInstance(
+    bind(classOf[RestRepositoryConfig]).annotatedWith(named(Vat)).toInstance(
       RestAdminDataRepositoryConfigLoader.vat(restRepositoryConfigLoader, underlyingConfig)
     )
-    bind(classOf[RestUnitRepositoryConfig]).annotatedWith(named(Paye)).toInstance(
+    bind(classOf[RestRepositoryConfig]).annotatedWith(named(Paye)).toInstance(
       RestAdminDataRepositoryConfigLoader.paye(restRepositoryConfigLoader, underlyingConfig)
     )
-    bind(classOf[RestUnitRepositoryConfig]).annotatedWith(named(CompaniesHouse)).toInstance(
+    bind(classOf[RestRepositoryConfig]).annotatedWith(named(CompaniesHouse)).toInstance(
       RestAdminDataRepositoryConfigLoader.companiesHouse(restRepositoryConfigLoader, underlyingConfig)
     )
 
@@ -78,6 +79,7 @@ class Module(
     bind(new TypeLiteral[UnitRef[CompanyRefNumber]]() {}).toInstance(CompaniesHouseUnitRef)
     bind(new TypeLiteral[UnitRef[Ern]]() {}).toInstance(EnterpriseUnitRef)
     bind(new TypeLiteral[UnitRef[Lurn]]() {}).toInstance(LocalUnitRef)
+    bind(new TypeLiteral[UnitRef[Rurn]]() {}).toInstance(ReportingUnitRef)
     bind(new TypeLiteral[UnitRef[PayeRef]]() {}).toInstance(PayeUnitRef)
     bind(new TypeLiteral[UnitRef[VatRef]]() {}).toInstance(VatUnitRef)
 
@@ -95,35 +97,35 @@ class Module(
   // repositories
   @Provides @Named(SbrCtrl)
   def providesSbrCtrlUnitRepository(
-    @Inject()@Named(SbrCtrl) sbrCtrlUnitRepositoryConfig: RestUnitRepositoryConfig,
+    @Inject()@Named(SbrCtrl) sbrCtrlUnitRepositoryConfig: RestRepositoryConfig,
     wSClient: WSClient
-  ): UnitRepository =
-    new RestUnitRepository(sbrCtrlUnitRepositoryConfig, wSClient)
+  ): Repository =
+    new RestRepository(sbrCtrlUnitRepositoryConfig, wSClient)
 
   @Provides @Named(Vat)
   def providesVatAdminDataRepository(
-    @Inject()@Named(Vat) vatUnitRepositoryConfig: RestUnitRepositoryConfig,
+    @Inject()@Named(Vat) vatUnitRepositoryConfig: RestRepositoryConfig,
     wSClient: WSClient, readsAdminData: Reads[AdminData]
   ): AdminDataRepository = {
-    val unitRepository = new RestUnitRepository(vatUnitRepositoryConfig, wSClient)
+    val unitRepository = new RestRepository(vatUnitRepositoryConfig, wSClient)
     new RestAdminDataRepository(unitRepository, readsAdminData)
   }
 
   @Provides @Named(Paye)
   def providesPayeAdminDataRepository(
-    @Inject()@Named(Paye) payeUnitRepositoryConfig: RestUnitRepositoryConfig,
+    @Inject()@Named(Paye) payeUnitRepositoryConfig: RestRepositoryConfig,
     wSClient: WSClient, readsAdminData: Reads[AdminData]
   ): AdminDataRepository = {
-    val unitRepository = new RestUnitRepository(payeUnitRepositoryConfig, wSClient)
+    val unitRepository = new RestRepository(payeUnitRepositoryConfig, wSClient)
     new RestAdminDataRepository(unitRepository, readsAdminData)
   }
 
   @Provides @Named(CompaniesHouse)
   def providesCompaniesHouseAdminDataRepository(
-    @Inject()@Named(CompaniesHouse) chUnitRepositoryConfig: RestUnitRepositoryConfig,
+    @Inject()@Named(CompaniesHouse) chUnitRepositoryConfig: RestRepositoryConfig,
     wSClient: WSClient, readsAdminData: Reads[AdminData]
   ): AdminDataRepository = {
-    val unitRepository = new RestUnitRepository(chUnitRepositoryConfig, wSClient)
+    val unitRepository = new RestRepository(chUnitRepositoryConfig, wSClient)
     new RestAdminDataRepository(unitRepository, readsAdminData)
   }
 
@@ -159,8 +161,15 @@ class Module(
   @Provides
   def providesLocalUnitService(@Inject() localUnitRefType: UnitRef[Lurn], enterpriseUnitRefType: UnitRef[Ern],
     unitLinksRepository: UnitLinksRepository, localUnitRepository: LocalUnitRepository): LinkedUnitService[Lurn] = {
-    val localUnitFinder = new LocalUnitFinder(localUnitRepository, enterpriseUnitRefType)
+    val localUnitFinder = new ByParentEnterpriseUnitFinder[Lurn](localUnitRepository.retrieveLocalUnit, enterpriseUnitRefType)
     new RestLinkedUnitService[Lurn](localUnitRefType, unitLinksRepository, localUnitFinder)
+  }
+
+  @Provides
+  def providesReportingUnitService(@Inject() reportingUnitRefType: UnitRef[Rurn], enterpriseUnitRefType: UnitRef[Ern],
+    unitLinksRepository: UnitLinksRepository, reportingUnitRepository: ReportingUnitRepository): LinkedUnitService[Rurn] = {
+    val reportingUnitFinder = new ByParentEnterpriseUnitFinder[Rurn](reportingUnitRepository.retrieveReportingUnit, enterpriseUnitRefType)
+    new RestLinkedUnitService[Rurn](reportingUnitRefType, unitLinksRepository, reportingUnitFinder)
   }
 
   // controller actions
@@ -171,6 +180,10 @@ class Module(
   @Provides
   def providesLocalLinkedUnitRequestActionBuilderMaker(@Inject() localUnitService: LinkedUnitService[Lurn]): LinkedUnitRequestActionBuilderMaker[Lurn] =
     new RetrieveLinkedUnitAction[Lurn](localUnitService)
+
+  @Provides
+  def providesReportingLinkedUnitRequestActionBuilderMaker(@Inject() reportingUnitService: LinkedUnitService[Rurn]): LinkedUnitRequestActionBuilderMaker[Rurn] =
+    new RetrieveLinkedUnitAction[Rurn](reportingUnitService)
 
   @Provides
   def providesVatLinkedUnitRequestActionBuilderMaker(@Inject() vatService: LinkedUnitService[VatRef]): LinkedUnitRequestActionBuilderMaker[VatRef] =

@@ -15,17 +15,17 @@ import scala.concurrent.Future
  * where possible.  This was introduced in order to assert that the configured baseUrl is used, as the
  * wsTestClient used by the acceptance test overrides the host / port.
  */
-class RestUnitRepository_MockClientSpec extends FreeSpec with Matchers with MockFactory with ScalaFutures with EitherValues {
+class RestRepository_MockClientSpec extends FreeSpec with Matchers with MockFactory with ScalaFutures with EitherValues {
 
   private trait Fixture {
     val SomeRelativePath = "foo/bar/baz"
 
     val wsClient = stub[WSClient]
     val wsRequest = mock[WSRequest]
-    val config = RestUnitRepositoryConfig(
+    val config = RestRepositoryConfig(
       BaseUrl(protocol = Http, host = "somehost", port = 4321)
     )
-    val repository = new RestUnitRepository(config, wsClient)
+    val repository = new RestRepository(config, wsClient)
 
     (wsRequest.withHeaders _).expects(*).returning(wsRequest)
   }

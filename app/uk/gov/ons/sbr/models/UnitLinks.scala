@@ -2,6 +2,8 @@ package uk.gov.ons.sbr.models
 
 import com.typesafe.scalalogging.LazyLogging
 import play.api.libs.json._
+import uk.gov.ons.sbr.models.UnitType.Enterprise
+import unitref.UnitRef
 import utils.JsResultSupport
 
 case class UnitLinks(
@@ -85,4 +87,9 @@ object UnitLinks extends LazyLogging {
     private def nonEmptyMap[K, V](map: Map[K, V]): Option[Map[K, V]] =
       if (map.isEmpty) None else Some(map)
   }
+
+  def parentErnFrom(ernType: UnitRef[Ern])(unitLinks: UnitLinks): Option[Ern] =
+    unitLinks.parents.flatMap(_.get(Enterprise)).map {
+      ernType.fromUnitId
+    }
 }

@@ -6,7 +6,7 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{ EitherValues, FreeSpec, Matchers }
 import play.api.libs.json.Json
-import repository.rest.UnitRepository
+import repository.rest.Repository
 import support.sample.SampleEnterprise
 import uk.gov.ons.sbr.models.{ Ern, Period }
 
@@ -19,7 +19,7 @@ class RestEnterpriseRepositorySpec extends FreeSpec with Matchers with MockFacto
     val TargetErn = Ern("9876543210")
     val EnterpriseJson = SampleEnterprise.asJson(TargetErn)
 
-    val unitRepository = mock[UnitRepository]
+    val unitRepository = mock[Repository]
     val enterpriseRepository = new RestEnterpriseRepository(unitRepository)
   }
 
@@ -63,7 +63,7 @@ class RestEnterpriseRepositorySpec extends FreeSpec with Matchers with MockFacto
         )
 
         whenReady(enterpriseRepository.retrieveEnterprise(TargetPeriod, TargetErn)) { result =>
-          result.left.value should startWith("Json returned for Enterprise does not define an object")
+          result.left.value should startWith("Unable to parse json response")
         }
       }
     }

@@ -23,6 +23,9 @@ GET     /v1/periods/:period/crns/:crn                                   controll
 GET     /v1/periods/$period<\d{4}(0[1-9]|1[0-2])>/lous/$lurn<\d{9}>     controllers.v1.LocalUnitController.retrieveLocalLinkedUnit(period, lurn)
 GET     /v1/periods/:period/lous/:lurn                                  controllers.BadRequestController.badRequest(period, lurn)
 
+GET     /v1/periods/$period<\d{4}(0[1-9]|1[0-2])>/reus/$rurn<\d{11}>    controllers.v1.ReportingUnitController.retrieveReportingLinkedUnit(period, rurn)
+GET     /v1/periods/:period/reus/:rurn                                  controllers.BadRequestController.badRequest(period, rurn)
+
 GET     /v1/periods/:date/leus/:id      controllers.v1.SearchController.searchLeUWithPeriod(date, id)
 
 # Editing Endpoints

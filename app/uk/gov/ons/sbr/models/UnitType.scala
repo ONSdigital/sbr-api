@@ -10,6 +10,7 @@ object UnitType {
   case object Enterprise extends UnitType
   case object LegalUnit extends UnitType
   case object LocalUnit extends UnitType
+  case object ReportingUnit extends UnitType
   case object ValueAddedTax extends UnitType
   case object PayAsYouEarn extends UnitType
   case object CompaniesHouse extends UnitType
@@ -18,6 +19,7 @@ object UnitType {
     val Enterprise = "ENT"
     val LegalUnit = "LEU"
     val LocalUnit = "LOU"
+    val ReportingUnit = "REU"
     val ValueAddedTax = "VAT"
     val PayeAsYouEarn = "PAYE"
     val CompaniesHouse = "CH"
@@ -28,6 +30,7 @@ object UnitType {
       case Enterprise => Acronym.Enterprise
       case LegalUnit => Acronym.LegalUnit
       case LocalUnit => Acronym.LocalUnit
+      case ReportingUnit => Acronym.ReportingUnit
       case ValueAddedTax => Acronym.ValueAddedTax
       case PayAsYouEarn => Acronym.PayeAsYouEarn
       case CompaniesHouse => Acronym.CompaniesHouse
@@ -38,6 +41,7 @@ object UnitType {
       case Acronym.Enterprise => Some(UnitType.Enterprise)
       case Acronym.LegalUnit => Some(UnitType.LegalUnit)
       case Acronym.LocalUnit => Some(UnitType.LocalUnit)
+      case Acronym.ReportingUnit => Some(UnitType.ReportingUnit)
       case Acronym.ValueAddedTax => Some(UnitType.ValueAddedTax)
       case Acronym.PayeAsYouEarn => Some(UnitType.PayAsYouEarn)
       case Acronym.CompaniesHouse => Some(UnitType.CompaniesHouse)

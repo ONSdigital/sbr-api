@@ -48,7 +48,8 @@ class LocalUnitController @Inject() (
 package localunit.examples {
   @deprecated(message = "This is just for Swagger example purposes - do not use in real code", since = "")
   case class LocalUnitParentsForSwagger(
-    @ApiModelProperty(value = "the unitType of the parent followed by its unique unit identifier", dataType = "string", example = "1234567890", required = true) ENT: UnitId
+    @ApiModelProperty(value = "the unitType of the parent followed by its unique unit identifier", dataType = "string", example = "1234567890", required = true) ENT: UnitId,
+    @ApiModelProperty(value = "the unitType of the parent followed by its unique unit identifier", dataType = "string", example = "98765432109", required = true) REU: UnitId
   )
 
   @deprecated(message = "This is just for Swagger example purposes - do not use in real code", since = "")
