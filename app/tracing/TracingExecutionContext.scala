@@ -5,7 +5,7 @@ import java.util
 import com.typesafe.scalalogging.LazyLogging
 import org.slf4j.MDC
 
-import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
+import scala.concurrent.{ ExecutionContext, ExecutionContextExecutor }
 
 /*
  * We are using the logback Mapped Diagnostic Context (MDC) to automatically associate a request trace context

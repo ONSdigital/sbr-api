@@ -2,11 +2,11 @@ package tracing
 
 import com.typesafe.scalalogging.LazyLogging
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.time.{Millis, Seconds}
-import org.scalatest.{FreeSpec, Matchers}
+import org.scalatest.time.{ Millis, Seconds }
+import org.scalatest.{ FreeSpec, Matchers }
 import org.slf4j.MDC
 
-import scala.concurrent.{ExecutionContextExecutor, Future}
+import scala.concurrent.{ ExecutionContextExecutor, Future }
 
 /*
  * This spec:
@@ -38,7 +38,7 @@ class TracingExecutionContextSpec extends FreeSpec with Matchers with ScalaFutur
 
     val ContextKey = "SomeKey"
     private val StartChainValue = 1
-    private val EndChainValue = 40320    // factorial of 8 (8!)
+    private val EndChainValue = 40320 // factorial of 8 (8!)
 
     def testContextMigration(): Unit = {
       val contextValue = newContextValue
