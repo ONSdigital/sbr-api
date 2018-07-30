@@ -68,6 +68,37 @@ Swagger API is used to document and expose swagger definitions of the routes and
  For a graphical interface using Swagger Ui use path:
  `http://localhost:9000/docs`
  
+#### Application Tracing
+[zipkin](https://zipkin.io/) is used for application tracing.
+
+Key implementation decisions:
+* a Play filter is used to create a span (and if necessary a parent trace) for all requests.  The filter
+automatically reports this span upon completion of the request.
+* the TraceWSClient from play-zipkin-tracing is used as a replacement for Play's WSClient.  This
+automatically creates and reports a child span for downstream API requests
+* the particular reporter to use is injected by Guice when the application is configured.  When the Play
+environment mode is "Dev" or "Test" a console reporter is used, which results in the trace simply being
+written to standard out.  Only in "Prod" mode will an asynchronous HTTP reporter be injected to publish
+traces to the Zipkin server configured in application.conf (and possibly overriden by the relevant
+environment variables).
+
+_Testing:_
+
+By default, trace information will automatically be printed to standard out when the application is
+run in Dev or Test modes (`sbt run` or `sbt test`).  No attempt will be made to publish trace information
+to a Zipkin server.
+
+If you want to publish traces to a Zipkin server:
+* edit `providesZipkinReporter` in the TracingModule binding to return `zipkinHttpReporter` for the mode
+you will be using
+* run a Zipkin 1 server.  The simplest way to do this is via docker:
+
+      docker run -d -p 9411:9411 openzipkin/zipkin:1.31.3
+
+* run an acceptance test such as `sbt "testOnly EnterpriseAcceptanceSpec"` or run the application with `sbt run`
+and exercise the relevant endpoint
+* the trace information should then be available in the Zipkin UI at [http://localhost:9411/zipkin/](http://localhost:9411/zipkin/)
+
 ### Troubleshooting
 See [FAQ](FAQ.md) for possible and common solutions.
 

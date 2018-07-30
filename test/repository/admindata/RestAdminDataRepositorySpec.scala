@@ -8,6 +8,7 @@ import org.scalatest.{ EitherValues, FreeSpec, Matchers }
 import play.api.libs.json.{ JsError, JsSuccess, Json, Reads }
 import repository.rest.Repository
 import support.sample.SampleVat
+import tracing.TraceData
 import uk.gov.ons.sbr.models.{ AdminData, Period, UnitId, VatRef }
 
 import scala.concurrent.Future
@@ -23,30 +24,33 @@ class RestAdminDataRepositorySpec extends FreeSpec with Matchers with MockFactor
       period = TargetPeriod,
       variables = SampleVat.asJson(VatRef(TargetUnitId.value))
     )
+    private val AdminDataType = "someAdminDataType"
+    val SpanName = s"get-admin-data-$AdminDataType"
 
+    val traceData = stub[TraceData]
     val unitRepository = mock[Repository]
     val readsAdminData = mock[Reads[AdminData]]
-    val adminDataRepository = new RestAdminDataRepository(unitRepository, readsAdminData)
+    val adminDataRepository = new RestAdminDataRepository(unitRepository, readsAdminData, AdminDataType)
   }
 
   "An AdminData repository" - {
     "returns the requested admin data when found" in new Fixture {
-      (unitRepository.getJson _).expects(s"v1/records/${TargetUnitId.value}/periods/${Period.asString(TargetPeriod)}").returning(
+      (unitRepository.getJson _).expects(s"v1/records/${TargetUnitId.value}/periods/${Period.asString(TargetPeriod)}", SpanName, traceData).returning(
         Future.successful(Right(Some(AdminDataJson)))
       )
       (readsAdminData.reads _).expects(AdminDataJson).returning(JsSuccess(SampleAdminData))
 
-      whenReady(adminDataRepository.retrieveAdminData(TargetUnitId, TargetPeriod)) { result =>
+      whenReady(adminDataRepository.retrieveAdminData(TargetUnitId, TargetPeriod, traceData)) { result =>
         result.right.value shouldBe Some(SampleAdminData)
       }
     }
 
     "returns nothing when the requested admin data cannot be found" in new Fixture {
-      (unitRepository.getJson _).expects(s"v1/records/${TargetUnitId.value}/periods/${Period.asString(TargetPeriod)}").returning(
+      (unitRepository.getJson _).expects(s"v1/records/${TargetUnitId.value}/periods/${Period.asString(TargetPeriod)}", SpanName, traceData).returning(
         Future.successful(Right(None))
       )
 
-      whenReady(adminDataRepository.retrieveAdminData(TargetUnitId, TargetPeriod)) { result =>
+      whenReady(adminDataRepository.retrieveAdminData(TargetUnitId, TargetPeriod, traceData)) { result =>
         result.right.value shouldBe empty
       }
     }
@@ -54,22 +58,22 @@ class RestAdminDataRepositorySpec extends FreeSpec with Matchers with MockFactor
     "returns an error message" - {
       "when the retrieval fails" in new Fixture {
         val failureMessage = "some failure message"
-        (unitRepository.getJson _).expects(s"v1/records/${TargetUnitId.value}/periods/${Period.asString(TargetPeriod)}").returning(
+        (unitRepository.getJson _).expects(s"v1/records/${TargetUnitId.value}/periods/${Period.asString(TargetPeriod)}", SpanName, traceData).returning(
           Future.successful(Left(failureMessage))
         )
 
-        whenReady(adminDataRepository.retrieveAdminData(TargetUnitId, TargetPeriod)) { result =>
+        whenReady(adminDataRepository.retrieveAdminData(TargetUnitId, TargetPeriod, traceData)) { result =>
           result.left.value shouldBe failureMessage
         }
       }
 
       "when unable to parse the json as an AdminData model" in new Fixture {
-        (unitRepository.getJson _).expects(s"v1/records/${TargetUnitId.value}/periods/${Period.asString(TargetPeriod)}").returning(
+        (unitRepository.getJson _).expects(s"v1/records/${TargetUnitId.value}/periods/${Period.asString(TargetPeriod)}", SpanName, traceData).returning(
           Future.successful(Right(Some(AdminDataJson)))
         )
         (readsAdminData.reads _).expects(AdminDataJson).returning(JsError("unexpected json format"))
 
-        whenReady(adminDataRepository.retrieveAdminData(TargetUnitId, TargetPeriod)) { result =>
+        whenReady(adminDataRepository.retrieveAdminData(TargetUnitId, TargetPeriod, traceData)) { result =>
           result.left.value should startWith("Unable to parse json response")
         }
       }

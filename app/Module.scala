@@ -1,22 +1,23 @@
 import actions.RetrieveLinkedUnitAction
-import actions.RetrieveLinkedUnitAction.LinkedUnitRequestActionBuilderMaker
+import actions.RetrieveLinkedUnitAction.LinkedUnitTracedRequestActionFunctionMaker
 import com.google.inject.name.Names.named
 import com.google.inject.{ AbstractModule, Provides, TypeLiteral }
+import com.typesafe.scalalogging.LazyLogging
 import config.{ BaseUrlConfigLoader, RestAdminDataRepositoryConfigLoader, SbrCtrlRestUnitRepositoryConfigLoader }
 import handlers.LinkedUnitRetrievalHandler
 import handlers.http.HttpLinkedUnitRetrievalHandler
 import javax.inject.{ Inject, Named }
 import play.api.libs.json.{ Reads, Writes }
-import play.api.libs.ws.WSClient
 import play.api.mvc.Result
 import play.api.{ Configuration, Environment }
 import repository.DataSourceNames.{ CompaniesHouse, Paye, SbrCtrl, Vat }
 import repository._
 import repository.admindata.RestAdminDataRepository
-import repository.rest.{ RestRepository, RestRepositoryConfig, Repository }
+import repository.rest.{ Repository, RestRepository, RestRepositoryConfig }
 import repository.sbrctrl._
 import services._
-import services.finder._
+import services.finder.{ AdminDataFinder, ByParentEnterpriseUnitFinder, EnterpriseFinder }
+import tracing.TraceWSClient
 import uk.gov.ons.sbr.models._
 import unitref._
 
@@ -33,7 +34,7 @@ import unitref._
 class Module(
     environment: Environment,
     configuration: Configuration
-) extends AbstractModule {
+) extends AbstractModule with LazyLogging {
   /*
    * Note that we use a common class as a REST repository, of which we need multiple instances - all configured
    * differently.  For example, in addition to communicating with sbr-control-api, we also need to communicate
@@ -43,6 +44,7 @@ class Module(
    * annotation.  Injection sites must specify the "name" of the instance they need to be made available to them.
    */
   override def configure(): Unit = {
+    logger.info(s"Configuring application for environment mode [${environment.mode}]")
     val underlyingConfig = configuration.underlying
     val restRepositoryConfigLoader = BaseUrlConfigLoader.map(RestRepositoryConfig)
 
@@ -84,6 +86,7 @@ class Module(
     bind(new TypeLiteral[UnitRef[VatRef]]() {}).toInstance(VatUnitRef)
 
     bind(new TypeLiteral[LinkedUnitRetrievalHandler[Result]]() {}).to(classOf[HttpLinkedUnitRetrievalHandler])
+
     /*
      * Explicitly return unit to avoid warning about discarded non-Unit value.
      * This is because a .to(classOf[...]) invocation returns a ScopedBindingBuilder which is
@@ -96,37 +99,25 @@ class Module(
 
   // repositories
   @Provides @Named(SbrCtrl)
-  def providesSbrCtrlUnitRepository(
-    @Inject()@Named(SbrCtrl) sbrCtrlUnitRepositoryConfig: RestRepositoryConfig,
-    wSClient: WSClient
-  ): Repository =
-    new RestRepository(sbrCtrlUnitRepositoryConfig, wSClient)
+  def providesSbrCtrlUnitRepository(@Inject()@Named(SbrCtrl) sbrCtrlUnitRepositoryConfig: RestRepositoryConfig, wsClient: TraceWSClient): Repository =
+    new RestRepository(sbrCtrlUnitRepositoryConfig, wsClient)
 
   @Provides @Named(Vat)
-  def providesVatAdminDataRepository(
-    @Inject()@Named(Vat) vatUnitRepositoryConfig: RestRepositoryConfig,
-    wSClient: WSClient, readsAdminData: Reads[AdminData]
-  ): AdminDataRepository = {
-    val unitRepository = new RestRepository(vatUnitRepositoryConfig, wSClient)
-    new RestAdminDataRepository(unitRepository, readsAdminData)
+  def providesVatAdminDataRepository(@Inject()@Named(Vat) vatUnitRepositoryConfig: RestRepositoryConfig, wsClient: TraceWSClient, readsAdminData: Reads[AdminData]): AdminDataRepository = {
+    val unitRepository = new RestRepository(vatUnitRepositoryConfig, wsClient)
+    new RestAdminDataRepository(unitRepository, readsAdminData, Vat)
   }
 
   @Provides @Named(Paye)
-  def providesPayeAdminDataRepository(
-    @Inject()@Named(Paye) payeUnitRepositoryConfig: RestRepositoryConfig,
-    wSClient: WSClient, readsAdminData: Reads[AdminData]
-  ): AdminDataRepository = {
-    val unitRepository = new RestRepository(payeUnitRepositoryConfig, wSClient)
-    new RestAdminDataRepository(unitRepository, readsAdminData)
+  def providesPayeAdminDataRepository(@Inject()@Named(Paye) payeUnitRepositoryConfig: RestRepositoryConfig, wsClient: TraceWSClient, readsAdminData: Reads[AdminData]): AdminDataRepository = {
+    val unitRepository = new RestRepository(payeUnitRepositoryConfig, wsClient)
+    new RestAdminDataRepository(unitRepository, readsAdminData, Paye)
   }
 
   @Provides @Named(CompaniesHouse)
-  def providesCompaniesHouseAdminDataRepository(
-    @Inject()@Named(CompaniesHouse) chUnitRepositoryConfig: RestRepositoryConfig,
-    wSClient: WSClient, readsAdminData: Reads[AdminData]
-  ): AdminDataRepository = {
-    val unitRepository = new RestRepository(chUnitRepositoryConfig, wSClient)
-    new RestAdminDataRepository(unitRepository, readsAdminData)
+  def providesCompaniesHouseAdminDataRepository(@Inject()@Named(CompaniesHouse) chUnitRepositoryConfig: RestRepositoryConfig, wsClient: TraceWSClient, readsAdminData: Reads[AdminData]): AdminDataRepository = {
+    val unitRepository = new RestRepository(chUnitRepositoryConfig, wsClient)
+    new RestAdminDataRepository(unitRepository, readsAdminData, CompaniesHouse)
   }
 
   // services
@@ -174,26 +165,26 @@ class Module(
 
   // controller actions
   @Provides
-  def providesEnterpriseLinkedUnitRequestActionBuilderMaker(@Inject() enterpriseService: LinkedUnitService[Ern]): LinkedUnitRequestActionBuilderMaker[Ern] =
+  def providesEnterpriseLinkedUnitRequestActionBuilderMaker(@Inject() enterpriseService: LinkedUnitService[Ern]): LinkedUnitTracedRequestActionFunctionMaker[Ern] =
     new RetrieveLinkedUnitAction[Ern](enterpriseService)
 
   @Provides
-  def providesLocalLinkedUnitRequestActionBuilderMaker(@Inject() localUnitService: LinkedUnitService[Lurn]): LinkedUnitRequestActionBuilderMaker[Lurn] =
+  def providesLocalLinkedUnitRequestActionBuilderMaker(@Inject() localUnitService: LinkedUnitService[Lurn]): LinkedUnitTracedRequestActionFunctionMaker[Lurn] =
     new RetrieveLinkedUnitAction[Lurn](localUnitService)
 
   @Provides
-  def providesReportingLinkedUnitRequestActionBuilderMaker(@Inject() reportingUnitService: LinkedUnitService[Rurn]): LinkedUnitRequestActionBuilderMaker[Rurn] =
+  def providesReportingLinkedUnitRequestActionBuilderMaker(@Inject() reportingUnitService: LinkedUnitService[Rurn]): LinkedUnitTracedRequestActionFunctionMaker[Rurn] =
     new RetrieveLinkedUnitAction[Rurn](reportingUnitService)
 
   @Provides
-  def providesVatLinkedUnitRequestActionBuilderMaker(@Inject() vatService: LinkedUnitService[VatRef]): LinkedUnitRequestActionBuilderMaker[VatRef] =
+  def providesVatLinkedUnitRequestActionBuilderMaker(@Inject() vatService: LinkedUnitService[VatRef]): LinkedUnitTracedRequestActionFunctionMaker[VatRef] =
     new RetrieveLinkedUnitAction[VatRef](vatService)
 
   @Provides
-  def providesPayeLinkedUnitRequestActionBuilderMaker(@Inject() payeService: LinkedUnitService[PayeRef]): LinkedUnitRequestActionBuilderMaker[PayeRef] =
+  def providesPayeLinkedUnitRequestActionBuilderMaker(@Inject() payeService: LinkedUnitService[PayeRef]): LinkedUnitTracedRequestActionFunctionMaker[PayeRef] =
     new RetrieveLinkedUnitAction[PayeRef](payeService)
 
   @Provides
-  def providesCompaniesHouseLinkedUnitRequestActionBuilderMaker(@Inject() chService: LinkedUnitService[CompanyRefNumber]): LinkedUnitRequestActionBuilderMaker[CompanyRefNumber] =
+  def providesCompaniesHouseLinkedUnitRequestActionBuilderMaker(@Inject() chService: LinkedUnitService[CompanyRefNumber]): LinkedUnitTracedRequestActionFunctionMaker[CompanyRefNumber] =
     new RetrieveLinkedUnitAction[CompanyRefNumber](chService)
 }

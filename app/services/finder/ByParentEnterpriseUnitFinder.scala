@@ -3,16 +3,17 @@ import com.typesafe.scalalogging.LazyLogging
 import play.api.libs.json.JsObject
 import services.ErrorMessage
 import services.finder.ByParentEnterpriseUnitFinder.UnitRetrieval
+import tracing.TraceData
 import uk.gov.ons.sbr.models.{ Ern, Period, UnitLinks }
 import unitref.UnitRef
 
 import scala.concurrent.Future
 
 class ByParentEnterpriseUnitFinder[T](retrieveUnit: UnitRetrieval[T], enterpriseUnitRefType: UnitRef[Ern]) extends UnitFinder[T] with LazyLogging {
-  override def find(period: Period, unitRef: T, unitLinks: UnitLinks): Future[Either[ErrorMessage, Option[JsObject]]] =
+  override def find(period: Period, unitRef: T, unitLinks: UnitLinks, traceData: TraceData): Future[Either[ErrorMessage, Option[JsObject]]] =
     UnitLinks.parentErnFrom(enterpriseUnitRefType)(unitLinks).fold(Future.successful(onMissingParentEnterprise(unitRef))) { ern =>
       logger.debug(s"Attempting to retrieve unit with [$ern] and [$unitRef] for [$period] ...")
-      retrieveUnit(period, ern, unitRef)
+      retrieveUnit(period, ern, unitRef, traceData)
     }
 
   private def onMissingParentEnterprise(unitRef: T): Either[ErrorMessage, Option[JsObject]] = {
@@ -22,5 +23,5 @@ class ByParentEnterpriseUnitFinder[T](retrieveUnit: UnitRetrieval[T], enterprise
 }
 
 object ByParentEnterpriseUnitFinder {
-  type UnitRetrieval[T] = (Period, Ern, T) => Future[Either[ErrorMessage, Option[JsObject]]]
+  type UnitRetrieval[T] = (Period, Ern, T, TraceData) => Future[Either[ErrorMessage, Option[JsObject]]]
 }

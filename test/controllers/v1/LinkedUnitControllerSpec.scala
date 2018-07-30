@@ -2,63 +2,79 @@ package controllers.v1
 
 import java.time.Month.FEBRUARY
 
-import actions.LinkedUnitRequest
-import actions.RetrieveLinkedUnitAction.LinkedUnitRequestActionBuilderMaker
+import actions.RetrieveLinkedUnitAction.LinkedUnitTracedRequestActionFunctionMaker
+import actions.{ RetrieveLinkedUnitAction, TracedRequest, WithTracingAction }
 import handlers.LinkedUnitRetrievalHandler
+import jp.co.bizreach.trace.ZipkinTraceServiceLike
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{ FreeSpec, Matchers }
 import play.api.mvc.Results.NotFound
 import play.api.mvc._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
+import services.LinkedUnitService
+import support.tracing.FakeTracing
+import tracing.TraceData
 import uk.gov.ons.sbr.models.{ Period, UnitId }
 import unitref.UnitRef
 
 import scala.concurrent.Future
 
-class LinkedUnitControllerSpec extends FreeSpec with Matchers with MockFactory {
+class LinkedUnitControllerSpec extends FreeSpec with Matchers with MockFactory with FakeTracing {
 
   private trait Fixture {
     case class FakeUnitRef(value: String)
+    class FakeUnitController(
+        unitRefType: UnitRef[FakeUnitRef],
+        withTracingAction: ActionBuilder[TracedRequest],
+        retrieveLinkedUnitAction: LinkedUnitTracedRequestActionFunctionMaker[FakeUnitRef],
+        handleLinkedUnitRetrievalResult: LinkedUnitRetrievalHandler[Result]
+    ) extends LinkedUnitController[FakeUnitRef](unitRefType, withTracingAction, retrieveLinkedUnitAction, handleLinkedUnitRetrievalResult) {
 
-    val TargetUnitRef = FakeUnitRef("a-unit-ref")
-    val TargetPeriod = Period.fromYearMonth(2018, FEBRUARY)
-    val TargetUnitRetrievalResult = Right(None)
-
-    val unitRefType = stub[UnitRef[FakeUnitRef]]
-    val actionBuilderMaker = mockFunction[Period, FakeUnitRef, ActionBuilder[LinkedUnitRequest]]
-    val linkedUnitRetrievalHandler = mock[LinkedUnitRetrievalHandler[Result]]
-
-    /*
-     * Invoke the 'block' supplied by the controller - this should result in the retrievalHandler being invoked.
-     */
-    val fakeActionBuilder = new ActionBuilder[LinkedUnitRequest] {
-      override def invokeBlock[A](request: Request[A], block: LinkedUnitRequest[A] => Future[Result]): Future[Result] = {
-        block(new LinkedUnitRequest[A](TargetUnitRetrievalResult, request))
-      }
-    }
-
-    class FakeUnitController(retrieveLinkedUnitAction: LinkedUnitRequestActionBuilderMaker[FakeUnitRef], handleLinkedUnitRetrievalResult: LinkedUnitRetrievalHandler[Result])
-        extends LinkedUnitController[FakeUnitRef](unitRefType, retrieveLinkedUnitAction, handleLinkedUnitRetrievalResult) {
       // make the method public so that we can invoke it from a test
       override def retrieveLinkedUnit(periodStr: String, unitRefStr: String): Action[AnyContent] =
         super.retrieveLinkedUnit(periodStr, unitRefStr)
     }
 
-    val controller = new FakeUnitController(actionBuilderMaker, linkedUnitRetrievalHandler)
+    val TargetUnitRef = FakeUnitRef("a-unit-ref")
+    val TargetPeriod = Period.fromYearMonth(2018, FEBRUARY)
+    val ServiceResult = Right(None)
+    val TraceIdHigh = 0x16723998292fc385L
+    val TraceIdLow = 0x45eb009b053d4091L
+    val ParentSpanId = 0x5d921a12b2a59500L
+    val SpanId = 0x88de528b04206226L
+
+    val unitRefType = stub[UnitRef[FakeUnitRef]]
+    val linkedUnitService = mock[LinkedUnitService[FakeUnitRef]]
+    val linkedUnitRetrievalHandler = mock[LinkedUnitRetrievalHandler[Result]]
+    val tracerService: ZipkinTraceServiceLike = new StubTraceService(fakeSpan(TraceIdHigh, TraceIdLow, ParentSpanId, SpanId))
+
+    /*
+     * We use the real implementations of the Actions here.  Trying to mock/stub these got complicated very quickly.
+     */
+    val controller = new FakeUnitController(
+      unitRefType,
+      new WithTracingAction(tracerService),
+      new RetrieveLinkedUnitAction[FakeUnitRef](linkedUnitService),
+      linkedUnitRetrievalHandler
+    )
   }
 
   "A request" - {
     "to retrieve a LinkedUnit for a period by the unit reference" - {
-      /*
-       * There is quite a bit of indirection here - but the aim is to assert that the controller invokes the
-       * LinkedUnit retrieval action, forwards the result to the result handler, and returns the output of
-       * the result handler unchanged.
-       */
-      "invokes the LinkedUnit retrieval action and handler" in new Fixture {
+      "is processed by utilising the common actions and request handler" in new Fixture {
         (unitRefType.fromUnitId _).when(UnitId(TargetUnitRef.value)).returns(TargetUnitRef)
-        actionBuilderMaker.expects(TargetPeriod, TargetUnitRef).returning(fakeActionBuilder)
-        (linkedUnitRetrievalHandler.apply _).expects(TargetUnitRetrievalResult).returning(NotFound)
+        (linkedUnitService.retrieve _).expects(where { (period: Period, unitRef: FakeUnitRef, traceData: TraceData) =>
+          period == TargetPeriod &&
+            unitRef == TargetUnitRef &&
+            aTraceContext(
+              withTraceIdHigh = TraceIdHigh,
+              withTraceIdLow = TraceIdLow,
+              withParentSpanId = ParentSpanId,
+              withSpanId = SpanId
+            )(traceData.asSpan.context())
+        }).returning(Future.successful(ServiceResult))
+        (linkedUnitRetrievalHandler.apply _).expects(ServiceResult).returning(NotFound)
 
         val action = controller.retrieveLinkedUnit(Period.asString(TargetPeriod), TargetUnitRef.value)
         val response = action.apply(FakeRequest())

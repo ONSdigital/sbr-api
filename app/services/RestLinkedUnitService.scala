@@ -4,6 +4,7 @@ import com.typesafe.scalalogging.LazyLogging
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import repository.UnitLinksRepository
 import services.finder.UnitFinder
+import tracing.TraceData
 import uk.gov.ons.sbr.models.{ LinkedUnit, Period, UnitLinks }
 import unitref.UnitRef
 
@@ -15,13 +16,13 @@ class RestLinkedUnitService[T](
     unitFinder: UnitFinder[T]
 ) extends LinkedUnitService[T] with LazyLogging {
 
-  override def retrieve(period: Period, unitRef: T): Future[Either[ErrorMessage, Option[LinkedUnit]]] = {
+  override def retrieve(period: Period, unitRef: T, traceData: TraceData): Future[Either[ErrorMessage, Option[LinkedUnit]]] = {
     val (unitId, unitType) = unitRefType.toIdTypePair(unitRef)
-    unitLinksRepository.retrieveUnitLinks(unitId, unitType, period).flatMap { errorOrUnitLinks =>
+    unitLinksRepository.retrieveUnitLinks(unitId, unitType, period, traceData).flatMap { errorOrUnitLinks =>
       errorOrUnitLinks.fold(
         err => Future.successful(Left(err)),
         optUnitLinks => optUnitLinks.fold(onUnitLinksNotFound(period, unitRef)) { unitLinks =>
-          onUnitLinksFound(period, unitRef, unitLinks)
+          onUnitLinksFound(period, unitRef, unitLinks, traceData)
         }
       )
     }
@@ -32,9 +33,9 @@ class RestLinkedUnitService[T](
     Future.successful(Right(None))
   }
 
-  private def onUnitLinksFound(period: Period, unitRef: T, unitLinks: UnitLinks): Future[Either[ErrorMessage, Option[LinkedUnit]]] = {
+  private def onUnitLinksFound(period: Period, unitRef: T, unitLinks: UnitLinks, traceData: TraceData): Future[Either[ErrorMessage, Option[LinkedUnit]]] = {
     logger.debug(s"Found Unit Links for [$period] and [$unitRef].  Attempting to find unit ...")
-    unitFinder.find(period, unitRef, unitLinks).map { errorOrJson =>
+    unitFinder.find(period, unitRef, unitLinks, traceData).map { errorOrJson =>
       errorOrJson.right.map { optJson =>
         if (optJson.isEmpty) logger.warn(s"Inconsistent Database.  No unit found for [$period] and [$unitRef] that has Unit Links [$unitLinks].")
         optJson.map { json =>

@@ -4,39 +4,46 @@ import java.time.Month.MAY
 
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{ FreeSpec, Matchers }
-import play.api.mvc.Results.NotFound
-import play.api.mvc.{ AnyContent, Result }
-import play.api.test.FakeRequest
+import org.scalatest.{ EitherValues, FreeSpec, Matchers }
+import play.api.libs.json.{ JsObject, Json }
+import play.api.mvc.{ AnyContent, Request }
 import services.LinkedUnitService
-import uk.gov.ons.sbr.models.{ Ern, Period }
+import tracing.TraceData
+import uk.gov.ons.sbr.models.{ LinkedUnit, Period, UnitId, UnitType }
 
 import scala.concurrent.Future
 
-class RetrieveLinkedUnitActionSpec extends FreeSpec with Matchers with MockFactory with ScalaFutures {
+class RetrieveLinkedUnitActionSpec extends FreeSpec with Matchers with MockFactory with ScalaFutures with EitherValues {
 
   private trait Fixture {
-    type UnitRef = Ern
-    val TargetPeriod = Period.fromYearMonth(2018, MAY)
-    val TargetUnitRef = Ern("1234567890")
-    val ServiceResult = Right(None)
-    val ControllerResult = NotFound
+    case class FakeRef(value: String)
 
-    val service = mock[LinkedUnitService[UnitRef]]
-    val controllerBlock = mockFunction[LinkedUnitRequest[AnyContent], Result]
-    val retrieveLinkedUnitAction = new RetrieveLinkedUnitAction[UnitRef](service)
+    val TargetPeriod = Period.fromYearMonth(2018, MAY)
+    val TargetUnitRef = FakeRef("some-unit-ref")
+    val ALinkedUnit = LinkedUnit(
+      id = UnitId(TargetUnitRef.value),
+      unitType = UnitType.LegalUnit, // this test is not about LegalUnits - but we need a valid Unit Type
+      period = TargetPeriod,
+      parents = None,
+      children = None,
+      vars = Json.parse(s"""{"unit":"data"}""").as[JsObject]
+    )
+    val ServiceResult = Right(Some(ALinkedUnit))
+
+    val traceData = stub[TraceData]
+    val request = stub[Request[AnyContent]]
+    val service = mock[LinkedUnitService[FakeRef]]
+    val retrieveLinkedUnitAction = new RetrieveLinkedUnitAction[FakeRef](service)
   }
 
-  "A retrieveLinkedUnitAction" - {
-    "invokes the controller block with a request containing the linkedUnit retrieval outcome" in new Fixture {
-      (service.retrieve _).expects(TargetPeriod, TargetUnitRef).returns(Future.successful(ServiceResult))
-      controllerBlock.expects(where[LinkedUnitRequest[AnyContent]] { lur =>
-        lur.linkedUnitResult == ServiceResult
-      }).returning(ControllerResult)
+  "A RetrieveLinkedUnitAction" - {
+    "attempts to retrieve the linked unit and adds the outcome to the request" in new Fixture {
+      (service.retrieve _).expects(TargetPeriod, TargetUnitRef, traceData).returning(Future.successful(ServiceResult))
+      val action = retrieveLinkedUnitAction(TargetPeriod, TargetUnitRef)
+      val tracedRequest = new TracedRequest(traceData, request)
 
-      val action = retrieveLinkedUnitAction(TargetPeriod, TargetUnitRef)(controllerBlock)
-      whenReady(action(FakeRequest())) { result =>
-        result shouldBe ControllerResult
+      whenReady(action.refine(tracedRequest)) { result =>
+        result.right.value.linkedUnitResult shouldBe ServiceResult
       }
     }
   }

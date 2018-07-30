@@ -1,11 +1,12 @@
 package controllers.v1
 
-import actions.RetrieveLinkedUnitAction.LinkedUnitRequestActionBuilderMaker
+import actions.RetrieveLinkedUnitAction.LinkedUnitTracedRequestActionFunctionMaker
+import actions.TracedRequest
 import handlers.LinkedUnitRetrievalHandler
 import io.swagger.annotations.{ Api, _ }
 import javax.inject.{ Inject, Singleton }
 import play.api.libs.json.JsObject
-import play.api.mvc.{ Action, AnyContent, Result }
+import play.api.mvc.{ Action, ActionBuilder, AnyContent, Result }
 import uk.gov.ons.sbr.models.{ CompanyRefNumber, Period, UnitId, UnitType }
 import unitref.UnitRef
 
@@ -13,9 +14,10 @@ import unitref.UnitRef
 @Singleton
 class CompaniesHouseController @Inject() (
     unitRefType: UnitRef[CompanyRefNumber],
-    retrieveLinkedUnitAction: LinkedUnitRequestActionBuilderMaker[CompanyRefNumber],
+    tracingAction: ActionBuilder[TracedRequest],
+    retrieveLinkedUnitAction: LinkedUnitTracedRequestActionFunctionMaker[CompanyRefNumber],
     handleLinkedUnitRetrievalResult: LinkedUnitRetrievalHandler[Result]
-) extends LinkedUnitController[CompanyRefNumber](unitRefType, retrieveLinkedUnitAction, handleLinkedUnitRetrievalResult) {
+) extends LinkedUnitController[CompanyRefNumber](unitRefType, tracingAction, retrieveLinkedUnitAction, handleLinkedUnitRetrievalResult) {
   @ApiOperation(
     value = "Json representation of the Companies House unit along with its links to other units",
     notes = "parents represent a mapping from a parent unitType to the associated unit identifier; " +

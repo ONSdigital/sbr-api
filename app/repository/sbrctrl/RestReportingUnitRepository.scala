@@ -7,15 +7,16 @@ import play.api.libs.json.{ JsObject, Reads }
 import repository.DataSourceNames.SbrCtrl
 import repository.rest.{ Repository, RepositoryResult }
 import repository.{ ErrorMessage, ReportingUnitRepository }
+import tracing.TraceData
 import uk.gov.ons.sbr.models.{ Ern, Period, Rurn }
 
 import scala.concurrent.Future
 
 class RestReportingUnitRepository @Inject() (@Named(SbrCtrl) unitRepository: Repository) extends ReportingUnitRepository with LazyLogging {
-  override def retrieveReportingUnit(period: Period, ern: Ern, rurn: Rurn): Future[Either[ErrorMessage, Option[JsObject]]] = {
+  override def retrieveReportingUnit(period: Period, ern: Ern, rurn: Rurn, traceData: TraceData): Future[Either[ErrorMessage, Option[JsObject]]] = {
     val path = ReportingUnitPath(period, ern, rurn)
     logger.debug(s"Requesting reporting unit with path [$path]")
-    unitRepository.getJson(path).map {
+    unitRepository.getJson(path, spanName = "get-reporting-unit", traceData).map {
       RepositoryResult.as(Reads.JsObjectReads)(_)
     }
   }

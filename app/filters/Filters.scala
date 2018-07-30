@@ -1,11 +1,14 @@
 package filters
 
-import javax.inject.Inject
+import javax.inject.{ Inject, Named }
 import play.api.http.DefaultHttpFilters
+import play.api.mvc.Filter
 import play.filters.gzip.GzipFilter
+import tracing.TracingFilterName
 
 class Filters @Inject() (
-  gzipFilter: GzipFilter,
   responseTimeHeader: XResponseTimeHeaderFilter,
-  accessLoggingFilter: AccessLoggingFilter
-) extends DefaultHttpFilters(gzipFilter, responseTimeHeader, accessLoggingFilter)
+  accessLoggingFilter: AccessLoggingFilter,
+  @Named(TracingFilterName) traceFilter: Filter,
+  gzipFilter: GzipFilter
+) extends DefaultHttpFilters(responseTimeHeader, traceFilter, accessLoggingFilter, gzipFilter)

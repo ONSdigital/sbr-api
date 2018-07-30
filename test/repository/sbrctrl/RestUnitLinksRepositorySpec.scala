@@ -7,6 +7,7 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{ EitherValues, FreeSpec, Matchers }
 import play.api.libs.json.{ JsError, JsSuccess, Json, Reads }
 import repository.rest.Repository
+import tracing.TraceData
 import uk.gov.ons.sbr.models.{ Period, UnitId, UnitLinks, UnitType }
 
 import scala.concurrent.Future
@@ -26,7 +27,9 @@ class RestUnitLinksRepositorySpec extends FreeSpec with Matchers with MockFactor
         UnitId("987654321") -> UnitType.LocalUnit
       ))
     )
+    val SpanName = "get-unit-links"
 
+    val traceData = stub[TraceData]
     val unitRepository = mock[Repository]
     val readsUnitLinks = mock[Reads[UnitLinks]]
     val unitLinksRepository = new RestUnitLinksRepository(unitRepository, readsUnitLinks)
@@ -35,24 +38,24 @@ class RestUnitLinksRepositorySpec extends FreeSpec with Matchers with MockFactor
   "A Unit Links repository" - {
     "when requested to retrieve the unit links for an enterprise at a period in time" - {
       "returns enterprise unit links when found" in new Fixture {
-        (unitRepository.getJson _).expects(s"v1/periods/${Period.asString(TargetPeriod)}/types/ENT/units/${TargetEnterpriseId.value}").returning(
+        (unitRepository.getJson _).expects(s"v1/periods/${Period.asString(TargetPeriod)}/types/ENT/units/${TargetEnterpriseId.value}", SpanName, traceData).returning(
           Future.successful(Right(Some(UnitLinksJsonResponse)))
         )
         (readsUnitLinks.reads _).expects(UnitLinksJsonResponse).returning(
           JsSuccess(TargetEnterpriseUnitLinks)
         )
 
-        whenReady(unitLinksRepository.retrieveUnitLinks(TargetEnterpriseId, UnitType.Enterprise, TargetPeriod)) { result =>
+        whenReady(unitLinksRepository.retrieveUnitLinks(TargetEnterpriseId, UnitType.Enterprise, TargetPeriod, traceData)) { result =>
           result.right.value shouldBe Some(TargetEnterpriseUnitLinks)
         }
       }
 
       "returns nothing when not found" in new Fixture {
-        (unitRepository.getJson _).expects(s"v1/periods/${Period.asString(TargetPeriod)}/types/ENT/units/${TargetEnterpriseId.value}").returning(
+        (unitRepository.getJson _).expects(s"v1/periods/${Period.asString(TargetPeriod)}/types/ENT/units/${TargetEnterpriseId.value}", SpanName, traceData).returning(
           Future.successful(Right(None))
         )
 
-        whenReady(unitLinksRepository.retrieveUnitLinks(TargetEnterpriseId, UnitType.Enterprise, TargetPeriod)) { result =>
+        whenReady(unitLinksRepository.retrieveUnitLinks(TargetEnterpriseId, UnitType.Enterprise, TargetPeriod, traceData)) { result =>
           result.right.value shouldBe empty
         }
       }
@@ -60,24 +63,24 @@ class RestUnitLinksRepositorySpec extends FreeSpec with Matchers with MockFactor
       "returns an error message" - {
         "when the retrieval fails" in new Fixture {
           val failureMessage = "some failure message"
-          (unitRepository.getJson _).expects(s"v1/periods/${Period.asString(TargetPeriod)}/types/ENT/units/${TargetEnterpriseId.value}").returning(
+          (unitRepository.getJson _).expects(s"v1/periods/${Period.asString(TargetPeriod)}/types/ENT/units/${TargetEnterpriseId.value}", SpanName, traceData).returning(
             Future.successful(Left(failureMessage))
           )
 
-          whenReady(unitLinksRepository.retrieveUnitLinks(TargetEnterpriseId, UnitType.Enterprise, TargetPeriod)) { result =>
+          whenReady(unitLinksRepository.retrieveUnitLinks(TargetEnterpriseId, UnitType.Enterprise, TargetPeriod, traceData)) { result =>
             result.left.value shouldBe failureMessage
           }
         }
 
         "when unable to parse the json as a UnitLinks model" in new Fixture {
-          (unitRepository.getJson _).expects(s"v1/periods/${Period.asString(TargetPeriod)}/types/ENT/units/${TargetEnterpriseId.value}").returning(
+          (unitRepository.getJson _).expects(s"v1/periods/${Period.asString(TargetPeriod)}/types/ENT/units/${TargetEnterpriseId.value}", SpanName, traceData).returning(
             Future.successful(Right(Some(UnitLinksJsonResponse)))
           )
           (readsUnitLinks.reads _).expects(UnitLinksJsonResponse).returning(
             JsError("unexpected json format")
           )
 
-          whenReady(unitLinksRepository.retrieveUnitLinks(TargetEnterpriseId, UnitType.Enterprise, TargetPeriod)) { result =>
+          whenReady(unitLinksRepository.retrieveUnitLinks(TargetEnterpriseId, UnitType.Enterprise, TargetPeriod, traceData)) { result =>
             result.left.value should startWith("Unable to parse json response")
           }
         }
