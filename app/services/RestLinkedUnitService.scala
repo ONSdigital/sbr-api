@@ -1,19 +1,19 @@
 package services
 
 import com.typesafe.scalalogging.LazyLogging
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import repository.UnitLinksRepository
 import services.finder.UnitFinder
 import tracing.TraceData
 import uk.gov.ons.sbr.models.{ LinkedUnit, Period, UnitLinks }
 import unitref.UnitRef
 
-import scala.concurrent.Future
+import scala.concurrent.{ ExecutionContext, Future }
 
 class RestLinkedUnitService[T](
     unitRefType: UnitRef[T],
     unitLinksRepository: UnitLinksRepository,
-    unitFinder: UnitFinder[T]
+    unitFinder: UnitFinder[T],
+    ec: ExecutionContext
 ) extends LinkedUnitService[T] with LazyLogging {
 
   override def retrieve(period: Period, unitRef: T, traceData: TraceData): Future[Either[ErrorMessage, Option[LinkedUnit]]] = {
@@ -25,7 +25,7 @@ class RestLinkedUnitService[T](
           onUnitLinksFound(period, unitRef, unitLinks, traceData)
         }
       )
-    }
+    }(ec)
   }
 
   private def onUnitLinksNotFound(period: Period, unitRef: T): Future[Either[ErrorMessage, Option[LinkedUnit]]] = {
@@ -44,6 +44,6 @@ class RestLinkedUnitService[T](
           linkedUnit
         }
       }
-    }
+    }(ec)
   }
 }

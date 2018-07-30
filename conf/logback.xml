@@ -26,12 +26,13 @@
   </appender>
 
   <!-- play libraries -->
-  <logger name="play" level="INFO"/>
+  <logger name="play" level="OFF"/>
+  <logger name="org.asynchttpclient.netty" level="OFF"/>
 
   <!-- default (unused by anything using a named logger e.g. if LazyLogging is mixed-in to the logging class) -->
   <logger name="application" level="INFO"/>
 
-  <root level="INFO">
+  <root level="TRACE">
     <appender-ref ref="ASYNCSTDOUT"/>
   </root>
 

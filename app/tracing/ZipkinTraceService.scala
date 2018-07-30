@@ -19,8 +19,8 @@ import scala.concurrent.ExecutionContext
  */
 @Singleton
 class ZipkinTraceService @Inject() (conf: Configuration, actorSystem: ActorSystem, reporter: Reporter[Span]) extends ZipkinTraceServiceLike {
-  override implicit val executionContext: ExecutionContext = actorSystem.dispatchers.lookup(AkkaName)
-
+  //override implicit val executionContext: ExecutionContext = actorSystem.dispatchers.lookup(AkkaName)
+  override implicit val executionContext: ExecutionContext = TracingExecutionContext.defaultContext
   override val tracing: Tracing = Tracing.newBuilder()
     .localServiceName("sbr-api")
     .reporter(reporter)

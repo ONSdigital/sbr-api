@@ -5,7 +5,6 @@ import java.util.concurrent.TimeoutException
 import com.typesafe.scalalogging.LazyLogging
 import javax.inject.Inject
 import play.api.http.Status.{ NOT_FOUND, OK }
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.JsValue
 import play.api.libs.ws.{ WSRequest, WSResponse }
 import play.mvc.Http.HeaderNames.ACCEPT
@@ -15,18 +14,20 @@ import tracing.{ TraceData, TraceWSClient }
 import utils.TrySupport
 import utils.url.{ BaseUrl, Url }
 
-import scala.concurrent.Future
+import scala.concurrent.{ ExecutionContext, Future }
 import scala.util.Try
 
 case class RestRepositoryConfig(baseUrl: BaseUrl)
 
-class RestRepository @Inject() (config: RestRepositoryConfig, wsClient: TraceWSClient) extends Repository with LazyLogging {
+class RestRepository @Inject() (config: RestRepositoryConfig, wsClient: TraceWSClient, ec: ExecutionContext) extends Repository with LazyLogging {
 
   override def getJson(path: String, spanName: String, traceData: TraceData): Future[Either[ErrorMessage, Option[JsValue]]] = {
     val url = Url(withBase = config.baseUrl, withPath = path)
+    logger.info(s"In getJson before requestFor in [${Thread.currentThread().getName}]")
     requestFor(url, spanName, traceData).get().map {
+      logger.info(s"In getJson after requestFor in [${Thread.currentThread().getName}]")
       fromResponseToErrorOrJson
-    }.recover(withTranslationOfFailureToError)
+    }(ec).recover(withTranslationOfFailureToError)(ec)
   }
 
   private def requestFor(url: String, spanName: String, traceData: TraceData): WSRequest =

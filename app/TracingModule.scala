@@ -1,7 +1,8 @@
 import actions.{ TracedRequest, WithTracingAction }
 import com.google.inject.name.Names.named
-import com.google.inject.{ AbstractModule, Provides, TypeLiteral }
+import com.google.inject.{ AbstractModule, Provides }
 import config.BaseUrlConfigLoader
+import javax.inject.Inject
 import jp.co.bizreach.trace.ZipkinTraceServiceLike
 import jp.co.bizreach.trace.play25.filter.ZipkinTraceFilter
 import play.api.Mode.{ Dev, Prod, Test }
@@ -22,7 +23,6 @@ class TracingModule(environment: Environment, configuration: Configuration) exte
     bind(classOf[ZipkinTraceServiceLike]).to(classOf[ZipkinTraceService])
     bind(classOf[Filter]).annotatedWith(named(TracingFilterName)).to(classOf[ZipkinTraceFilter])
     bind(classOf[TraceWSClient]).to(classOf[ZipkinTraceWSClient])
-    bind(new TypeLiteral[ActionBuilder[TracedRequest]]() {}).to(classOf[WithTracingAction])
     () // Explicitly return unit to avoid warning about discarded non-Unit value.
   }
 
@@ -47,4 +47,8 @@ class TracingModule(environment: Environment, configuration: Configuration) exte
     val reporterUrl = Url(withBase = baseUrl, withPath = "/api/v1/spans")
     AsyncReporter.builder(OkHttpSender.create(reporterUrl)).build()
   }
+
+  @Provides
+  def providesTracingAction(@Inject() zipkinTraceServiceLike: ZipkinTraceServiceLike): ActionBuilder[TracedRequest] =
+    new WithTracingAction(zipkinTraceServiceLike, TracingExecutionContext.defaultContext)
 }

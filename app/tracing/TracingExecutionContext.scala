@@ -48,3 +48,8 @@ class TracingExecutionContext(delegateContext: ExecutionContext) extends Executi
   override def reportFailure(cause: Throwable): Unit =
     delegateContext.reportFailure(cause)
 }
+
+object TracingExecutionContext {
+  def defaultContext: ExecutionContext =
+    new TracingExecutionContext(play.api.libs.concurrent.Execution.defaultContext)
+}
