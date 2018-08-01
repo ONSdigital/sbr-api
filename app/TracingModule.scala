@@ -44,7 +44,7 @@ class TracingModule(environment: Environment, configuration: Configuration) exte
 
   private def zipkinHttpReporter: Reporter[Span] = {
     val baseUrl = BaseUrlConfigLoader.load(configuration.underlying, "trace.zipkin.reporter")
-    val reporterUrl = Url(withBase = baseUrl, withPath = "/api/v1/spans")
+    val reporterUrl = Url(withBase = baseUrl, withPath = "api/v1/spans")
     AsyncReporter.builder(OkHttpSender.create(reporterUrl)).build()
   }
 }
