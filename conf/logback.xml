@@ -1,7 +1,5 @@
 <configuration>
 
-  <conversionRule conversionWord="coloredLevel" converterClass="play.api.libs.logback.ColoredLevel"/>
-
   <appender name="FILE" class="ch.qos.logback.core.FileAppender">
     <file>${application.home:-.}/logs/application.log</file>
     <encoder>
@@ -9,14 +7,14 @@
     </encoder>
   </appender>
 
-  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-    <encoder>
-      <pattern>%coloredLevel %logger{15} - %message%n%xException{10}</pattern>
-    </encoder>
-  </appender>
-
   <appender name="ASYNCFILE" class="ch.qos.logback.classic.AsyncAppender">
     <appender-ref ref="FILE"/>
+  </appender>
+
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%date %highlight(%-5level) [%logger{16}] - %m%n%xException{10}</pattern>
+    </encoder>
   </appender>
 
   <appender name="ASYNCSTDOUT" class="ch.qos.logback.classic.AsyncAppender">
@@ -24,22 +22,11 @@
   </appender>
 
   <logger name="play" level="INFO"/>
-  <logger name="application" level="DEBUG"/>
 
-  <logger name="controllers" level="DEBUG" additivity="false">
-    <!--<appender-ref ref="ASYNCFILE"/>-->
-    <appender-ref ref="ASYNCSTDOUT"/>
-  </logger>
-
-  <logger name="services" level="DEBUG" additivity="false">
-    <!--<appender-ref ref="ASYNCFILE"/>-->
-    <appender-ref ref="ASYNCSTDOUT"/>
-  </logger>
-
-  <logger name="org.slf4j" level="WARN"/>
+  <!-- default (but not used by anything using a named logger e.g. if LazyLogging is mixed-in to the logging class )-->
+  <logger name="application" level="INFO"/>
 
   <root level="INFO">
-    <!--<appender-ref ref="ASYNCFILE"/>-->
     <appender-ref ref="ASYNCSTDOUT"/>
   </root>
 
