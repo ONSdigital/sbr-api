@@ -28,10 +28,6 @@ GET     /v1/periods/:period/reus/:rurn                                  controll
 
 GET     /v1/periods/:date/leus/:id      controllers.v1.SearchController.searchLeUWithPeriod(date, id)
 
-# Editing Endpoints
-POST    /v1/enterprises/:id                  controllers.v1.EditController.editEnterprise(id)
-POST    /v1/periods/:period/enterprises/:id  controllers.v1.EditController.editEnterpriseForPeriod(period, id)
-
 # Home
 GET     /                               controllers.HomeController.status
 OPTIONS /*all                           controllers.HomeController.preflight(all: String)
