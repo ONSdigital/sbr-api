@@ -4,14 +4,16 @@ import java.util.concurrent.TimeoutException
 
 import com.typesafe.scalalogging.LazyLogging
 import javax.inject.Inject
-import play.api.http.Status.{ NOT_FOUND, OK }
+
+import play.api.http.Status._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import play.api.libs.json.JsValue
+import play.api.libs.json.{ JsValue, Json }
 import play.api.libs.ws.{ WSRequest, WSResponse }
-import play.mvc.Http.HeaderNames.ACCEPT
+import play.mvc.Http.HeaderNames.{ ACCEPT, CONTENT_TYPE }
 import play.mvc.Http.MimeTypes.JSON
-import repository.ErrorMessage
+import repository.{ EditFailure, EditParentLinkStatus, EditSuccess, ErrorMessage }
 import tracing.{ TraceData, TraceWSClient }
+import uk.gov.ons.sbr.models.edit.Patch
 import utils.TrySupport
 import utils.url.{ BaseUrl, Url }
 
@@ -22,17 +24,36 @@ case class RestRepositoryConfig(baseUrl: BaseUrl)
 
 class RestRepository @Inject() (config: RestRepositoryConfig, wsClient: TraceWSClient) extends Repository with LazyLogging {
 
+  // See here for details on JSON Patch: https://tools.ietf.org/html/rfc6902
+  private val PATCH_JSON = s"$JSON-patch+json"
+
   override def getJson(path: String, spanName: String, traceData: TraceData): Future[Either[ErrorMessage, Option[JsValue]]] = {
     val url = Url(withBase = config.baseUrl, withPath = path)
-    requestFor(url, spanName, traceData).get().map {
+    requestForWithTracing(url, JSON, spanName, traceData).get().map {
       fromResponseToErrorOrJson
     }.recover(withTranslationOfFailureToError)
   }
 
-  private def requestFor(url: String, spanName: String, traceData: TraceData): WSRequest =
+  override def patchJson(path: String, patch: Patch): Future[EditParentLinkStatus] = {
+    val url = Url(withBase = config.baseUrl, withPath = path)
+    requestFor(url, PATCH_JSON).patch(Json.toJson(patch)).map {
+      toEditParentLinkStatus
+    }.recover(withTranslationOfFailureToEditStatus)
+  }
+
+  private def requestForWithTracing(url: String, contentType: String, spanName: String, traceData: TraceData): WSRequest =
     wsClient.
       url(url, spanName, traceData).
-      withHeaders(ACCEPT -> JSON)
+      withHeaders(ACCEPT -> contentType)
+
+  /**
+   * Explicit tracing will be removed in future, hence the duplication of the requestFor method below without
+   * any explicit tracing parameters, using the untracedUrl method.
+   */
+  private def requestFor(url: String, contentType: String): WSRequest =
+    wsClient.
+      untracedUrl(url).
+      withHeaders(CONTENT_TYPE -> contentType)
 
   private def fromResponseToErrorOrJson(response: WSResponse): Either[ErrorMessage, Option[JsValue]] =
     response.status match {
@@ -40,6 +61,13 @@ class RestRepository @Inject() (config: RestRepositoryConfig, wsClient: TraceWSC
       case NOT_FOUND => Right(None)
       case _ => Left(describeStatus(response))
     }
+
+  private def toEditParentLinkStatus(response: WSResponse): EditParentLinkStatus = {
+    response.status match {
+      case NO_CONTENT => EditSuccess
+      case _ => EditFailure
+    }
+  }
 
   private def bodyAsJson(response: WSResponse): Either[ErrorMessage, JsValue] =
     TrySupport.fold(Try(response.json))(
@@ -58,6 +86,18 @@ class RestRepository @Inject() (config: RestRepositoryConfig, wsClient: TraceWSC
       cause match {
         case t: TimeoutException => Left(s"Timeout.  ${t.getMessage}")
         case t: Throwable => Left(t.getMessage)
+      }
+    }
+  }
+
+  private def withTranslationOfFailureToEditStatus = new PartialFunction[Throwable, EditParentLinkStatus] {
+    override def isDefinedAt(cause: Throwable): Boolean = true
+
+    override def apply(cause: Throwable): EditParentLinkStatus = {
+      logger.error(s"Translating unit request failure [$cause].")
+      cause match {
+        case t: TimeoutException => EditFailure
+        case t: Throwable => EditFailure
       }
     }
   }

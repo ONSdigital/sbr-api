@@ -12,6 +12,7 @@ import play.api.Application
 import play.api.http.Status.{ BAD_REQUEST, SERVICE_UNAVAILABLE }
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
+import play.api.libs.ws.WSClient
 import support.wiremock.WireMockSbrControlApi
 import tracing.{ TraceData, TraceWSClient }
 import utils.url.BaseUrl
@@ -63,6 +64,7 @@ class RestRepository_WiremockSpec extends org.scalatest.fixture.FreeSpec with Gu
   private def newFixtureParam: FixtureParam = {
     val config = RestRepositoryConfig(BaseUrl(Http, "localhost", DefaultSbrControlApiPort))
     val wsClient = app.injector.instanceOf[TraceWSClient]
+    val ws = app.injector.instanceOf[WSClient]
     FixtureParam(new RestRepository(config, wsClient))
   }
 

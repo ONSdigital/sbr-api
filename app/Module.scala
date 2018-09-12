@@ -7,7 +7,9 @@ import config.{ BaseUrlConfigLoader, RestAdminDataRepositoryConfigLoader, SbrCtr
 import handlers.LinkedUnitRetrievalHandler
 import handlers.http.HttpLinkedUnitRetrievalHandler
 import javax.inject.{ Inject, Named }
+
 import play.api.libs.json.{ Reads, Writes }
+import play.api.libs.ws.WSClient
 import play.api.mvc.Result
 import play.api.{ Configuration, Environment }
 import repository.DataSourceNames.{ CompaniesHouse, Paye, SbrCtrl, Vat }
@@ -68,6 +70,10 @@ class Module(
       RestAdminDataRepositoryConfigLoader.companiesHouse(restRepositoryConfigLoader, underlyingConfig)
     )
 
+    // Edit -> Patch Conversion
+    bind(classOf[PatchCreationService]).to(classOf[UnitLinkPatchCreationService])
+    bind(classOf[AdminDataUnitLinksEditRepository]).to(classOf[RestAdminDataUnitLinksEditRepository])
+
     // generics
     /*
      * Because of JVM type erasure, we need to use TypeLiteral to resolve generic types.
@@ -99,23 +105,23 @@ class Module(
 
   // repositories
   @Provides @Named(SbrCtrl)
-  def providesSbrCtrlUnitRepository(@Inject()@Named(SbrCtrl) sbrCtrlUnitRepositoryConfig: RestRepositoryConfig, wsClient: TraceWSClient): Repository =
+  def providesSbrCtrlUnitRepository(@Inject()@Named(SbrCtrl) sbrCtrlUnitRepositoryConfig: RestRepositoryConfig, wsClient: TraceWSClient, ws: WSClient): Repository =
     new RestRepository(sbrCtrlUnitRepositoryConfig, wsClient)
 
   @Provides @Named(Vat)
-  def providesVatAdminDataRepository(@Inject()@Named(Vat) vatUnitRepositoryConfig: RestRepositoryConfig, wsClient: TraceWSClient, readsAdminData: Reads[AdminData]): AdminDataRepository = {
+  def providesVatAdminDataRepository(@Inject()@Named(Vat) vatUnitRepositoryConfig: RestRepositoryConfig, wsClient: TraceWSClient, ws: WSClient, readsAdminData: Reads[AdminData]): AdminDataRepository = {
     val unitRepository = new RestRepository(vatUnitRepositoryConfig, wsClient)
     new RestAdminDataRepository(unitRepository, readsAdminData, Vat)
   }
 
   @Provides @Named(Paye)
-  def providesPayeAdminDataRepository(@Inject()@Named(Paye) payeUnitRepositoryConfig: RestRepositoryConfig, wsClient: TraceWSClient, readsAdminData: Reads[AdminData]): AdminDataRepository = {
+  def providesPayeAdminDataRepository(@Inject()@Named(Paye) payeUnitRepositoryConfig: RestRepositoryConfig, wsClient: TraceWSClient, ws: WSClient, readsAdminData: Reads[AdminData]): AdminDataRepository = {
     val unitRepository = new RestRepository(payeUnitRepositoryConfig, wsClient)
     new RestAdminDataRepository(unitRepository, readsAdminData, Paye)
   }
 
   @Provides @Named(CompaniesHouse)
-  def providesCompaniesHouseAdminDataRepository(@Inject()@Named(CompaniesHouse) chUnitRepositoryConfig: RestRepositoryConfig, wsClient: TraceWSClient, readsAdminData: Reads[AdminData]): AdminDataRepository = {
+  def providesCompaniesHouseAdminDataRepository(@Inject()@Named(CompaniesHouse) chUnitRepositoryConfig: RestRepositoryConfig, wsClient: TraceWSClient, ws: WSClient, readsAdminData: Reads[AdminData]): AdminDataRepository = {
     val unitRepository = new RestRepository(chUnitRepositoryConfig, wsClient)
     new RestAdminDataRepository(unitRepository, readsAdminData, CompaniesHouse)
   }

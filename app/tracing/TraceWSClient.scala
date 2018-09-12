@@ -21,6 +21,11 @@ import play.api.libs.ws.WSRequest
 trait TraceWSClient extends Closeable {
   def url(url: String, spanName: String, traceData: TraceData): WSRequest
 
+  /**
+   * We use this for untraced ws requests, so that we don't need to pass around two different version of wsClient
+   */
+  def untracedUrl(url: String): WSRequest
+
   /** Closes this client, and releases underlying resources. */
   @throws[IOException] def close(): Unit
 }

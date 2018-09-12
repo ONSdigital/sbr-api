@@ -11,6 +11,8 @@ class ZipkinTraceWSClient @Inject() (wsClient: jp.co.bizreach.trace.play25.Trace
   override def url(url: String, spanName: String, traceData: TraceData): WSRequest =
     wsClient.url(spanName, url)(jp.co.bizreach.trace.TraceData(traceData.asSpan))
 
+  override def untracedUrl(url: String): WSRequest = wsClient.url(url)
+
   /** Closes this client, and releases underlying resources. */
   @throws[IOException] override def close(): Unit =
     wsClient.close()

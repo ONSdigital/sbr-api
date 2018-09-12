@@ -28,6 +28,10 @@ GET     /v1/periods/:period/reus/:rurn                                  controll
 
 GET     /v1/periods/:date/leus/:id      controllers.v1.SearchController.searchLeUWithPeriod(date, id)
 
+# Editing Endpoints
+POST     /v1/periods/$period<\d{4}(0[1-9]|1[0-2])>/edit/vats/$vatref<\d{12}>  controllers.v1.AdminDataParentLinkEditController.editVatParentLink(period, vatref)
+POST     /v1/periods/:period/edit/vats/:vatref                                controllers.BadRequestController.badRequest(period, vatref)
+
 # Home
 GET     /                               controllers.HomeController.status
 OPTIONS /*all                           controllers.HomeController.preflight(all: String)
