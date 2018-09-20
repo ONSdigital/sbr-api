@@ -6,8 +6,8 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{ EitherValues, FreeSpec, Matchers }
 import play.api.libs.json.{ JsString, Json }
-import repository.EditSuccess
-import repository.rest.Repository
+import repository._
+import repository.rest._
 import uk.gov.ons.sbr.models.edit.{ Operation, OperationTypes, Patch }
 import uk.gov.ons.sbr.models.{ Period, VatRef }
 
@@ -35,11 +35,51 @@ class RestAdminDataUnitLinksEditRepositorySpec extends FreeSpec with Matchers wi
   "An AdminDataUnitLinksEdit repository" - {
     "returns an EditSuccess when an edit is successful" in new Fixture {
       (unitRepository.patchJson _).expects(s"v1/periods/${Period.asString(TargetPeriod)}/types/VAT/units/$TargetVAT", testReplaceVatParentLink).returning(
-        Future.successful(EditSuccess)
+        Future.successful(PatchSuccess)
       )
 
       whenReady(editAdminDataRepository.patchVatParentUnitLink(testReplaceVatParentLink, TargetPeriod, VatRef(TargetVAT))) { result =>
         result shouldBe EditSuccess
+      }
+    }
+
+    "returns an EditRejected when an edit is rejected (due to valid but unprocessable JSON)" in new Fixture {
+      (unitRepository.patchJson _).expects(s"v1/periods/${Period.asString(TargetPeriod)}/types/VAT/units/$TargetVAT", testReplaceVatParentLink).returning(
+        Future.successful(PatchRejected)
+      )
+
+      whenReady(editAdminDataRepository.patchVatParentUnitLink(testReplaceVatParentLink, TargetPeriod, VatRef(TargetVAT))) { result =>
+        result shouldBe EditRejected
+      }
+    }
+
+    "returns an EditUnitNotFound when the target unit cannot be found" in new Fixture {
+      (unitRepository.patchJson _).expects(s"v1/periods/${Period.asString(TargetPeriod)}/types/VAT/units/$TargetVAT", testReplaceVatParentLink).returning(
+        Future.successful(PatchUnitNotFound)
+      )
+
+      whenReady(editAdminDataRepository.patchVatParentUnitLink(testReplaceVatParentLink, TargetPeriod, VatRef(TargetVAT))) { result =>
+        result shouldBe EditUnitNotFound
+      }
+    }
+
+    "returns an EditConflict when the target unit has been edited by another person" in new Fixture {
+      (unitRepository.patchJson _).expects(s"v1/periods/${Period.asString(TargetPeriod)}/types/VAT/units/$TargetVAT", testReplaceVatParentLink).returning(
+        Future.successful(PatchConflict)
+      )
+
+      whenReady(editAdminDataRepository.patchVatParentUnitLink(testReplaceVatParentLink, TargetPeriod, VatRef(TargetVAT))) { result =>
+        result shouldBe EditConflict
+      }
+    }
+
+    "returns an EditFailure when a general error has occurred" in new Fixture {
+      (unitRepository.patchJson _).expects(s"v1/periods/${Period.asString(TargetPeriod)}/types/VAT/units/$TargetVAT", testReplaceVatParentLink).returning(
+        Future.successful(PatchFailure)
+      )
+
+      whenReady(editAdminDataRepository.patchVatParentUnitLink(testReplaceVatParentLink, TargetPeriod, VatRef(TargetVAT))) { result =>
+        result shouldBe EditFailure
       }
     }
   }

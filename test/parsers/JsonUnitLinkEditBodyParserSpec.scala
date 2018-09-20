@@ -5,7 +5,7 @@ import akka.util.ByteString
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{ EitherValues, FreeSpec, Matchers }
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.http.Status.{ BAD_REQUEST, UNSUPPORTED_MEDIA_TYPE }
+import play.api.http.Status._
 import play.api.test.FakeRequest
 import play.mvc.Http.HeaderNames.CONTENT_TYPE
 import play.mvc.Http.MimeTypes.{ JSON, XML }
@@ -39,6 +39,17 @@ class JsonUnitLinkEditBodyParserSpec extends FreeSpec with Matchers with GuiceOn
           |  "audit": { "username": "$Username" }
           |}""".stripMargin
 
+    val InvalidVATEditParentLinkPostBody = VATEditParentLinkPostBody + "}"
+
+    val BeforeAfterUnprocessableVATEditParentLinkPostBody = VATEditParentLinkPostBody.replace("from", "before")
+      .replace("to", "after")
+
+    val NoIdUnprocessableVATEditParentLinkPostBody = VATEditParentLinkPostBody.replace(s"""\"id\": \"$FromParentLEU\",""", "")
+
+    val NumberUnprocessableVATEditParentLinkPostBody = VATEditParentLinkPostBody.replace(s"""\"$FromParentLEU\"""", FromParentLEU)
+
+    val UnitTypeUnprocessableVATEditParentLinkPostBody = VATEditParentLinkPostBody.replace("LEU", "Legal Unit")
+
     val from = IdAndType(UnitId(FromParentLEU), UnitType.LegalUnit)
     val to = IdAndType(UnitId(ToParentLEU), UnitType.LegalUnit)
     val parent = Parent(from, to)
@@ -66,11 +77,48 @@ class JsonUnitLinkEditBodyParserSpec extends FreeSpec with Matchers with GuiceOn
 
       "when the patch document is not valid json" in new Fixture {
         val request = FakeRequest().withHeaders(CONTENT_TYPE -> JSON)
-        val invalidJson = s"""$VATEditParentLinkPostBody}""" // JSON object has an extra '}'
-        val body = Source.single(ByteString(invalidJson))
+        val body = Source.single(ByteString(InvalidVATEditParentLinkPostBody))
 
         whenReady(JsonUnitLinkEditBodyParser.apply(request).run(body)) { result =>
           result.left.value.header.status shouldBe BAD_REQUEST
+        }
+      }
+
+      "when the patch document valid json but does not comply with our model" - {
+        "use of before/after rather than from/to" in new Fixture {
+          val request = FakeRequest().withHeaders(CONTENT_TYPE -> JSON)
+          val body = Source.single(ByteString(BeforeAfterUnprocessableVATEditParentLinkPostBody))
+
+          whenReady(JsonUnitLinkEditBodyParser.apply(request).run(body)) { result =>
+            result.left.value.header.status shouldBe UNPROCESSABLE_ENTITY
+          }
+        }
+
+        "from map does not contain an id" in new Fixture {
+          val request = FakeRequest().withHeaders(CONTENT_TYPE -> JSON)
+          val body = Source.single(ByteString(NoIdUnprocessableVATEditParentLinkPostBody))
+
+          whenReady(JsonUnitLinkEditBodyParser.apply(request).run(body)) { result =>
+            result.left.value.header.status shouldBe UNPROCESSABLE_ENTITY
+          }
+        }
+
+        "from id contains a number rather than a string" in new Fixture {
+          val request = FakeRequest().withHeaders(CONTENT_TYPE -> JSON)
+          val body = Source.single(ByteString(NumberUnprocessableVATEditParentLinkPostBody))
+
+          whenReady(JsonUnitLinkEditBodyParser.apply(request).run(body)) { result =>
+            result.left.value.header.status shouldBe UNPROCESSABLE_ENTITY
+          }
+        }
+
+        "invalid unit type" in new Fixture {
+          val request = FakeRequest().withHeaders(CONTENT_TYPE -> JSON)
+          val body = Source.single(ByteString(UnitTypeUnprocessableVATEditParentLinkPostBody))
+
+          whenReady(JsonUnitLinkEditBodyParser.apply(request).run(body)) { result =>
+            result.left.value.header.status shouldBe UNPROCESSABLE_ENTITY
+          }
         }
       }
     }

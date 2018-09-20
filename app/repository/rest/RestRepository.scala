@@ -11,7 +11,7 @@ import play.api.libs.json.{ JsValue, Json }
 import play.api.libs.ws.{ WSRequest, WSResponse }
 import play.mvc.Http.HeaderNames.{ ACCEPT, CONTENT_TYPE }
 import play.mvc.Http.MimeTypes.JSON
-import repository.{ EditFailure, EditParentLinkStatus, EditSuccess, ErrorMessage }
+import repository._
 import tracing.{ TraceData, TraceWSClient }
 import uk.gov.ons.sbr.models.edit.Patch
 import utils.TrySupport
@@ -25,7 +25,7 @@ case class RestRepositoryConfig(baseUrl: BaseUrl)
 class RestRepository @Inject() (config: RestRepositoryConfig, wsClient: TraceWSClient) extends Repository with LazyLogging {
 
   // See here for details on JSON Patch: https://tools.ietf.org/html/rfc6902
-  private val PATCH_JSON = s"$JSON-patch+json"
+  private val Patch_Json = s"$JSON-patch+json"
 
   override def getJson(path: String, spanName: String, traceData: TraceData): Future[Either[ErrorMessage, Option[JsValue]]] = {
     val url = Url(withBase = config.baseUrl, withPath = path)
@@ -34,11 +34,11 @@ class RestRepository @Inject() (config: RestRepositoryConfig, wsClient: TraceWSC
     }.recover(withTranslationOfFailureToError)
   }
 
-  override def patchJson(path: String, patch: Patch): Future[EditParentLinkStatus] = {
+  override def patchJson(path: String, patch: Patch): Future[PatchStatus] = {
     val url = Url(withBase = config.baseUrl, withPath = path)
-    requestFor(url, PATCH_JSON).patch(Json.toJson(patch)).map {
-      toEditParentLinkStatus
-    }.recover(withTranslationOfFailureToEditStatus)
+    requestFor(url, Patch_Json).patch(Json.toJson(patch)).map {
+      toPatchStatus
+    }.recover(withTranslationOfFailurePatchStatus)
   }
 
   private def requestForWithTracing(url: String, contentType: String, spanName: String, traceData: TraceData): WSRequest =
@@ -62,10 +62,13 @@ class RestRepository @Inject() (config: RestRepositoryConfig, wsClient: TraceWSC
       case _ => Left(describeStatus(response))
     }
 
-  private def toEditParentLinkStatus(response: WSResponse): EditParentLinkStatus = {
+  private def toPatchStatus(response: WSResponse): PatchStatus = {
     response.status match {
-      case NO_CONTENT => EditSuccess
-      case _ => EditFailure
+      case NO_CONTENT => PatchSuccess
+      case NOT_FOUND => PatchUnitNotFound
+      case CONFLICT => PatchConflict
+      case UNPROCESSABLE_ENTITY => PatchRejected
+      case _ => PatchFailure
     }
   }
 
@@ -90,15 +93,12 @@ class RestRepository @Inject() (config: RestRepositoryConfig, wsClient: TraceWSC
     }
   }
 
-  private def withTranslationOfFailureToEditStatus = new PartialFunction[Throwable, EditParentLinkStatus] {
+  private def withTranslationOfFailurePatchStatus = new PartialFunction[Throwable, PatchStatus] {
     override def isDefinedAt(cause: Throwable): Boolean = true
 
-    override def apply(cause: Throwable): EditParentLinkStatus = {
+    override def apply(cause: Throwable): PatchStatus = {
       logger.error(s"Translating unit request failure [$cause].")
-      cause match {
-        case t: TimeoutException => EditFailure
-        case t: Throwable => EditFailure
-      }
+      PatchFailure
     }
   }
 }

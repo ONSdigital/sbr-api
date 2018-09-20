@@ -7,6 +7,8 @@ import scala.concurrent.Future
 
 sealed trait EditParentLinkStatus
 case object EditSuccess extends EditParentLinkStatus
+case object EditRejected extends EditParentLinkStatus
+case object EditUnitNotFound extends EditParentLinkStatus
 case object EditFailure extends EditParentLinkStatus
 case object EditConflict extends EditParentLinkStatus
 

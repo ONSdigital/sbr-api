@@ -7,7 +7,7 @@ import io.swagger.annotations.{ Api, ApiOperation, ApiResponse, ApiResponses }
 import parsers.JsonUnitLinkEditBodyParser
 import play.api.mvc.{ Action, Controller, Result }
 import repository.sbrctrl.RestAdminDataUnitLinksEditRepository
-import repository.EditSuccess
+import repository.{ EditConflict, EditRejected, EditSuccess, EditUnitNotFound }
 import services.PatchCreationService
 import uk.gov.ons.sbr.models.{ Period, VatRef }
 import uk.gov.ons.sbr.models.edit.Patch
@@ -32,8 +32,8 @@ class AdminDataParentLinkEditController @Inject() (
   @ApiResponses(Array(
     new ApiResponse(code = 400, message = "One or more arguments do not comply with the expected format"),
     new ApiResponse(code = 404, message = "The specified VAT reference could not be found in the Unit Links table"),
-    new ApiResponse(code = 422, message = "The request cannot be processed, e.g. specified LEU does not exist"),
     new ApiResponse(code = 409, message = "An edit conflict has occurred"),
+    new ApiResponse(code = 422, message = "The request cannot be processed, e.g. specified LEU does not exist"),
     new ApiResponse(code = 500, message = "The attempt to edit the VAT parent unit link could not complete due to an unrecoverable error")
   ))
   def editVatParentLink(periodStr: String, vatrefStr: String) = Action.async(JsonUnitLinkEditBodyParser) { request =>
@@ -47,6 +47,9 @@ class AdminDataParentLinkEditController @Inject() (
   private def resultOnPatchConversionSuccess(patch: Patch, period: Period, vatref: VatRef): Future[Result] = {
     repository.patchVatParentUnitLink(patch, period, vatref) map {
       case EditSuccess => Created
+      case EditUnitNotFound => NotFound
+      case EditConflict => Conflict
+      case EditRejected => UnprocessableEntity
       case _ => InternalServerError
     }
   }

@@ -2,7 +2,7 @@ package support.wiremock
 
 import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
-import play.api.http.Status.{ INTERNAL_SERVER_ERROR, NOT_FOUND, OK, NO_CONTENT }
+import play.api.http.Status.{ INTERNAL_SERVER_ERROR, NOT_FOUND, OK, NO_CONTENT, UNPROCESSABLE_ENTITY, CONFLICT }
 
 trait ApiResponse {
   def anOkResponse(): ResponseDefinitionBuilder =
@@ -13,6 +13,12 @@ trait ApiResponse {
 
   def aNotFoundResponse(): ResponseDefinitionBuilder =
     aResponse().withStatus(NOT_FOUND)
+
+  def anUnprocessableEntityResponse(): ResponseDefinitionBuilder =
+    aResponse().withStatus(UNPROCESSABLE_ENTITY)
+
+  def aConflictResponse(): ResponseDefinitionBuilder =
+    aResponse().withStatus(CONFLICT)
 
   def anInternalServerError(): ResponseDefinitionBuilder =
     aResponse().withStatus(INTERNAL_SERVER_ERROR)

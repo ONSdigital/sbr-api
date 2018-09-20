@@ -1,20 +1,24 @@
 package repository.rest
 
 import brave.propagation.TraceContext
-import com.github.tomakehurst.wiremock.client.WireMock.{ aResponse, get, urlEqualTo }
+import com.github.tomakehurst.wiremock.client.WireMock._
 import jp.co.bizreach.trace.ZipkinTraceServiceLike
 import org.scalamock.scalatest.MockFactory
 import org.scalatest._
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{ Millis, Second, Span }
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import parsers.JsonUnitLinkEditBodyParser
 import play.api.Application
+import play.api.http.HeaderNames
 import play.api.http.Status.{ BAD_REQUEST, SERVICE_UNAVAILABLE }
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.libs.json.Json
+import play.api.libs.json.{ JsString, Json }
 import play.api.libs.ws.WSClient
 import support.wiremock.WireMockSbrControlApi
 import tracing.{ TraceData, TraceWSClient }
+import uk.gov.ons.sbr.models.{ Period, VatRef }
+import uk.gov.ons.sbr.models.edit.{ Operation, OperationTypes, _ }
 import utils.url.BaseUrl
 import utils.url.BaseUrl.Protocol.Http
 
@@ -25,6 +29,22 @@ class RestRepository_WiremockSpec extends org.scalatest.fixture.FreeSpec with Gu
   private val SomeTraceData = stub[TraceData]
   private val SomeJsonStr = s"""{"message":"Hello World!"}"""
   private val RequestTimeoutMillis = 100
+
+  private val TargetVAT = VatRef("123456789012")
+  private val TargetPeriod = Period.fromString("201803")
+  private val TargetFromUBRN = "123456789"
+  private val TargetToUBRN = "987654321"
+
+  private val TestReplacePatch: Patch = Seq(
+    Operation(OperationTypes.Test, "/parents/LEU", JsString(TargetFromUBRN)),
+    Operation(OperationTypes.Replace, "/parents/LEU", JsString(TargetToUBRN))
+  )
+
+  private val VATEditParentLinkPatchBody =
+    s"""|[
+        |  { "op": "test", path: "/parents/LEU", value: "123456789" },
+        |  { "op": "replace", path: "/parents/LEU", value: "987654321" }
+        |]""".stripMargin
 
   /*
    * Turn off auto-verification of mocks inherited from AbstractMockFactory.
@@ -87,40 +107,112 @@ class RestRepository_WiremockSpec extends org.scalatest.fixture.FreeSpec with Gu
       }
     }
 
+    "when requested to patch json for a resource" - {
+      "returns PatchSuccess when the resource is found" in { fixture =>
+        stubSbrControlApiFor(aVatParentLinkEditRequest(withVatRef = TargetVAT, withPeriod = TargetPeriod)
+          .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonUnitLinkEditBodyParser.JsonPatchMediaType))
+          .withRequestBody(equalToJson(VATEditParentLinkPatchBody))
+          .willReturn(aNoContentResponse()))
+
+        whenReady(fixture.repository.patchJson(s"v1/periods/${Period.asString(TargetPeriod)}/types/VAT/units/${TargetVAT.value}", TestReplacePatch)) { result =>
+          result shouldBe PatchSuccess
+        }
+      }
+
+      "returns PatchUnitNotFound when the resource is not found" in { fixture =>
+        stubSbrControlApiFor(get(urlEqualTo(s"""/$SomePath""")).willReturn(aNotFoundResponse()))
+
+        whenReady(fixture.repository.patchJson(SomePath, TestReplacePatch)) { result =>
+          result shouldBe PatchUnitNotFound
+        }
+      }
+    }
+
     "fails" - {
-      "when the response is a client error" in { fixture =>
-        stubSbrControlApiFor(get(urlEqualTo(s"""/$SomePath""")).willReturn(aResponse().withStatus(BAD_REQUEST)))
+      "when requested to get json for a resource" - {
+        "when the response is a client error" in { fixture =>
+          stubSbrControlApiFor(get(urlEqualTo(s"""/$SomePath""")).willReturn(aResponse().withStatus(BAD_REQUEST)))
 
-        whenReady(fixture.repository.getJson(SomePath, SomeSpanName, SomeTraceData)) { result =>
-          result.left.value shouldBe "Bad Request (400)"
+          whenReady(fixture.repository.getJson(SomePath, SomeSpanName, SomeTraceData)) { result =>
+            result.left.value shouldBe "Bad Request (400)"
+          }
         }
-      }
 
-      "when the response is a server error" in { fixture =>
-        stubSbrControlApiFor(get(urlEqualTo(s"""/$SomePath""")).willReturn(aResponse().withStatus(SERVICE_UNAVAILABLE)))
+        "when the response is a server error" in { fixture =>
+          stubSbrControlApiFor(get(urlEqualTo(s"""/$SomePath""")).willReturn(aResponse().withStatus(SERVICE_UNAVAILABLE)))
 
-        whenReady(fixture.repository.getJson(SomePath, SomeSpanName, SomeTraceData)) { result =>
-          result.left.value shouldBe "Service Unavailable (503)"
+          whenReady(fixture.repository.getJson(SomePath, SomeSpanName, SomeTraceData)) { result =>
+            result.left.value shouldBe "Service Unavailable (503)"
+          }
         }
-      }
 
-      "when an OK response is returned containing a non-JSON body" in { fixture =>
-        stubSbrControlApiFor(get(urlEqualTo(s"""/$SomePath""")).willReturn(anOkResponse().withBody("this-is-not-json")))
+        "when an OK response is returned containing a non-JSON body" in { fixture =>
+          stubSbrControlApiFor(get(urlEqualTo(s"""/$SomePath""")).willReturn(anOkResponse().withBody("this-is-not-json")))
 
-        whenReady(fixture.repository.getJson(SomePath, SomeSpanName, SomeTraceData)) { result =>
-          result.left.value should startWith("Unable to create JsValue from unit response")
+          whenReady(fixture.repository.getJson(SomePath, SomeSpanName, SomeTraceData)) { result =>
+            result.left.value should startWith("Unable to create JsValue from unit response")
+          }
         }
-      }
 
-      /*
+        /*
        * Test patienceConfig must exceed the fixedDelay for this to work ...
        */
-      "when the server takes longer than the configured client-side timeout" in { fixture =>
-        stubSbrControlApiFor(get(urlEqualTo(s"""/$SomePath""")).willReturn(anOkResponse().withBody(SomeJsonStr).
-          withFixedDelay(RequestTimeoutMillis * 2)))
+        "when the server takes longer than the configured client-side timeout" in { fixture =>
+          stubSbrControlApiFor(get(urlEqualTo(s"""/$SomePath""")).willReturn(anOkResponse().withBody(SomeJsonStr).
+            withFixedDelay(RequestTimeoutMillis * 2)))
 
-        whenReady(fixture.repository.getJson(SomePath, SomeSpanName, SomeTraceData)) { result =>
-          result.left.value should startWith("Timeout")
+          whenReady(fixture.repository.getJson(SomePath, SomeSpanName, SomeTraceData)) { result =>
+            result.left.value should startWith("Timeout")
+          }
+        }
+      }
+
+      "when requested to patch json for a resource" - {
+        "when the response is a server error" in { fixture =>
+          stubSbrControlApiFor(aVatParentLinkEditRequest(withVatRef = TargetVAT, withPeriod = TargetPeriod)
+            .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonUnitLinkEditBodyParser.JsonPatchMediaType))
+            .withRequestBody(equalToJson(VATEditParentLinkPatchBody))
+            .willReturn(anInternalServerError()))
+
+          whenReady(fixture.repository.patchJson(s"v1/periods/${Period.asString(TargetPeriod)}/types/VAT/units/${TargetVAT.value}", TestReplacePatch)) { result =>
+            result shouldBe PatchFailure
+          }
+        }
+
+        "when the patch request is rejected" in { fixture =>
+          stubSbrControlApiFor(aVatParentLinkEditRequest(withVatRef = TargetVAT, withPeriod = TargetPeriod)
+            .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonUnitLinkEditBodyParser.JsonPatchMediaType))
+            .withRequestBody(equalToJson(VATEditParentLinkPatchBody))
+            .willReturn(anUnprocessableEntityResponse()))
+
+          whenReady(fixture.repository.patchJson(s"v1/periods/${Period.asString(TargetPeriod)}/types/VAT/units/${TargetVAT.value}", TestReplacePatch)) { result =>
+            result shouldBe PatchRejected
+          }
+        }
+
+        "when the response is conflict" in { fixture =>
+          stubSbrControlApiFor(aVatParentLinkEditRequest(withVatRef = TargetVAT, withPeriod = TargetPeriod)
+            .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonUnitLinkEditBodyParser.JsonPatchMediaType))
+            .withRequestBody(equalToJson(VATEditParentLinkPatchBody))
+            .willReturn(aConflictResponse()))
+
+          whenReady(fixture.repository.patchJson(s"v1/periods/${Period.asString(TargetPeriod)}/types/VAT/units/${TargetVAT.value}", TestReplacePatch)) { result =>
+            result shouldBe PatchConflict
+          }
+        }
+
+        /*
+       * Test patienceConfig must exceed the fixedDelay for this to work ...
+       */
+        "when the server takes longer than the configured client-side timeout" in { fixture =>
+          stubSbrControlApiFor(aVatParentLinkEditRequest(withVatRef = TargetVAT, withPeriod = TargetPeriod)
+            .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonUnitLinkEditBodyParser.JsonPatchMediaType))
+            .withRequestBody(equalToJson(VATEditParentLinkPatchBody))
+            .willReturn(aConflictResponse().withFixedDelay(RequestTimeoutMillis * 2)))
+
+          whenReady(fixture.repository.patchJson(s"v1/periods/${Period.asString(TargetPeriod)}/types/VAT/units/${TargetVAT.value}", TestReplacePatch)) { result =>
+            result shouldBe PatchFailure
+          }
         }
       }
     }
