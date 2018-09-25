@@ -16,15 +16,15 @@ class RestAdminDataUnitLinksEditRepository @Inject() (@Named(SbrCtrl) unitReposi
 
   override def updateVatParentUnitLink(from: IdAndType, to: IdAndType, vatref: VatRef, period: Period): Future[PatchStatus] = {
     val updatePatch = PatchCreation.buildUpdateParentPatch(from, to)
-    val vatIdAndType = VatUnitRef.toIdTypePair(vatref)
-    val url = EditAdminDataPath(UnitKey(vatIdAndType._1, vatIdAndType._2, period))
+    val (unitId, unitType) = VatUnitRef.toIdTypePair(vatref)
+    val url = EditAdminDataPath(UnitKey(unitId, unitType, period))
     logger.debug(s"Updating VAT parent unit link with url [$url] and patch [$updatePatch]")
     unitRepository.patchJson(url, updatePatch)
   }
 
   override def createLeuChildUnitLink(unitKey: UnitKey, vatref: VatRef): Future[PatchStatus] = {
-    val vatIdAndType = VatUnitRef.toIdTypePair(vatref)
-    val createPatch = PatchCreation.buildCreateChildPatch(vatIdAndType._1, vatIdAndType._2)
+    val (unitId, unitType) = VatUnitRef.toIdTypePair(vatref)
+    val createPatch = PatchCreation.buildCreateChildPatch(unitId, unitType)
     val url = EditAdminDataPath(unitKey)
     logger.debug(s"Creating LEU child unit link with url [$url] and patch [$createPatch]")
     unitRepository.patchJson(url, createPatch)

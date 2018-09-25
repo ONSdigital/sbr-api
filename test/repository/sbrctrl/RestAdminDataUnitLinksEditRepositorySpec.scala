@@ -6,7 +6,7 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{ EitherValues, FreeSpec, Matchers }
 import play.api.libs.json.JsString
-import repository.rest._
+import repository.rest.{ PatchUnitNotFound, _ }
 import uk.gov.ons.sbr.models._
 import uk.gov.ons.sbr.models.UnitType.LegalUnit
 import uk.gov.ons.sbr.models.edit.OperationTypes.{ Add, Replace, Test }
@@ -63,43 +63,91 @@ class RestAdminDataUnitLinksEditRepositorySpec extends FreeSpec with Matchers wi
       }
     }
 
-    "returns an EditRejected when an edit is rejected (due to valid but unprocessable JSON)" in new Fixture {
-      (unitRepository.patchJson _).expects(s"v1/periods/${Period.asString(TargetPeriod)}/types/VAT/units/${TargetVAT.value}", PatchTestReplaceParentLink).returning(
-        Future.successful(PatchRejected)
-      )
+    "returns an EditRejected when an edit is rejected (due to valid but unprocessable JSON)" - {
+      "for a request to update a parent unit link" in new Fixture {
+        (unitRepository.patchJson _).expects(s"v1/periods/${Period.asString(TargetPeriod)}/types/VAT/units/${TargetVAT.value}", PatchTestReplaceParentLink).returning(
+          Future.successful(PatchRejected)
+        )
 
-      whenReady(editAdminDataRepository.updateVatParentUnitLink(from, to, TargetVAT, TargetPeriod)) { result =>
-        result shouldBe PatchRejected
+        whenReady(editAdminDataRepository.updateVatParentUnitLink(from, to, TargetVAT, TargetPeriod)) { result =>
+          result shouldBe PatchRejected
+        }
+      }
+
+      "for a request to create a child unit link" in new Fixture {
+        (unitRepository.patchJson _).expects(s"v1/periods/${Period.asString(TargetPeriod)}/types/LEU/units/${TargetToUBRN.value}", PatchCreateParentLink).returning(
+          Future.successful(PatchRejected)
+        )
+
+        whenReady(editAdminDataRepository.createLeuChildUnitLink(unitKey, TargetVAT)) { result =>
+          result shouldBe PatchRejected
+        }
       }
     }
 
-    "returns an EditUnitNotFound when the target unit cannot be found" in new Fixture {
-      (unitRepository.patchJson _).expects(s"v1/periods/${Period.asString(TargetPeriod)}/types/VAT/units/${TargetVAT.value}", PatchTestReplaceParentLink).returning(
-        Future.successful(PatchUnitNotFound)
-      )
+    "returns an EditUnitNotFound when the target unit cannot be found" - {
+      "for a request to update a parent unit link" in new Fixture {
+        (unitRepository.patchJson _).expects(s"v1/periods/${Period.asString(TargetPeriod)}/types/VAT/units/${TargetVAT.value}", PatchTestReplaceParentLink).returning(
+          Future.successful(PatchUnitNotFound)
+        )
 
-      whenReady(editAdminDataRepository.updateVatParentUnitLink(from, to, TargetVAT, TargetPeriod)) { result =>
-        result shouldBe PatchUnitNotFound
+        whenReady(editAdminDataRepository.updateVatParentUnitLink(from, to, TargetVAT, TargetPeriod)) { result =>
+          result shouldBe PatchUnitNotFound
+        }
+      }
+
+      "for a request to create a child unit link" in new Fixture {
+        (unitRepository.patchJson _).expects(s"v1/periods/${Period.asString(TargetPeriod)}/types/LEU/units/${TargetToUBRN.value}", PatchCreateParentLink).returning(
+          Future.successful(PatchUnitNotFound)
+        )
+
+        whenReady(editAdminDataRepository.createLeuChildUnitLink(unitKey, TargetVAT)) { result =>
+          result shouldBe PatchUnitNotFound
+        }
       }
     }
 
-    "returns an EditConflict when the target unit has been edited by another person" in new Fixture {
-      (unitRepository.patchJson _).expects(s"v1/periods/${Period.asString(TargetPeriod)}/types/VAT/units/${TargetVAT.value}", PatchTestReplaceParentLink).returning(
-        Future.successful(PatchConflict)
-      )
+    "returns an EditConflict when the target unit has been edited by another person" - {
+      "for a request to update a parent unit link" in new Fixture {
+        (unitRepository.patchJson _).expects(s"v1/periods/${Period.asString(TargetPeriod)}/types/VAT/units/${TargetVAT.value}", PatchTestReplaceParentLink).returning(
+          Future.successful(PatchConflict)
+        )
 
-      whenReady(editAdminDataRepository.updateVatParentUnitLink(from, to, TargetVAT, TargetPeriod)) { result =>
-        result shouldBe PatchConflict
+        whenReady(editAdminDataRepository.updateVatParentUnitLink(from, to, TargetVAT, TargetPeriod)) { result =>
+          result shouldBe PatchConflict
+        }
+      }
+
+      "for a request to create a child unit link" in new Fixture {
+        (unitRepository.patchJson _).expects(s"v1/periods/${Period.asString(TargetPeriod)}/types/LEU/units/${TargetToUBRN.value}", PatchCreateParentLink).returning(
+          Future.successful(PatchConflict)
+        )
+
+        whenReady(editAdminDataRepository.createLeuChildUnitLink(unitKey, TargetVAT)) { result =>
+          result shouldBe PatchConflict
+        }
       }
     }
 
-    "returns an EditFailure when a general error has occurred" in new Fixture {
-      (unitRepository.patchJson _).expects(s"v1/periods/${Period.asString(TargetPeriod)}/types/VAT/units/${TargetVAT.value}", PatchTestReplaceParentLink).returning(
-        Future.successful(PatchFailure)
-      )
+    "returns an EditFailure when a general error has occurred" - {
+      "for a request to update a parent unit link" in new Fixture {
+        (unitRepository.patchJson _).expects(s"v1/periods/${Period.asString(TargetPeriod)}/types/VAT/units/${TargetVAT.value}", PatchTestReplaceParentLink).returning(
+          Future.successful(PatchFailure)
+        )
 
-      whenReady(editAdminDataRepository.updateVatParentUnitLink(from, to, TargetVAT, TargetPeriod)) { result =>
-        result shouldBe PatchFailure
+        whenReady(editAdminDataRepository.updateVatParentUnitLink(from, to, TargetVAT, TargetPeriod)) { result =>
+          result shouldBe PatchFailure
+        }
+      }
+
+      "for a request to create a child unit link" in new Fixture {
+        (unitRepository.patchJson _).expects(s"v1/periods/${Period.asString(TargetPeriod)}/types/LEU/units/${TargetToUBRN.value}", PatchCreateParentLink).returning(
+          Future.successful(PatchFailure)
+        )
+
+        whenReady(editAdminDataRepository.createLeuChildUnitLink(unitKey, TargetVAT)) { result =>
+          result shouldBe PatchFailure
+        }
       }
     }
   }
