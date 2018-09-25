@@ -9,6 +9,7 @@ sealed trait OperationType
 object OperationTypes {
   case object Test extends OperationType
   case object Replace extends OperationType
+  case object Add extends OperationType
 }
 
 object OperationType {

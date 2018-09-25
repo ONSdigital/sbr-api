@@ -3,7 +3,7 @@ package repository.sbrctrl
 import java.time.Month.MARCH
 
 import org.scalatest.{ FreeSpec, Matchers }
-import uk.gov.ons.sbr.models.{ Ern, Period, UnitId, UnitType }
+import uk.gov.ons.sbr.models.{ Period, UnitId, UnitKey, UnitType }
 
 class EditAdminDataPathSpec extends FreeSpec with Matchers {
 
@@ -15,7 +15,7 @@ class EditAdminDataPathSpec extends FreeSpec with Matchers {
 
   "A relative path" - {
     "can be built to identify a vatref, unitType and period" in new Fixture {
-      EditAdminDataPath(TargetPeriod, (TargetId, TargetUnitType)) shouldBe s"v1/periods/201803/types/VAT/units/123456789012"
+      EditAdminDataPath(UnitKey(TargetId, TargetUnitType, TargetPeriod)) shouldBe s"v1/periods/201803/types/VAT/units/123456789012"
     }
   }
 }

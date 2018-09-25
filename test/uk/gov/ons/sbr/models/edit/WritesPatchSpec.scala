@@ -8,8 +8,8 @@ class WritesPatchSpec extends FreeSpec with Matchers {
 
   private trait Fixture {
     val SamplePatch: Patch = Seq(
-      Operation(Test, "/parents/LEU", JsString("123456789")),
-      Operation(Replace, "/parents/LEU", JsString("987654321"))
+      Operation(Test, Path("/parents/", "LEU"), JsString("123456789")),
+      Operation(Replace, Path("/parents/", "LEU"), JsString("987654321"))
     )
 
     val ExpectedJsonOutput =

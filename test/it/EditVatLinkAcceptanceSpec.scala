@@ -44,6 +44,11 @@ class EditVatLinkAcceptanceSpec extends ServerAcceptanceSpec with WireMockSbrCon
         |  { "op": "replace", path: "/parents/LEU", value: "$NewParentLEU" }
         |]""".stripMargin
 
+  private val LEUCreateChildLinkPatchBody =
+    s"""|[
+        |  { "op": "add", path: "/children/${TargetVAT.value}", value: "VAT" }
+        |]""".stripMargin
+
   override type FixtureParam = WSClient
 
   override protected def withFixture(test: OneArgTest): Outcome =
@@ -64,6 +69,11 @@ class EditVatLinkAcceptanceSpec extends ServerAcceptanceSpec with WireMockSbrCon
       stubSbrControlApiFor(aVatParentLinkEditRequest(withVatRef = TargetVAT, withPeriod = TargetPeriod)
         .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonPatchMediaType))
         .withRequestBody(equalToJson(VATEditParentLinkPatchBody))
+        .willReturn(aNoContentResponse()))
+
+      stubSbrControlApiFor(aLegalUnitChildLinkCreationRequest(withUbrn = UnitId(NewParentLEU), withPeriod = TargetPeriod)
+        .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonPatchMediaType))
+        .withRequestBody(equalToJson(LEUCreateChildLinkPatchBody))
         .willReturn(aNoContentResponse()))
 
       When(s"an edit request for the VAT unit with $TargetVAT is requested for $TargetPeriod")

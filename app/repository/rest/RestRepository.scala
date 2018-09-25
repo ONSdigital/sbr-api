@@ -11,7 +11,7 @@ import play.api.libs.json.{ JsValue, Json }
 import play.api.libs.ws.{ WSRequest, WSResponse }
 import play.mvc.Http.HeaderNames.{ ACCEPT, CONTENT_TYPE }
 import play.mvc.Http.MimeTypes.JSON
-import repository._
+import repository.ErrorMessage
 import tracing.{ TraceData, TraceWSClient }
 import uk.gov.ons.sbr.models.edit.Patch
 import utils.TrySupport

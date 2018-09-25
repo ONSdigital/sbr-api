@@ -71,7 +71,7 @@ class Module(
     )
 
     // Edit -> Patch Conversion
-    bind(classOf[PatchCreationService]).to(classOf[UnitLinkPatchCreationService])
+    bind(classOf[EditService]).to(classOf[UnitLinksEditService])
     bind(classOf[AdminDataUnitLinksEditRepository]).to(classOf[RestAdminDataUnitLinksEditRepository])
 
     // generics

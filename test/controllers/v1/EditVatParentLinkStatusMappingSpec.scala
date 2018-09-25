@@ -7,11 +7,11 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.libs.json.{ JsString, Json }
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import repository._
+import repository.rest.PatchSuccess
 import repository.sbrctrl.RestAdminDataUnitLinksEditRepository
-import services.PatchCreationService
+import services._
 import uk.gov.ons.sbr.models._
-import uk.gov.ons.sbr.models.edit.{ Operation, OperationTypes }
+import uk.gov.ons.sbr.models.edit.{ Operation, OperationTypes, Path }
 
 import scala.concurrent.Future
 
@@ -19,8 +19,7 @@ class EditVatParentLinkStatusMappingSpec extends FreeSpec with GuiceOneAppPerSui
 
   private trait Fixture {
     val ValidVatRef = "397585634298"
-    val ValidPeriod = "201803"
-    val TargetPeriod = Period.fromString(ValidPeriod)
+    val TargetPeriod = Period.fromString("201803")
     val TargetVatRef = VatRef(ValidVatRef)
     val TargetPath = "/parents/LEU"
     val TargetFromLEU = "123456789"
@@ -41,7 +40,7 @@ class EditVatParentLinkStatusMappingSpec extends FreeSpec with GuiceOneAppPerSui
           |  "audit": { "username": "abcd" }
           |}""".stripMargin
 
-    val editParentLink = EditParentLink(
+    val TargetEditParentLink = EditParentLink(
       Parent(
         IdAndType(UnitId(TargetFromLEU), UnitType.LegalUnit),
         IdAndType(UnitId(TargetToLEU), UnitType.LegalUnit)
@@ -50,78 +49,73 @@ class EditVatParentLinkStatusMappingSpec extends FreeSpec with GuiceOneAppPerSui
     )
 
     val patch = Seq(
-      Operation(OperationTypes.Test, TargetPath, JsString(TargetFromLEU)),
-      Operation(OperationTypes.Replace, TargetPath, JsString(TargetToLEU))
+      Operation(OperationTypes.Test, Path("/parents/", "LEU"), JsString(TargetFromLEU)),
+      Operation(OperationTypes.Replace, Path("/parents/", "LEU"), JsString(TargetToLEU))
     )
 
-    val patchCreation = mock[PatchCreationService]
+    val editService = mock[EditService]
     val repository = mock[RestAdminDataUnitLinksEditRepository]
-    val controller = new AdminDataParentLinkEditController(patchCreation, repository)
+    val controller = new AdminDataParentLinkEditController(editService)
 
     implicit lazy val materializer = app.materializer
   }
 
   "A request to edit a VAT parent LEU unit link by VAT reference and period" - {
     "is successful" in new Fixture {
-      (patchCreation.createPatch _).expects(editParentLink).returning(Right(patch))
-      (repository.patchVatParentUnitLink _).expects(patch, TargetPeriod, TargetVatRef).returning(
+      (editService.editVatParentUnitLink _).expects(TargetPeriod, TargetVatRef, TargetEditParentLink).returning(
         Future.successful(EditSuccess)
       )
 
-      val action = controller.editVatParentLink(ValidPeriod, ValidVatRef)
-      val request = FakeRequest().withHeaders(CONTENT_TYPE -> JSON).withJsonBody(Json.toJson(editParentLink))
+      val action = controller.editVatParentLink(Period.asString(TargetPeriod), ValidVatRef)
+      val request = FakeRequest().withHeaders(CONTENT_TYPE -> JSON).withBody(VATEditParentLinkPostBody)
       val response = call(action, request)
 
       status(response) shouldBe CREATED
     }
 
     "is not found" in new Fixture {
-      (patchCreation.createPatch _).expects(editParentLink).returning(Right(patch))
-      (repository.patchVatParentUnitLink _).expects(patch, TargetPeriod, TargetVatRef).returning(
+      (editService.editVatParentUnitLink _).expects(TargetPeriod, TargetVatRef, TargetEditParentLink).returning(
         Future.successful(EditUnitNotFound)
       )
 
-      val action = controller.editVatParentLink(ValidPeriod, ValidVatRef)
-      val request = FakeRequest().withHeaders(CONTENT_TYPE -> JSON).withJsonBody(Json.toJson(editParentLink))
+      val action = controller.editVatParentLink(Period.asString(TargetPeriod), ValidVatRef)
+      val request = FakeRequest().withHeaders(CONTENT_TYPE -> JSON).withBody(VATEditParentLinkPostBody)
       val response = call(action, request)
 
       status(response) shouldBe NOT_FOUND
     }
 
     "is in conflict with another edit" in new Fixture {
-      (patchCreation.createPatch _).expects(editParentLink).returning(Right(patch))
-      (repository.patchVatParentUnitLink _).expects(patch, TargetPeriod, TargetVatRef).returning(
+      (editService.editVatParentUnitLink _).expects(TargetPeriod, TargetVatRef, TargetEditParentLink).returning(
         Future.successful(EditConflict)
       )
 
-      val action = controller.editVatParentLink(ValidPeriod, ValidVatRef)
-      val request = FakeRequest().withHeaders(CONTENT_TYPE -> JSON).withJsonBody(Json.toJson(editParentLink))
+      val action = controller.editVatParentLink(Period.asString(TargetPeriod), ValidVatRef)
+      val request = FakeRequest().withHeaders(CONTENT_TYPE -> JSON).withBody(VATEditParentLinkPostBody)
       val response = call(action, request)
 
       status(response) shouldBe CONFLICT
     }
 
     "is rejected" in new Fixture {
-      (patchCreation.createPatch _).expects(editParentLink).returning(Right(patch))
-      (repository.patchVatParentUnitLink _).expects(patch, TargetPeriod, TargetVatRef).returning(
+      (editService.editVatParentUnitLink _).expects(TargetPeriod, TargetVatRef, TargetEditParentLink).returning(
         Future.successful(EditRejected)
       )
 
-      val action = controller.editVatParentLink(ValidPeriod, ValidVatRef)
-      val request = FakeRequest().withHeaders(CONTENT_TYPE -> JSON).withJsonBody(Json.toJson(editParentLink))
+      val action = controller.editVatParentLink(Period.asString(TargetPeriod), ValidVatRef)
+      val request = FakeRequest().withHeaders(CONTENT_TYPE -> JSON).withBody(VATEditParentLinkPostBody)
       val response = call(action, request)
 
       status(response) shouldBe UNPROCESSABLE_ENTITY
     }
 
     "fails" in new Fixture {
-      (patchCreation.createPatch _).expects(editParentLink).returning(Right(patch))
-      (repository.patchVatParentUnitLink _).expects(patch, TargetPeriod, TargetVatRef).returning(
+      (editService.editVatParentUnitLink _).expects(TargetPeriod, TargetVatRef, TargetEditParentLink).returning(
         Future.successful(EditFailure)
       )
 
-      val action = controller.editVatParentLink(ValidPeriod, ValidVatRef)
-      val request = FakeRequest().withHeaders(CONTENT_TYPE -> JSON).withJsonBody(Json.toJson(editParentLink))
+      val action = controller.editVatParentLink(Period.asString(TargetPeriod), ValidVatRef)
+      val request = FakeRequest().withHeaders(CONTENT_TYPE -> JSON).withBody(VATEditParentLinkPostBody)
       val response = call(action, request)
 
       status(response) shouldBe INTERNAL_SERVER_ERROR

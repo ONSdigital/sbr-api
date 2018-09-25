@@ -6,21 +6,14 @@ import com.typesafe.scalalogging.LazyLogging
 import io.swagger.annotations.{ Api, ApiOperation, ApiResponse, ApiResponses }
 import parsers.JsonUnitLinkEditBodyParser
 import play.api.mvc.{ Action, Controller, Result }
-import repository.sbrctrl.RestAdminDataUnitLinksEditRepository
-import repository.{ EditConflict, EditRejected, EditSuccess, EditUnitNotFound }
-import services.PatchCreationService
-import uk.gov.ons.sbr.models.{ Period, VatRef }
-import uk.gov.ons.sbr.models.edit.Patch
+import services._
+import uk.gov.ons.sbr.models._
 
-import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
 @Api("AdminDataEdit")
 @Singleton
-class AdminDataParentLinkEditController @Inject() (
-    patchService: PatchCreationService,
-    repository: RestAdminDataUnitLinksEditRepository
-) extends Controller with LazyLogging {
+class AdminDataParentLinkEditController @Inject() (editService: EditService) extends Controller with LazyLogging {
 
   @ApiOperation(
     value = "Submit JSON with edit details for editing a VAT Parent Unit Link from one value to another",
@@ -37,20 +30,15 @@ class AdminDataParentLinkEditController @Inject() (
     new ApiResponse(code = 500, message = "The attempt to edit the VAT parent unit link could not complete due to an unrecoverable error")
   ))
   def editVatParentLink(periodStr: String, vatrefStr: String) = Action.async(JsonUnitLinkEditBodyParser) { request =>
-    patchService.createPatch(request.body).fold(
-      resultOnFailure, patch => resultOnPatchConversionSuccess(patch, Period.fromString(periodStr), VatRef(vatrefStr))
-    )
+    editService.editVatParentUnitLink(Period.fromString(periodStr), VatRef(vatrefStr), request.body)
+      .map(editStatusToHttpStatus)
   }
 
-  private def resultOnFailure(errorMessage: String): Future[Result] = Future(InternalServerError(errorMessage))
-
-  private def resultOnPatchConversionSuccess(patch: Patch, period: Period, vatref: VatRef): Future[Result] = {
-    repository.patchVatParentUnitLink(patch, period, vatref) map {
-      case EditSuccess => Created
-      case EditUnitNotFound => NotFound
-      case EditConflict => Conflict
-      case EditRejected => UnprocessableEntity
-      case _ => InternalServerError
-    }
+  private def editStatusToHttpStatus(editStatus: EditParentLinkStatus): Result = editStatus match {
+    case EditSuccess => Created
+    case EditUnitNotFound => NotFound
+    case EditConflict => Conflict
+    case EditRejected => UnprocessableEntity
+    case _ => InternalServerError
   }
 }
