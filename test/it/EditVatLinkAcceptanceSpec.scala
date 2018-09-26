@@ -108,7 +108,7 @@ class EditVatLinkAcceptanceSpec extends ServerAcceptanceSpec with WireMockSbrCon
 
   feature("edit an existing VAT records parent link, where the parent link cannot be found") {
     scenario("by VAT reference (vatref) and UBRN for a specific period") { wsClient =>
-      Given(s"a VAT record with $TargetVAT for $TargetPeriod does not exist")
+      Given(s"a VAT record with $TargetVAT for $TargetPeriod exists")
       And(s"And the parent unit link $ParentLEU cannot be found (resulting in a 422 response)")
       stubSbrControlApiFor(aVatParentLinkEditRequest(withVatRef = TargetVAT, withPeriod = TargetPeriod)
         .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonPatchMediaType))
@@ -206,31 +206,6 @@ class EditVatLinkAcceptanceSpec extends ServerAcceptanceSpec with WireMockSbrCon
         .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonPatchMediaType))
         .withRequestBody(equalToJson(LEUCreateChildLinkPatchBody))
         .willReturn(aNotFoundResponse()))
-
-      When(s"an edit request for the VAT unit with $TargetVAT is requested for $TargetPeriod")
-      val response = await(wsClient
-        .url(s"/v1/periods/${Period.asString(TargetPeriod)}/edit/vats/${TargetVAT.value}")
-        .withHeaders((HeaderNames.CONTENT_TYPE, JSON))
-        .post(VATEditParentLinkPostBody))
-
-      Then(s"an Internal Server Error response will be returned")
-      response.status shouldBe INTERNAL_SERVER_ERROR
-    }
-  }
-
-  feature("edit an LEU records child link whilst another person is editing it") {
-    scenario("by VAT reference (vatref) for a specific period") { wsClient =>
-      Given(s"a VAT record with $TargetVAT for $TargetPeriod exists")
-      stubSbrControlApiFor(aVatParentLinkEditRequest(withVatRef = TargetVAT, withPeriod = TargetPeriod)
-        .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonPatchMediaType))
-        .withRequestBody(equalToJson(VATEditParentLinkPatchBody))
-        .willReturn(aNoContentResponse()))
-
-      And(s"the requested LEU unit [$NewParentLEU] is being edited by somebody else")
-      stubSbrControlApiFor(aLegalUnitChildLinkCreationRequest(withUbrn = UnitId(NewParentLEU), withPeriod = TargetPeriod)
-        .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonPatchMediaType))
-        .withRequestBody(equalToJson(LEUCreateChildLinkPatchBody))
-        .willReturn(aConflictResponse()))
 
       When(s"an edit request for the VAT unit with $TargetVAT is requested for $TargetPeriod")
       val response = await(wsClient
