@@ -15,7 +15,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 class UnitLinksEditService @Inject() (repository: AdminDataUnitLinksEditRepository) extends EditService with LazyLogging {
 
-  case class AddAndDeleteOperationsParams(createUnitKey: UnitKey, deleteUnitKey: UnitKey, vatIdAndType: IdAndType)
+  private case class AddAndDeleteOperationsParams(createUnitKey: UnitKey, deleteUnitKey: UnitKey, vatIdAndType: IdAndType)
 
   override def editVatParentUnitLink(period: Period, vatref: VatRef, editParentLink: EditParentLink): Future[EditParentLinkStatus] = {
     val parent = editParentLink.parent
