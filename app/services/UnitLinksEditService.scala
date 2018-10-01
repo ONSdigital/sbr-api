@@ -7,7 +7,8 @@ import repository.AdminDataUnitLinksEditRepository
 import repository.rest._
 import uk.gov.ons.sbr.models._
 import uk.gov.ons.sbr.models.Period
-import uk.gov.ons.sbr.models.UnitType.LegalUnit
+import uk.gov.ons.sbr.models.UnitType.{ LegalUnit, ValueAddedTax }
+import unitref.VatUnitRef
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -16,13 +17,19 @@ class UnitLinksEditService @Inject() (repository: AdminDataUnitLinksEditReposito
 
   override def editVatParentUnitLink(period: Period, vatref: VatRef, editParentLink: EditParentLink): Future[EditParentLinkStatus] = {
     val parent = editParentLink.parent
-    val unitKey = UnitKey(parent.to.id, LegalUnit, period)
 
-    repository.updateVatParentUnitLink(parent.from, parent.to, vatref, period).flatMap {
+    val updateParentUnitKey = UnitKey(UnitId(vatref.value), ValueAddedTax, period)
+    val createChildUnitKey = UnitKey(parent.to.id, LegalUnit, period)
+    val deleteChildUnitKey = UnitKey(parent.from.id, LegalUnit, period)
+
+    val vatIdAndType = (IdAndType.apply _).tupled(VatUnitRef.toIdTypePair(vatref))
+
+    repository.updateVatParentUnitLink(updateParentUnitKey, parent.from, parent.to).flatMap {
       case PatchSuccess => Future.sequence(Seq(
-        repository.createLeuChildUnitLink(unitKey, vatref)
+        repository.createLeuChildUnitLink(createChildUnitKey, vatIdAndType),
+        repository.deleteLeuChildUnitLink(deleteChildUnitKey, vatIdAndType)
       )).map(reducePatchStatuses)
-      case failedStatus => Future(failedStatus)
+      case failedStatus => Future.successful(failedStatus)
     } map patchStatusToEditStatus
   }
 

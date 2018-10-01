@@ -36,8 +36,8 @@ class RestRepository_WiremockSpec extends org.scalatest.fixture.FreeSpec with Gu
   private val TargetToUBRN = "987654321"
 
   private val TestReplacePatch: Patch = Seq(
-    Operation(OperationTypes.Test, Path("/parents/", "LEU"), JsString(TargetFromUBRN)),
-    Operation(OperationTypes.Replace, Path("/parents/", "LEU"), JsString(TargetToUBRN))
+    TestOperation(Path("/parents/", "LEU"), JsString(TargetFromUBRN)),
+    ReplaceOperation(Path("/parents/", "LEU"), JsString(TargetToUBRN))
   )
 
   private val VATEditParentLinkPatchBody =

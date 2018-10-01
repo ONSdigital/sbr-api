@@ -6,11 +6,10 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{ EitherValues, FreeSpec, Matchers }
 import play.api.libs.json.JsString
-import repository.rest.{ PatchUnitNotFound, _ }
+import repository.rest.{ PatchRejected, PatchUnitNotFound, _ }
 import uk.gov.ons.sbr.models._
-import uk.gov.ons.sbr.models.UnitType.LegalUnit
-import uk.gov.ons.sbr.models.edit.OperationTypes.{ Add, Replace, Test }
-import uk.gov.ons.sbr.models.edit.{ Operation, Patch, Path }
+import uk.gov.ons.sbr.models.UnitType.{ LegalUnit, ValueAddedTax }
+import uk.gov.ons.sbr.models.edit._
 
 import scala.concurrent.Future
 
@@ -23,18 +22,26 @@ class RestAdminDataUnitLinksEditRepositorySpec extends FreeSpec with Matchers wi
     val TargetToUBRN = UnitId("987654321")
 
     val PatchTestReplaceParentLink: Patch = Seq(
-      Operation(Test, Path("/parents/", "LEU"), JsString(TargetFromUBRN.value)),
-      Operation(Replace, Path("/parents/", "LEU"), JsString(TargetToUBRN.value))
+      TestOperation(Path("/parents/", "LEU"), JsString(TargetFromUBRN.value)),
+      ReplaceOperation(Path("/parents/", "LEU"), JsString(TargetToUBRN.value))
     )
 
     val PatchCreateParentLink: Patch = Seq(
-      Operation(Add, Path("/children/", TargetVAT.value), JsString("VAT"))
+      AddOperation(Path("/children/", TargetVAT.value), JsString("VAT"))
     )
 
-    val from = IdAndType(TargetFromUBRN, LegalUnit)
-    val to = IdAndType(TargetToUBRN, LegalUnit)
+    val PatchDeleteChildLink: Patch = Seq(
+      TestOperation(Path("/children/", TargetVAT.value), JsString("VAT")),
+      RemoveOperation(Path("/children/", TargetVAT.value))
+    )
 
-    val unitKey = UnitKey(TargetToUBRN, LegalUnit, TargetPeriod)
+    val TargetFromIdAndType = IdAndType(TargetFromUBRN, LegalUnit)
+    val TargetToIdAndType = IdAndType(TargetToUBRN, LegalUnit)
+
+    val TargetUpdateUnitKey = UnitKey(UnitId(TargetVAT.value), ValueAddedTax, TargetPeriod)
+    val TargetCreateUnitKey = UnitKey(TargetToUBRN, LegalUnit, TargetPeriod)
+    val TargetDeleteUnitKey = UnitKey(TargetFromUBRN, LegalUnit, TargetPeriod)
+    val TargetVATIdAndType = IdAndType(UnitId(TargetVAT.value), ValueAddedTax)
 
     val unitRepository = mock[Repository]
     val editAdminDataRepository = new RestAdminDataUnitLinksEditRepository(unitRepository)
@@ -47,7 +54,7 @@ class RestAdminDataUnitLinksEditRepositorySpec extends FreeSpec with Matchers wi
           Future.successful(PatchSuccess)
         )
 
-        whenReady(editAdminDataRepository.updateVatParentUnitLink(from, to, TargetVAT, TargetPeriod)) { result =>
+        whenReady(editAdminDataRepository.updateVatParentUnitLink(TargetUpdateUnitKey, TargetFromIdAndType, TargetToIdAndType)) { result =>
           result shouldBe PatchSuccess
         }
       }
@@ -57,7 +64,17 @@ class RestAdminDataUnitLinksEditRepositorySpec extends FreeSpec with Matchers wi
           Future.successful(PatchSuccess)
         )
 
-        whenReady(editAdminDataRepository.createLeuChildUnitLink(unitKey, TargetVAT)) { result =>
+        whenReady(editAdminDataRepository.createLeuChildUnitLink(TargetCreateUnitKey, TargetVATIdAndType)) { result =>
+          result shouldBe PatchSuccess
+        }
+      }
+
+      "for a request to delete a child unit link" in new Fixture {
+        (unitRepository.patchJson _).expects(s"v1/periods/${Period.asString(TargetPeriod)}/types/LEU/units/${TargetFromUBRN.value}", PatchDeleteChildLink).returning(
+          Future.successful(PatchSuccess)
+        )
+
+        whenReady(editAdminDataRepository.deleteLeuChildUnitLink(TargetDeleteUnitKey, TargetVATIdAndType)) { result =>
           result shouldBe PatchSuccess
         }
       }
@@ -69,7 +86,7 @@ class RestAdminDataUnitLinksEditRepositorySpec extends FreeSpec with Matchers wi
           Future.successful(PatchRejected)
         )
 
-        whenReady(editAdminDataRepository.updateVatParentUnitLink(from, to, TargetVAT, TargetPeriod)) { result =>
+        whenReady(editAdminDataRepository.updateVatParentUnitLink(TargetUpdateUnitKey, TargetFromIdAndType, TargetToIdAndType)) { result =>
           result shouldBe PatchRejected
         }
       }
@@ -79,7 +96,17 @@ class RestAdminDataUnitLinksEditRepositorySpec extends FreeSpec with Matchers wi
           Future.successful(PatchRejected)
         )
 
-        whenReady(editAdminDataRepository.createLeuChildUnitLink(unitKey, TargetVAT)) { result =>
+        whenReady(editAdminDataRepository.createLeuChildUnitLink(TargetCreateUnitKey, TargetVATIdAndType)) { result =>
+          result shouldBe PatchRejected
+        }
+      }
+
+      "for a request to delete a child unit link" in new Fixture {
+        (unitRepository.patchJson _).expects(s"v1/periods/${Period.asString(TargetPeriod)}/types/LEU/units/${TargetFromUBRN.value}", PatchDeleteChildLink).returning(
+          Future.successful(PatchRejected)
+        )
+
+        whenReady(editAdminDataRepository.deleteLeuChildUnitLink(TargetDeleteUnitKey, TargetVATIdAndType)) { result =>
           result shouldBe PatchRejected
         }
       }
@@ -91,7 +118,7 @@ class RestAdminDataUnitLinksEditRepositorySpec extends FreeSpec with Matchers wi
           Future.successful(PatchUnitNotFound)
         )
 
-        whenReady(editAdminDataRepository.updateVatParentUnitLink(from, to, TargetVAT, TargetPeriod)) { result =>
+        whenReady(editAdminDataRepository.updateVatParentUnitLink(TargetUpdateUnitKey, TargetFromIdAndType, TargetToIdAndType)) { result =>
           result shouldBe PatchUnitNotFound
         }
       }
@@ -101,7 +128,17 @@ class RestAdminDataUnitLinksEditRepositorySpec extends FreeSpec with Matchers wi
           Future.successful(PatchUnitNotFound)
         )
 
-        whenReady(editAdminDataRepository.createLeuChildUnitLink(unitKey, TargetVAT)) { result =>
+        whenReady(editAdminDataRepository.createLeuChildUnitLink(TargetCreateUnitKey, TargetVATIdAndType)) { result =>
+          result shouldBe PatchUnitNotFound
+        }
+      }
+
+      "for a request to delete a child unit link" in new Fixture {
+        (unitRepository.patchJson _).expects(s"v1/periods/${Period.asString(TargetPeriod)}/types/LEU/units/${TargetFromUBRN.value}", PatchDeleteChildLink).returning(
+          Future.successful(PatchUnitNotFound)
+        )
+
+        whenReady(editAdminDataRepository.deleteLeuChildUnitLink(TargetDeleteUnitKey, TargetVATIdAndType)) { result =>
           result shouldBe PatchUnitNotFound
         }
       }
@@ -113,7 +150,7 @@ class RestAdminDataUnitLinksEditRepositorySpec extends FreeSpec with Matchers wi
           Future.successful(PatchConflict)
         )
 
-        whenReady(editAdminDataRepository.updateVatParentUnitLink(from, to, TargetVAT, TargetPeriod)) { result =>
+        whenReady(editAdminDataRepository.updateVatParentUnitLink(TargetUpdateUnitKey, TargetFromIdAndType, TargetToIdAndType)) { result =>
           result shouldBe PatchConflict
         }
       }
@@ -123,7 +160,17 @@ class RestAdminDataUnitLinksEditRepositorySpec extends FreeSpec with Matchers wi
           Future.successful(PatchConflict)
         )
 
-        whenReady(editAdminDataRepository.createLeuChildUnitLink(unitKey, TargetVAT)) { result =>
+        whenReady(editAdminDataRepository.createLeuChildUnitLink(TargetCreateUnitKey, TargetVATIdAndType)) { result =>
+          result shouldBe PatchConflict
+        }
+      }
+
+      "for a request to delete a child unit link" in new Fixture {
+        (unitRepository.patchJson _).expects(s"v1/periods/${Period.asString(TargetPeriod)}/types/LEU/units/${TargetFromUBRN.value}", PatchDeleteChildLink).returning(
+          Future.successful(PatchConflict)
+        )
+
+        whenReady(editAdminDataRepository.deleteLeuChildUnitLink(TargetDeleteUnitKey, TargetVATIdAndType)) { result =>
           result shouldBe PatchConflict
         }
       }
@@ -135,7 +182,7 @@ class RestAdminDataUnitLinksEditRepositorySpec extends FreeSpec with Matchers wi
           Future.successful(PatchFailure)
         )
 
-        whenReady(editAdminDataRepository.updateVatParentUnitLink(from, to, TargetVAT, TargetPeriod)) { result =>
+        whenReady(editAdminDataRepository.updateVatParentUnitLink(TargetUpdateUnitKey, TargetFromIdAndType, TargetToIdAndType)) { result =>
           result shouldBe PatchFailure
         }
       }
@@ -145,7 +192,17 @@ class RestAdminDataUnitLinksEditRepositorySpec extends FreeSpec with Matchers wi
           Future.successful(PatchFailure)
         )
 
-        whenReady(editAdminDataRepository.createLeuChildUnitLink(unitKey, TargetVAT)) { result =>
+        whenReady(editAdminDataRepository.createLeuChildUnitLink(TargetCreateUnitKey, TargetVATIdAndType)) { result =>
+          result shouldBe PatchFailure
+        }
+      }
+
+      "for a request to delete a child unit link" in new Fixture {
+        (unitRepository.patchJson _).expects(s"v1/periods/${Period.asString(TargetPeriod)}/types/LEU/units/${TargetFromUBRN.value}", PatchDeleteChildLink).returning(
+          Future.successful(PatchFailure)
+        )
+
+        whenReady(editAdminDataRepository.deleteLeuChildUnitLink(TargetDeleteUnitKey, TargetVATIdAndType)) { result =>
           result shouldBe PatchFailure
         }
       }

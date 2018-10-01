@@ -5,7 +5,12 @@ import uk.gov.ons.sbr.models._
 
 import scala.concurrent.Future
 
+/**
+ * Each unitKey is used to form the sbr-control-api URL and other parameters are used to form the Patch which is
+ * sent to sbr-control-api.
+ */
 trait AdminDataUnitLinksEditRepository {
-  def updateVatParentUnitLink(from: IdAndType, to: IdAndType, vatref: VatRef, period: Period): Future[PatchStatus]
-  def createLeuChildUnitLink(unitKey: UnitKey, vatRef: VatRef): Future[PatchStatus]
+  def updateVatParentUnitLink(unitKey: UnitKey, from: IdAndType, to: IdAndType): Future[PatchStatus]
+  def createLeuChildUnitLink(unitKey: UnitKey, childToCreate: IdAndType): Future[PatchStatus]
+  def deleteLeuChildUnitLink(unitKey: UnitKey, toDelete: IdAndType): Future[PatchStatus]
 }

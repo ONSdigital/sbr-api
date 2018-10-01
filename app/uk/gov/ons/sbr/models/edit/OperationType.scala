@@ -10,6 +10,7 @@ object OperationTypes {
   case object Test extends OperationType
   case object Replace extends OperationType
   case object Add extends OperationType
+  case object Remove extends OperationType
 }
 
 object OperationType {

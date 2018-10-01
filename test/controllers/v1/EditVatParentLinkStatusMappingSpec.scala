@@ -4,14 +4,13 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{ FreeSpec, Matchers }
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.libs.json.{ JsString, Json }
+import play.api.libs.json.JsString
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import repository.rest.PatchSuccess
 import repository.sbrctrl.RestAdminDataUnitLinksEditRepository
 import services._
 import uk.gov.ons.sbr.models._
-import uk.gov.ons.sbr.models.edit.{ Operation, OperationTypes, Path }
+import uk.gov.ons.sbr.models.edit._
 
 import scala.concurrent.Future
 
@@ -49,8 +48,8 @@ class EditVatParentLinkStatusMappingSpec extends FreeSpec with GuiceOneAppPerSui
     )
 
     val patch = Seq(
-      Operation(OperationTypes.Test, Path("/parents/", "LEU"), JsString(TargetFromLEU)),
-      Operation(OperationTypes.Replace, Path("/parents/", "LEU"), JsString(TargetToLEU))
+      TestOperation(Path("/parents/", "LEU"), JsString(TargetFromLEU)),
+      ReplaceOperation(Path("/parents/", "LEU"), JsString(TargetToLEU))
     )
 
     val editService = mock[EditService]

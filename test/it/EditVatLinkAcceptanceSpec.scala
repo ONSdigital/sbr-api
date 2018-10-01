@@ -21,18 +21,18 @@ class EditVatLinkAcceptanceSpec extends ServerAcceptanceSpec with WireMockSbrCon
 
   private val VATEditParentLinkPostBody =
     s"""{
-       |  "parent": {
-       |    "from": {
-       |      "id": "$ParentLEU",
-       |      "type": "LEU"
-       |    },
-       |    "to": {
-       |      "id": "$NewParentLEU",
-       |      "type": "LEU"
-       |    }
-       |  },
-       |  "audit": { "username": "abcd" }
-       |}""".stripMargin
+        |  "parent": {
+        |    "from": {
+        |      "id": "$ParentLEU",
+        |      "type": "LEU"
+        |    },
+        |    "to": {
+        |      "id": "$NewParentLEU",
+        |      "type": "LEU"
+        |    }
+        |  },
+        |  "audit": { "username": "abcd" }
+        |}""".stripMargin
 
   private val InvalidVATEditParentLinkPostBody = VATEditParentLinkPostBody + "}"
 
@@ -47,6 +47,12 @@ class EditVatLinkAcceptanceSpec extends ServerAcceptanceSpec with WireMockSbrCon
   private val LEUCreateChildLinkPatchBody =
     s"""|[
         |  { "op": "add", path: "/children/${TargetVAT.value}", value: "VAT" }
+        |]""".stripMargin
+
+  private val LEUDeleteChildUnitLink =
+    s"""|[
+        |  { "op": "test", path: "/children/${TargetVAT.value}", value: "VAT" },
+        |  { "op": "remove", path: "/children/${TargetVAT.value}" }
         |]""".stripMargin
 
   override type FixtureParam = WSClient
@@ -71,9 +77,16 @@ class EditVatLinkAcceptanceSpec extends ServerAcceptanceSpec with WireMockSbrCon
         .withRequestBody(equalToJson(VATEditParentLinkPatchBody))
         .willReturn(aNoContentResponse()))
 
-      stubSbrControlApiFor(aLegalUnitChildLinkCreationRequest(withUbrn = UnitId(NewParentLEU), withPeriod = TargetPeriod)
+      And(s"the request to add the new VAT child link [$TargetVAT] succeeds")
+      stubSbrControlApiFor(aLegalUnitEditRequest(withUbrn = UnitId(NewParentLEU), withPeriod = TargetPeriod)
         .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonPatchMediaType))
         .withRequestBody(equalToJson(LEUCreateChildLinkPatchBody))
+        .willReturn(aNoContentResponse()))
+
+      And(s"the request to remove the LEU child link [$TargetVAT] succeeds")
+      stubSbrControlApiFor(aLegalUnitEditRequest(withUbrn = UnitId(ParentLEU), withPeriod = TargetPeriod)
+        .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonPatchMediaType))
+        .withRequestBody(equalToJson(LEUDeleteChildUnitLink))
         .willReturn(aNoContentResponse()))
 
       When(s"an edit request for the VAT unit with $TargetVAT is requested for $TargetPeriod")
@@ -201,8 +214,14 @@ class EditVatLinkAcceptanceSpec extends ServerAcceptanceSpec with WireMockSbrCon
         .withRequestBody(equalToJson(VATEditParentLinkPatchBody))
         .willReturn(aNoContentResponse()))
 
+      And(s"the request for LEU unit [$ParentLEU] succeeds")
+      stubSbrControlApiFor(aLegalUnitEditRequest(withUbrn = UnitId(ParentLEU), withPeriod = TargetPeriod)
+        .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonPatchMediaType))
+        .withRequestBody(equalToJson(LEUDeleteChildUnitLink))
+        .willReturn(aNoContentResponse()))
+
       And(s"the requested LEU unit [$NewParentLEU] does not exist")
-      stubSbrControlApiFor(aLegalUnitChildLinkCreationRequest(withUbrn = UnitId(NewParentLEU), withPeriod = TargetPeriod)
+      stubSbrControlApiFor(aLegalUnitEditRequest(withUbrn = UnitId(NewParentLEU), withPeriod = TargetPeriod)
         .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonPatchMediaType))
         .withRequestBody(equalToJson(LEUCreateChildLinkPatchBody))
         .willReturn(aNotFoundResponse()))
@@ -226,8 +245,14 @@ class EditVatLinkAcceptanceSpec extends ServerAcceptanceSpec with WireMockSbrCon
         .withRequestBody(equalToJson(VATEditParentLinkPatchBody))
         .willReturn(aNoContentResponse()))
 
-      And(s"the requested JSON for LEU unit [$NewParentLEU] is invalid")
-      stubSbrControlApiFor(aLegalUnitChildLinkCreationRequest(withUbrn = UnitId(NewParentLEU), withPeriod = TargetPeriod)
+      And(s"the request for LEU unit [$ParentLEU] succeeds")
+      stubSbrControlApiFor(aLegalUnitEditRequest(withUbrn = UnitId(ParentLEU), withPeriod = TargetPeriod)
+        .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonPatchMediaType))
+        .withRequestBody(equalToJson(LEUDeleteChildUnitLink))
+        .willReturn(aNoContentResponse()))
+
+      And(s"the request for LEU unit [$NewParentLEU] is unprocessable (cannot be found)")
+      stubSbrControlApiFor(aLegalUnitEditRequest(withUbrn = UnitId(NewParentLEU), withPeriod = TargetPeriod)
         .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonPatchMediaType))
         .withRequestBody(equalToJson(LEUCreateChildLinkPatchBody))
         .willReturn(anUnprocessableEntityResponse()))
@@ -251,8 +276,14 @@ class EditVatLinkAcceptanceSpec extends ServerAcceptanceSpec with WireMockSbrCon
         .withRequestBody(equalToJson(VATEditParentLinkPatchBody))
         .willReturn(aNoContentResponse()))
 
-      And(s"the requested JSON for LEU unit [$NewParentLEU] is invalid")
-      stubSbrControlApiFor(aLegalUnitChildLinkCreationRequest(withUbrn = UnitId(NewParentLEU), withPeriod = TargetPeriod)
+      And(s"the request for LEU unit [$ParentLEU] fails due to general errors on sbr-control-api")
+      stubSbrControlApiFor(aLegalUnitEditRequest(withUbrn = UnitId(ParentLEU), withPeriod = TargetPeriod)
+        .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonPatchMediaType))
+        .withRequestBody(equalToJson(LEUDeleteChildUnitLink))
+        .willReturn(anInternalServerError()))
+
+      And(s"the request for LEU unit [$NewParentLEU] fails due to general errors on sbr-control-api")
+      stubSbrControlApiFor(aLegalUnitEditRequest(withUbrn = UnitId(NewParentLEU), withPeriod = TargetPeriod)
         .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonPatchMediaType))
         .withRequestBody(equalToJson(LEUCreateChildLinkPatchBody))
         .willReturn(anInternalServerError()))
