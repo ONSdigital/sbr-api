@@ -44,6 +44,12 @@ class EditVatLinkAcceptanceSpec extends ServerAcceptanceSpec with WireMockSbrCon
         |  { "op": "replace", path: "/parents/LEU", value: "$NewParentLEU" }
         |]""".stripMargin
 
+  private val VATEditParentLinkConflictPatchBody =
+    s"""|[
+        |  { "op": "test", path: "/parents/LEU", value: "$NewParentLEU" },
+        |  { "op": "replace", path: "/parents/LEU", value: "$NewParentLEU" }
+        |]""".stripMargin
+
   private val LEUCreateChildLinkPatchBody =
     s"""|[
         |  { "op": "add", path: "/children/${TargetVAT.value}", value: "VAT" }
@@ -148,6 +154,13 @@ class EditVatLinkAcceptanceSpec extends ServerAcceptanceSpec with WireMockSbrCon
         .withRequestBody(equalToJson(VATEditParentLinkPatchBody))
         .willReturn(aConflictResponse()))
 
+      And(s"And an update request using the same from/to $NewParentLEU value is submitted, to confirm the conflict")
+      And("as an actual conflict has occurred, a Conflict status is returned")
+      stubSbrControlApiFor(aVatParentLinkEditRequest(withVatRef = TargetVAT, withPeriod = TargetPeriod)
+        .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonPatchMediaType))
+        .withRequestBody(equalToJson(VATEditParentLinkConflictPatchBody))
+        .willReturn(aConflictResponse()))
+
       When(s"an edit request for the VAT unit with $TargetVAT is requested for $TargetPeriod")
       val response = await(wsClient
         .url(s"/v1/periods/${Period.asString(TargetPeriod)}/edit/vats/${TargetVAT.value}")
@@ -156,6 +169,45 @@ class EditVatLinkAcceptanceSpec extends ServerAcceptanceSpec with WireMockSbrCon
 
       Then(s"a Conflict response will be returned")
       response.status shouldBe CONFLICT
+    }
+  }
+
+  feature("retry a request (that previously failed) where only the first update operation succeeded") {
+    scenario("by VAT reference (vatref) and UBRN for a specific period") { wsClient =>
+      Given(s"a VAT record with $TargetVAT for $TargetPeriod exists")
+      And("And the UBRN from value is invalid (as the previous update operation succeeded), resulting in a Conflict")
+      stubSbrControlApiFor(aVatParentLinkEditRequest(withVatRef = TargetVAT, withPeriod = TargetPeriod)
+        .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonPatchMediaType))
+        .withRequestBody(equalToJson(VATEditParentLinkPatchBody))
+        .willReturn(aConflictResponse()))
+
+      And(s"And an update request using the same from/to $NewParentLEU value is submitted, to confirm the conflict")
+      And("as the from/to values match whats in the database, a NoContentResponse is returned")
+      stubSbrControlApiFor(aVatParentLinkEditRequest(withVatRef = TargetVAT, withPeriod = TargetPeriod)
+        .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonPatchMediaType))
+        .withRequestBody(equalToJson(VATEditParentLinkConflictPatchBody))
+        .willReturn(aNoContentResponse()))
+
+      And(s"the request to add the new VAT child link [$TargetVAT] succeeds")
+      stubSbrControlApiFor(aLegalUnitEditRequest(withUbrn = UnitId(NewParentLEU), withPeriod = TargetPeriod)
+        .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonPatchMediaType))
+        .withRequestBody(equalToJson(LEUCreateChildLinkPatchBody))
+        .willReturn(aNoContentResponse()))
+
+      And(s"the request to remove the LEU child link [$TargetVAT] succeeds")
+      stubSbrControlApiFor(aLegalUnitEditRequest(withUbrn = UnitId(ParentLEU), withPeriod = TargetPeriod)
+        .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonPatchMediaType))
+        .withRequestBody(equalToJson(LEUDeleteChildUnitLink))
+        .willReturn(aNoContentResponse()))
+
+      When(s"an edit request for the VAT unit with $TargetVAT is requested for $TargetPeriod")
+      val response = await(wsClient
+        .url(s"/v1/periods/${Period.asString(TargetPeriod)}/edit/vats/${TargetVAT.value}")
+        .withHeaders((HeaderNames.CONTENT_TYPE, JSON))
+        .post(VATEditParentLinkPostBody))
+
+      Then(s"a Created response will be returned")
+      response.status shouldBe CREATED
     }
   }
 

@@ -65,8 +65,34 @@ class UnitLinksEditServiceSpec extends FreeSpec with MockFactory with ScalaFutur
         Future.successful(PatchConflict)
       )
 
+      (repository.updateVatParentUnitLink _).expects(TargetUpdateUnitKey, TargetToIdAndType, TargetToIdAndType).returning(
+        Future.successful(PatchConflict)
+      )
+
       whenReady(editService.editVatParentUnitLink(TargetPeriod, TargetVat, TargetEditParent)) { result =>
         result shouldBe EditConflict
+      }
+    }
+
+    "returns an EditSuccess status when retrying a previously failed request" in new Fixture {
+      (repository.updateVatParentUnitLink _).expects(TargetUpdateUnitKey, TargetFromIdAndType, TargetToIdAndType).returning(
+        Future.successful(PatchConflict)
+      )
+
+      (repository.updateVatParentUnitLink _).expects(TargetUpdateUnitKey, TargetToIdAndType, TargetToIdAndType).returning(
+        Future.successful(PatchSuccess)
+      )
+
+      (repository.createLeuChildUnitLink _).expects(TargetCreateUnitKey, TargetVATIdAndType).returning(
+        Future.successful(PatchSuccess)
+      )
+
+      (repository.deleteLeuChildUnitLink _).expects(TargetDeleteUnitKey, TargetVATIdAndType).returning(
+        Future.successful(PatchSuccess)
+      )
+
+      whenReady(editService.editVatParentUnitLink(TargetPeriod, TargetVat, TargetEditParent)) { result =>
+        result shouldBe EditSuccess
       }
     }
 
