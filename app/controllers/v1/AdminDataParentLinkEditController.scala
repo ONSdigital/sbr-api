@@ -30,7 +30,26 @@ class AdminDataParentLinkEditController @Inject() (editService: EditService) ext
     new ApiResponse(code = 500, message = "The attempt to edit the VAT parent unit link could not complete due to an unrecoverable error")
   ))
   def editVatParentLink(periodStr: String, vatrefStr: String) = Action.async(JsonUnitLinkEditBodyParser) { request =>
-    editService.editVatParentUnitLink(Period.fromString(periodStr), VatRef(vatrefStr), request.body)
+    editService.editVatAdminDataParentUnitLink(Period.fromString(periodStr), VatRef(vatrefStr), request.body)
+      .map(editStatusToHttpStatus)
+  }
+
+  @ApiOperation(
+    value = "Submit JSON with edit details for editing a PAYE Parent Unit Link from one value to another",
+    notes = """Use the following template: {"parent": "from": {"id":"123456789", "type":"LEU"}, "to": {"id":"123456789", "type":"LEU"}}""",
+    consumes = "application/json",
+    code = 201,
+    httpMethod = "POST"
+  )
+  @ApiResponses(Array(
+    new ApiResponse(code = 400, message = "One or more arguments do not comply with the expected format"),
+    new ApiResponse(code = 404, message = "The specified PAYE reference could not be found in the Unit Links table"),
+    new ApiResponse(code = 409, message = "An edit conflict has occurred"),
+    new ApiResponse(code = 422, message = "The request cannot be processed, e.g. specified LEU does not exist"),
+    new ApiResponse(code = 500, message = "The attempt to edit the PAYE parent unit link could not complete due to an unrecoverable error")
+  ))
+  def editPayeParentLink(periodStr: String, payerefStr: String) = Action.async(JsonUnitLinkEditBodyParser) { request =>
+    editService.editPayeAdminDataParentUnitLink(Period.fromString(periodStr), PayeRef(payerefStr), request.body)
       .map(editStatusToHttpStatus)
   }
 

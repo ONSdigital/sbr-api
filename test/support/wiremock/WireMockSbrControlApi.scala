@@ -45,6 +45,9 @@ trait WireMockSbrControlApi extends ApiResponse with LazyLogging {
   def aVatParentLinkEditRequest(withVatRef: VatRef, withPeriod: Period): MappingBuilder =
     patch(urlEqualTo(s"/v1/periods/${Period.asString(withPeriod)}/types/VAT/units/${withVatRef.value}"))
 
+  def aPayeParentLinkEditRequest(withPayeRef: PayeRef, withPeriod: Period): MappingBuilder =
+    patch(urlEqualTo(s"/v1/periods/${Period.asString(withPeriod)}/types/PAYE/units/${withPayeRef.value}"))
+
   def aLegalUnitEditRequest(withUbrn: UnitId, withPeriod: Period): MappingBuilder =
     patch(urlEqualTo(s"/v1/periods/${Period.asString(withPeriod)}/types/LEU/units/${withUbrn.value}"))
 

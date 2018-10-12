@@ -14,7 +14,7 @@ import scala.concurrent._
 
 class RestAdminDataUnitLinksEditRepository @Inject() (@Named(SbrCtrl) unitRepository: Repository) extends AdminDataUnitLinksEditRepository with LazyLogging {
 
-  override def updateVatParentUnitLink(unitKey: UnitKey, from: IdAndType, to: IdAndType): Future[PatchStatus] = {
+  override def updateAdminDataParentUnitLink(unitKey: UnitKey, from: IdAndType, to: IdAndType): Future[PatchStatus] = {
     val updatePatch = PatchCreation.buildUpdateParentPatch(from, to)
     createUrlAndPatch(unitKey, updatePatch)
   }

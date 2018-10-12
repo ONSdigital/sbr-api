@@ -10,7 +10,7 @@ import scala.concurrent.Future
  * sent to sbr-control-api.
  */
 trait AdminDataUnitLinksEditRepository {
-  def updateVatParentUnitLink(unitKey: UnitKey, from: IdAndType, to: IdAndType): Future[PatchStatus]
+  def updateAdminDataParentUnitLink(unitKey: UnitKey, from: IdAndType, to: IdAndType): Future[PatchStatus]
   def createLeuChildUnitLink(unitKey: UnitKey, childToCreate: IdAndType): Future[PatchStatus]
   def deleteLeuChildUnitLink(unitKey: UnitKey, toDelete: IdAndType): Future[PatchStatus]
 }

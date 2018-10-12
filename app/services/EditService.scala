@@ -1,6 +1,6 @@
 package services
 
-import uk.gov.ons.sbr.models.{ EditParentLink, Period, VatRef }
+import uk.gov.ons.sbr.models.{ EditParentLink, PayeRef, Period, VatRef }
 
 import scala.concurrent.Future
 
@@ -12,5 +12,6 @@ case object EditFailure extends EditParentLinkStatus
 case object EditConflict extends EditParentLinkStatus
 
 trait EditService {
-  def editVatParentUnitLink(period: Period, vatref: VatRef, editParentLink: EditParentLink): Future[EditParentLinkStatus]
+  def editVatAdminDataParentUnitLink(period: Period, vatref: VatRef, editParentLink: EditParentLink): Future[EditParentLinkStatus]
+  def editPayeAdminDataParentUnitLink(period: Period, payeref: PayeRef, editParentLink: EditParentLink): Future[EditParentLinkStatus]
 }

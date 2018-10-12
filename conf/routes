@@ -31,6 +31,8 @@ GET     /v1/periods/:date/leus/:id      controllers.v1.SearchController.searchLe
 # Editing Endpoints
 POST     /v1/periods/$period<\d{4}(0[1-9]|1[0-2])>/edit/vats/$vatref<\d{12}>  controllers.v1.AdminDataParentLinkEditController.editVatParentLink(period, vatref)
 POST     /v1/periods/:period/edit/vats/:vatref                                controllers.BadRequestController.badRequest(period, vatref)
+POST     /v1/periods/$period<\d{4}(0[1-9]|1[0-2])>/edit/payes/$payeref<[0-9a-zA-Z]{4,12}>  controllers.v1.AdminDataParentLinkEditController.editPayeParentLink(period, payeref)
+POST     /v1/periods/:period/edit/payes/:payeref                                controllers.BadRequestController.badRequest(period, payeref)
 
 # Home
 GET     /                               controllers.HomeController.status

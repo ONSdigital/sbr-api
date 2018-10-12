@@ -7,31 +7,39 @@ import repository.AdminDataUnitLinksEditRepository
 import repository.rest._
 import uk.gov.ons.sbr.models._
 import uk.gov.ons.sbr.models.Period
-import unitref.VatUnitRef
+import unitref.{ PayeUnitRef, VatUnitRef }
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class UnitLinksEditService @Inject() (repository: AdminDataUnitLinksEditRepository) extends EditService with LazyLogging {
 
-  override def editVatParentUnitLink(period: Period, vatref: VatRef, editParentLink: EditParentLink): Future[EditParentLinkStatus] = {
-    val parent = editParentLink.parent
-    val vatIdAndType = (IdAndType.apply _).tupled(VatUnitRef.toIdTypePair(vatref))
-    val updateParentUnitKey = UnitKey(vatIdAndType.id, vatIdAndType.`type`, period)
+  override def editVatAdminDataParentUnitLink(period: Period, vatref: VatRef, editParentLink: EditParentLink): Future[EditParentLinkStatus] = {
+    val idAndType = (IdAndType.apply _).tupled(VatUnitRef.toIdTypePair(vatref))
+    submitEditRequests(period, idAndType, editParentLink.parent)
+  }
+
+  override def editPayeAdminDataParentUnitLink(period: Period, payeref: PayeRef, editParentLink: EditParentLink): Future[EditParentLinkStatus] = {
+    val idAndType = (IdAndType.apply _).tupled(PayeUnitRef.toIdTypePair(payeref))
+    submitEditRequests(period, idAndType, editParentLink.parent)
+  }
+
+  private def submitEditRequests(period: Period, idAndType: IdAndType, parent: Parent): Future[EditParentLinkStatus] = {
+    val updateParentUnitKey = UnitKey(idAndType.id, idAndType.`type`, period)
     val createChildUnitKey = UnitKey(parent.to.id, parent.to.`type`, period)
     val deleteChildUnitKey = UnitKey(parent.from.id, parent.from.`type`, period)
 
-    updateVatParentUnitLinkAndHandleConflict(updateParentUnitKey, parent) flatMap {
+    updateAdminDataParentUnitLinkAndHandleConflict(updateParentUnitKey, parent) flatMap {
       case PatchSuccess => Future.sequence(Seq(
-        repository.createLeuChildUnitLink(createChildUnitKey, vatIdAndType),
-        repository.deleteLeuChildUnitLink(deleteChildUnitKey, vatIdAndType)
+        repository.createLeuChildUnitLink(createChildUnitKey, idAndType),
+        repository.deleteLeuChildUnitLink(deleteChildUnitKey, idAndType)
       )).map(reducePatchStatuses)
       case failedStatus => Future.successful(failedStatus)
     } map patchStatusToEditStatus
   }
 
   /**
-   * When the user submits an editVatParentUnitLink request, if the update operation succeeds but any of the
+   * When the user submits an editAdminDataParentUnitLink request, if the update operation succeeds but any of the
    * subsequent create/delete operations fail, the request will need to be retried by the user, to maintain
    * data consistency in HBase.
    *
@@ -40,9 +48,9 @@ class UnitLinksEditService @Inject() (repository: AdminDataUnitLinksEditReposito
    * request, just with the from/to value being the updated (to) value, thus the request will succeed and the
    * subsequent add/delete operations can be submitted.
    */
-  private def updateVatParentUnitLinkAndHandleConflict(unitKey: UnitKey, parent: Parent): Future[PatchStatus] = {
-    repository.updateVatParentUnitLink(unitKey, parent.from, parent.to) flatMap {
-      case PatchConflict => repository.updateVatParentUnitLink(unitKey, parent.to, parent.to)
+  private def updateAdminDataParentUnitLinkAndHandleConflict(unitKey: UnitKey, parent: Parent): Future[PatchStatus] = {
+    repository.updateAdminDataParentUnitLink(unitKey, parent.from, parent.to) flatMap {
+      case PatchConflict => repository.updateAdminDataParentUnitLink(unitKey, parent.to, parent.to)
       case patchStatus => Future.successful(patchStatus)
     }
   }
