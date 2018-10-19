@@ -60,7 +60,7 @@ pipeline {
                     agent { label "build.${agentSbtVersion}" }
                     steps {
                         unstash name: 'Checkout'
-                        sh 'sbt coverage test coverageReport coverageAggregate'
+                        sh 'sbt coverage test coverageReport'
                     }
                     post {
                         always {
@@ -114,6 +114,7 @@ pipeline {
             steps {
                 unstash name: 'Checkout'
                 sh "sbt it:test"
+                milestone label: 'post test:acceptance', ordinal: 1
             }
             post {
                 always {
@@ -189,16 +190,19 @@ pipeline {
                 dir('config') {
                     git url: "${GITLAB_URL}/StatBusReg/${env.SVC_NAME}.git", credentialsId: 'JenkinsSBR__gitlab'
                 }
-                script {
-                    cfDeploy {
-                        credentialsId = "${this.env.CREDS}"
-                        org = "${this.env.ORG}"
-                        space = "${this.env.SPACE}"
-                        appName = "${this.env.SPACE.toLowerCase()}-${this.env.SVC_NAME}"
-                        appPath = "./${distDir}/${this.env.SVC_NAME}.zip"
-                        manifestPath  = "config/${this.env.SPACE.toLowerCase()}/manifest.yml"
+                lock("${this.env.SPACE.toLowerCase()}-${this.env.SVC_NAME}"){
+                    script {
+                        cfDeploy {
+                            credentialsId = "${this.env.CREDS}"
+                            org = "${this.env.ORG}"
+                            space = "${this.env.SPACE}"
+                            appName = "${this.env.SPACE.toLowerCase()}-${this.env.SVC_NAME}"
+                            appPath = "./${distDir}/${this.env.SVC_NAME}.zip"
+                            manifestPath  = "config/${this.env.SPACE.toLowerCase()}/manifest.yml"
+                        }
                     }
                 }
+                milestone label: 'post deploy:dev', ordinal: 1
             }
             post {
                 success {
@@ -238,16 +242,19 @@ pipeline {
                 dir('config') {
                     git url: "${GITLAB_URL}/StatBusReg/${env.SVC_NAME}.git", credentialsId: 'JenkinsSBR__gitlab'
                 }
-                script {
-                    cfDeploy {
-                        credentialsId = "${this.env.CREDS}"
-                        org = "${this.env.ORG}"
-                        space = "${this.env.SPACE}"
-                        appName = "${this.env.SPACE.toLowerCase()}-${this.env.SVC_NAME}"
-                        appPath = "./${distDir}/${this.env.SVC_NAME}.zip"
-                        manifestPath  = "config/${this.env.SPACE.toLowerCase()}/manifest.yml"
+                lock("${this.env.SPACE.toLowerCase()}-${this.env.SVC_NAME}"){
+                    script {
+                        cfDeploy {
+                            credentialsId = "${this.env.CREDS}"
+                            org = "${this.env.ORG}"
+                            space = "${this.env.SPACE}"
+                            appName = "${this.env.SPACE.toLowerCase()}-${this.env.SVC_NAME}"
+                            appPath = "./${distDir}/${this.env.SVC_NAME}.zip"
+                            manifestPath  = "config/${this.env.SPACE.toLowerCase()}/manifest.yml"
+                        }
                     }
                 }
+                milestone label: 'post deploy:test', ordinal: 1
             }
             post {
                 success {
