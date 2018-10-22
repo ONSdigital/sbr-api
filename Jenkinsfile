@@ -202,7 +202,7 @@ pipeline {
                         }
                     }
                 }
-                milestone label: 'post deploy:dev', ordinal: 1
+                milestone label: 'post deploy:dev', ordinal: 2
             }
             post {
                 success {
@@ -254,7 +254,7 @@ pipeline {
                         }
                     }
                 }
-                milestone label: 'post deploy:test', ordinal: 1
+                milestone label: 'post deploy:test', ordinal: 3
             }
             post {
                 success {
