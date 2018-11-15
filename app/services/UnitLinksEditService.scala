@@ -1,16 +1,14 @@
 package services
 
-import javax.inject.Inject
-
 import com.typesafe.scalalogging.LazyLogging
+import javax.inject.Inject
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import repository.AdminDataUnitLinksEditRepository
 import repository.rest._
-import uk.gov.ons.sbr.models._
-import uk.gov.ons.sbr.models.Period
+import uk.gov.ons.sbr.models.{ Period, _ }
 import unitref.{ PayeUnitRef, VatUnitRef }
 
 import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
 
 class UnitLinksEditService @Inject() (repository: AdminDataUnitLinksEditRepository) extends EditService with LazyLogging {
 
