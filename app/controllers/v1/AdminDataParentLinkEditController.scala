@@ -1,15 +1,13 @@
 package controllers.v1
 
-import javax.inject.{ Inject, Singleton }
-
 import com.typesafe.scalalogging.LazyLogging
 import io.swagger.annotations.{ Api, ApiOperation, ApiResponse, ApiResponses }
+import javax.inject.{ Inject, Singleton }
 import parsers.JsonUnitLinkEditBodyParser
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc.{ Action, Controller, Result }
 import services._
 import uk.gov.ons.sbr.models._
-
-import scala.concurrent.ExecutionContext.Implicits.global
 
 @Api("AdminDataEdit")
 @Singleton
