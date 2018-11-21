@@ -18,8 +18,8 @@ import play.api.test.WsTestClient
 import support.wiremock.WireMockSbrControlApi
 import tracing.SpanNameCleaningReporter
 import uk.gov.ons.sbr.models.{ Ern, Period }
-import zipkin.Span
-import zipkin.reporter.Reporter
+import zipkin2.Span
+import zipkin2.reporter.Reporter
 
 import scala.collection._
 

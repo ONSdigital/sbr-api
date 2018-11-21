@@ -1,8 +1,8 @@
 package tracing
 
 import tracing.SpanNameCleaningReporter.regexPathParam
-import zipkin.Span
-import zipkin.reporter.Reporter
+import zipkin2.Span
+import zipkin2.reporter.Reporter
 
 /*
  * A Zipkin Reporter that "cleans up" spanNames by removing regex definitions and then forwards the modified span

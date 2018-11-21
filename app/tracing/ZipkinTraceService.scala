@@ -8,8 +8,8 @@ import javax.inject.{ Inject, Singleton }
 import jp.co.bizreach.trace.ZipkinTraceConfig.{ AkkaName, ZipkinSampleRate }
 import jp.co.bizreach.trace.ZipkinTraceServiceLike
 import play.api.Configuration
-import zipkin.Span
-import zipkin.reporter.Reporter
+import zipkin2.Span
+import zipkin2.reporter.Reporter
 
 import scala.concurrent.ExecutionContext
 

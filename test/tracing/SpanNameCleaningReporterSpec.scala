@@ -4,8 +4,8 @@ import java.lang.System.currentTimeMillis
 
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{ FreeSpec, Matchers }
-import zipkin.Span
-import zipkin.reporter.Reporter
+import zipkin2.Span
+import zipkin2.reporter.Reporter
 
 class SpanNameCleaningReporterSpec extends FreeSpec with Matchers with MockFactory {
 

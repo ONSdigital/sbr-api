@@ -9,9 +9,9 @@ import play.api.mvc.{ ActionBuilder, Filter }
 import play.api.{ Configuration, Environment }
 import tracing._
 import utils.url.Url
-import zipkin.Span
-import zipkin.reporter.okhttp3.OkHttpSender
-import zipkin.reporter.{ AsyncReporter, Reporter }
+import zipkin2.Span
+import zipkin2.reporter.okhttp3.OkHttpSender
+import zipkin2.reporter.{ AsyncReporter, Reporter }
 
 /*
  * An attempt to keep all configuration relating to tracing in an isolated module, as this is not a core
