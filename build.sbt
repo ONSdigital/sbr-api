@@ -29,8 +29,7 @@ lazy val ITest = config("it") extend Test
   * HARD VARS
   */
 lazy val Versions = new {
-  val scala = "2.11.11"
-  val scapegoatVersion = "1.1.0"
+  val scala = "2.12.7"
 }
 
 lazy val Constant = new {
@@ -78,7 +77,7 @@ lazy val publishingSettings: Seq[Def.Setting[_]] = Seq(
     art.withType("jar").withClassifier(Some("assembly"))
   },
   // @TODO - add naming convention config in (Compile, assembly)
-  artifactName := { (sv: ScalaVersion, module: ModuleID, artifact: Artifact) =>
+  artifactName := { (_: ScalaVersion, module: ModuleID, artifact: Artifact) =>
     module.organization + "_" + artifact.name + "-" + artifact.classifier.getOrElse("package") + "-" + module.revision + "." + artifact.extension
   },
   credentials += Credentials("Artifactory Realm", applicationConfig.value("artifactoryHost"),
@@ -138,18 +137,17 @@ lazy val assemblySettings: Seq[Def.Setting[_]] = Seq(
 lazy val devDeps = Seq(
   ws,
   filters,
-  "org.scalatestplus.play"       %%    "scalatestplus-play"  %    "2.0.0"           % Test,
-  "org.scalatest"                %%    "scalatest"           %    "3.0.4"           % Test,
-  "com.github.tomakehurst"       %     "wiremock"            %    "1.58"            % Test,
+  "org.scalatestplus.play"       %%    "scalatestplus-play"  %    "3.1.2"           % Test,
+  "org.scalatest"                %%    "scalatest"           %    "3.0.5"           % Test,
+  "com.github.tomakehurst"       %     "wiremock"            %    "2.19.0"          % Test,
   "org.scalamock"                %%    "scalamock"           %    "4.1.0"           % Test,
-  "org.webjars"                  %%    "webjars-play"        %    "2.5.0-3",
-  "com.typesafe.scala-logging"   %%    "scala-logging"       %    "3.5.0",
-  "io.swagger"                   %%    "swagger-play2"       %    "1.5.3",
-  "io.lemonlabs"                 %%    "scala-uri"           %    "0.5.0",
-  "org.webjars"                  %     "swagger-ui"          %    "3.1.4",
-  "com.typesafe"                 %     "config"              %    "1.3.1"
+  "com.typesafe.scala-logging"   %%    "scala-logging"       %    "3.9.0",
+  "io.swagger"                   %%    "swagger-play2"       %    "1.6.0",
+  "io.lemonlabs"                 %%    "scala-uri"           %    "1.4.0",
+  "org.webjars"                  %     "swagger-ui"          %    "3.19.5",
+  "com.typesafe"                 %     "config"              %    "1.3.3"
     excludeAll ExclusionRule("commons-logging", "commons-logging"),
-  "jp.co.bizreach"               %%    "play-zipkin-tracing-play25" % "1.2.0"       // Zipkin v1 support (not v2)
+  "jp.co.bizreach"               %% "play-zipkin-tracing-play" %  "2.1.0"
 )
 
 /*
@@ -199,6 +197,7 @@ lazy val api = (project in file("."))
   .settings(assemblySettings:_*)
   .settings(
     scalaVersion := Versions.scala,
+    scapegoatVersion in ThisBuild := "1.3.8",
     developers := List(Developer("Adrian Harris (Tech Lead)", "SBR", "ons-sbr-team@ons.gov.uk", new java.net.URL(s"https:///v1/home"))),
     moduleName := "sbr-api",
     organizationName := "ons",
