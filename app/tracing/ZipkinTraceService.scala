@@ -23,7 +23,7 @@ class ZipkinTraceService @Inject() (conf: Configuration, actorSystem: ActorSyste
 
   override val tracing: Tracing = Tracing.newBuilder()
     .localServiceName("sbr-api")
-    .reporter(reporter)
+    .spanReporter(reporter)
     .sampler(samplerFrom(conf))
     .build()
 
