@@ -11,11 +11,11 @@ import javax.inject.{Inject, Singleton}
 import javax.naming.ServiceUnavailableException
 import org.slf4j.{Logger, LoggerFactory}
 import play.api.Configuration
-import play.api.i18n.{I18nSupport, Messages, MessagesApi}
+import play.api.i18n.{I18nSupport, Messages, MessagesProvider}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.{JsValue, Json, _}
 import play.api.libs.ws.WSResponse
-import play.api.mvc.{Action, AnyContent, Controller, Result}
+import play.api.mvc._
 import services.RequestGenerator
 import uk.gov.ons.sbr.models._
 import utils.FutureResponse.futureSuccess
@@ -28,8 +28,7 @@ import scala.util.Try
 
 @Api("Search")
 @Singleton
-class SearchController @Inject() (implicit ws: RequestGenerator, val configuration: Configuration,
-    val messagesApi: MessagesApi) extends Controller with StrictLogging with Properties with I18nSupport {
+class SearchController @Inject() (val configuration: Configuration, mcc: MessagesControllerComponents)(implicit ws: RequestGenerator) extends MessagesAbstractController(mcc) with StrictLogging with Properties {
 
   private[this] val LOGGER: Logger = LoggerFactory.getLogger(getClass.getName)
 
@@ -97,13 +96,13 @@ class SearchController @Inject() (implicit ws: RequestGenerator, val configurati
   def searchLeUWithPeriod(
     @ApiParam(value = "Identifier creation date", example = "2017/07", required = true) date: String,
     @ApiParam(value = "A legal unit identifier", example = "<some example>", required = true) id: String
-  ): Action[AnyContent] = Action.async {
+  ): Action[AnyContent] = Action.async { implicit request =>
     LOGGER.info(s"Sending request to Control Api to retrieve legal unit with $id and $date")
     val uri = createUri(SBR_CONTROL_API_URL, id, Some(date), Some(LEU))
     search[StatisticalUnitLinkType](id, uri, LEU, Some(date))
   }
 
-  private def search[T](key: String, baseUrl: Uri, sourceType: DataSourceTypes = ENT, periodParam: Option[String] = None, history: Option[Int] = None)(implicit fjs: Reads[T], ws: RequestGenerator): Future[Result] =
+  private def search[T](key: String, baseUrl: Uri, sourceType: DataSourceTypes = ENT, periodParam: Option[String] = None, history: Option[Int] = None)(implicit fjs: Reads[T], ws: RequestGenerator, messagesProvider: MessagesProvider): Future[Result] =
     key match {
       case k if k.length >= MINIMUM_KEY_LENGTH =>
         LOGGER.debug(s"Sending request to ${baseUrl.toString} to retrieve Unit Links")
@@ -242,7 +241,7 @@ class SearchController @Inject() (implicit ws: RequestGenerator, val configurati
       case LOU => SBR_CONTROL_API_URL
     }
 
-  private def responseException: PartialFunction[Throwable, Result] = {
+  private def responseException(implicit messagesProvider: MessagesProvider): PartialFunction[Throwable, Result] = {
     case ex: DateTimeParseException =>
       BadRequest(Messages("controller.datetime.failed.parse", ex.toString))
     case ex: RuntimeException =>
