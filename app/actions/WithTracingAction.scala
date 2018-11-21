@@ -3,7 +3,7 @@ package actions
 import brave.Span
 import javax.inject.Inject
 import jp.co.bizreach.trace.ZipkinTraceServiceLike
-import jp.co.bizreach.trace.play25.implicits.ZipkinTraceImplicits
+import jp.co.bizreach.trace.play.implicits.ZipkinTraceImplicits
 import play.api.mvc.{ ActionBuilder, ActionTransformer, Request, WrappedRequest }
 import tracing.TraceData
 

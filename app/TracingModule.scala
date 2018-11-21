@@ -1,17 +1,17 @@
-import actions.{ TracedRequest, WithTracingAction }
+import actions.{TracedRequest, WithTracingAction}
 import com.google.inject.name.Names.named
-import com.google.inject.{ AbstractModule, Provides, TypeLiteral }
+import com.google.inject.{AbstractModule, Provides, TypeLiteral}
 import config.BaseUrlConfigLoader
 import jp.co.bizreach.trace.ZipkinTraceServiceLike
-import jp.co.bizreach.trace.play25.filter.ZipkinTraceFilter
-import play.api.Mode.{ Dev, Prod, Test }
-import play.api.mvc.{ ActionBuilder, Filter }
-import play.api.{ Configuration, Environment }
+import jp.co.bizreach.trace.play.filter.ZipkinTraceFilter
+import play.api.Mode.{Dev, Prod, Test}
+import play.api.mvc.{ActionBuilder, Filter}
+import play.api.{Configuration, Environment}
 import tracing._
 import utils.url.Url
 import zipkin2.Span
 import zipkin2.reporter.okhttp3.OkHttpSender
-import zipkin2.reporter.{ AsyncReporter, Reporter }
+import zipkin2.reporter.{AsyncReporter, Reporter}
 
 /*
  * An attempt to keep all configuration relating to tracing in an isolated module, as this is not a core
