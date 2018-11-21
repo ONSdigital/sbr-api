@@ -2,7 +2,7 @@ package controllers.v1
 
 import java.time.format.DateTimeParseException
 
-import com.netaporter.uri.Uri
+import io.lemonlabs.uri.Uri
 import com.typesafe.scalalogging.StrictLogging
 import config.Properties
 import javax.naming.ServiceUnavailableException

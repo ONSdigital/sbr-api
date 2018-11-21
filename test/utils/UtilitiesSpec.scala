@@ -1,6 +1,6 @@
 package utils
 
-import com.netaporter.uri.Uri
+import io.lemonlabs.uri.Uri
 import play.api.libs.json._
 import support.TestUtils
 import uk.gov.ons.sbr.models.{ CRN, ENT }
