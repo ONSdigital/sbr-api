@@ -14,7 +14,7 @@ import unitref.UnitRef
 @Singleton
 class LocalUnitController @Inject() (
     unitRefType: UnitRef[Lurn],
-    tracingAction: ActionBuilder[TracedRequest],
+    tracingAction: ActionBuilder[TracedRequest, AnyContent],
     retrieveLinkedUnitAction: LinkedUnitTracedRequestActionFunctionMaker[Lurn],
     handleLinkedUnitRetrievalResult: LinkedUnitRetrievalHandler[Result]
 ) extends LinkedUnitController[Lurn](unitRefType, tracingAction, retrieveLinkedUnitAction, handleLinkedUnitRetrievalResult) {

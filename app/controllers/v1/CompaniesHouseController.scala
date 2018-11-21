@@ -14,7 +14,7 @@ import unitref.UnitRef
 @Singleton
 class CompaniesHouseController @Inject() (
     unitRefType: UnitRef[CompanyRefNumber],
-    tracingAction: ActionBuilder[TracedRequest],
+    tracingAction: ActionBuilder[TracedRequest, AnyContent],
     retrieveLinkedUnitAction: LinkedUnitTracedRequestActionFunctionMaker[CompanyRefNumber],
     handleLinkedUnitRetrievalResult: LinkedUnitRetrievalHandler[Result]
 ) extends LinkedUnitController[CompanyRefNumber](unitRefType, tracingAction, retrieveLinkedUnitAction, handleLinkedUnitRetrievalResult) {

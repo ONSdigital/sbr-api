@@ -4,14 +4,17 @@ import brave.Span
 import javax.inject.Inject
 import jp.co.bizreach.trace.ZipkinTraceServiceLike
 import jp.co.bizreach.trace.play.implicits.ZipkinTraceImplicits
-import play.api.mvc.{ ActionBuilder, ActionTransformer, Request, WrappedRequest }
+import play.api.mvc._
 import tracing.TraceData
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class TracedRequest[A](val traceData: TraceData, originalRequest: Request[A]) extends WrappedRequest[A](originalRequest)
 
-class WithTracingAction @Inject() (val tracer: ZipkinTraceServiceLike) extends ActionBuilder[TracedRequest] with ActionTransformer[Request, TracedRequest] with ZipkinTraceImplicits {
+class WithTracingAction @Inject() (val parser: BodyParser[AnyContent], val tracer: ZipkinTraceServiceLike)
+                                  (implicit val executionContext: ExecutionContext) extends
+  ActionBuilder[TracedRequest, AnyContent] with ActionTransformer[Request, TracedRequest] with ZipkinTraceImplicits {
+
   override protected def transform[A](request: Request[A]): Future[TracedRequest[A]] =
     Future.successful(newRequestWithTraceData(request))
 

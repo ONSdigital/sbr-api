@@ -14,7 +14,7 @@ import unitref.UnitRef
 @Singleton
 class VatController @Inject() (
     unitRefType: UnitRef[VatRef],
-    tracingAction: ActionBuilder[TracedRequest],
+    tracingAction: ActionBuilder[TracedRequest, AnyContent],
     retrieveLinkedUnitAction: LinkedUnitTracedRequestActionFunctionMaker[VatRef],
     handleLinkedUnitRetrievalResult: LinkedUnitRetrievalHandler[Result]
 ) extends LinkedUnitController[VatRef](unitRefType, tracingAction, retrieveLinkedUnitAction, handleLinkedUnitRetrievalResult) {

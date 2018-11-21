@@ -14,7 +14,7 @@ import unitref.UnitRef
  */
 private[v1] class LinkedUnitController[T](
     unitRefType: UnitRef[T],
-    withTracingAction: ActionBuilder[TracedRequest],
+    withTracingAction: ActionBuilder[TracedRequest, AnyContent],
     retrieveLinkedUnitAction: LinkedUnitTracedRequestActionFunctionMaker[T],
     handleLinkedUnitRetrievalResult: LinkedUnitRetrievalHandler[Result]
 ) extends Controller {

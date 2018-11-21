@@ -14,7 +14,7 @@ import unitref.UnitRef
 @Singleton
 class PayeController @Inject() (
     unitRefType: UnitRef[PayeRef],
-    tracingAction: ActionBuilder[TracedRequest],
+    tracingAction: ActionBuilder[TracedRequest, AnyContent],
     retrieveLinkedUnitAction: LinkedUnitTracedRequestActionFunctionMaker[PayeRef],
     handleLinkedUnitRetrievalResult: LinkedUnitRetrievalHandler[Result]
 ) extends LinkedUnitController[PayeRef](unitRefType, tracingAction, retrieveLinkedUnitAction, handleLinkedUnitRetrievalResult) {

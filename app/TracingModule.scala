@@ -5,7 +5,7 @@ import config.BaseUrlConfigLoader
 import jp.co.bizreach.trace.ZipkinTraceServiceLike
 import jp.co.bizreach.trace.play.filter.ZipkinTraceFilter
 import play.api.Mode.{Dev, Prod, Test}
-import play.api.mvc.{ActionBuilder, Filter}
+import play.api.mvc.{ActionBuilder, AnyContent, Filter}
 import play.api.{Configuration, Environment}
 import tracing._
 import utils.url.Url
@@ -22,7 +22,7 @@ class TracingModule(environment: Environment, configuration: Configuration) exte
     bind(classOf[ZipkinTraceServiceLike]).to(classOf[ZipkinTraceService])
     bind(classOf[Filter]).annotatedWith(named(TracingFilterName)).to(classOf[ZipkinTraceFilter])
     bind(classOf[TraceWSClient]).to(classOf[ZipkinTraceWSClient])
-    bind(new TypeLiteral[ActionBuilder[TracedRequest]]() {}).to(classOf[WithTracingAction])
+    bind(new TypeLiteral[ActionBuilder[TracedRequest, AnyContent]]() {}).to(classOf[WithTracingAction])
     () // Explicitly return unit to avoid warning about discarded non-Unit value.
   }
 
