@@ -75,11 +75,11 @@ lazy val publishingSettings: Seq[Def.Setting[_]] = Seq(
       Some("Artifactory Realm" at applicationConfig.value("artifactoryAddress"))
   },
   artifact in (Compile, assembly) ~= { art =>
-    art.copy(`type` = "jar", `classifier` = Some("assembly"))
+    art.withType("jar").withClassifier(Some("assembly"))
   },
   // @TODO - add naming convention config in (Compile, assembly)
-  artifactName := { (sv: ScalaVersion, module: ModuleID, artefact: Artifact) =>
-    module.organization + "_" + artefact.name + "-" + artefact.classifier.getOrElse("package") + "-" + module.revision + "." + artefact.extension
+  artifactName := { (sv: ScalaVersion, module: ModuleID, artifact: Artifact) =>
+    module.organization + "_" + artifact.name + "-" + artifact.classifier.getOrElse("package") + "-" + module.revision + "." + artifact.extension
   },
   credentials += Credentials("Artifactory Realm", applicationConfig.value("artifactoryHost"),
     applicationConfig.value("artifactoryUser"), applicationConfig.value("artifactoryPassword")),
