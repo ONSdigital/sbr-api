@@ -1,12 +1,10 @@
 package repository.rest
 
-import javax.inject.Inject
-
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{ EitherValues, FreeSpec, Matchers }
-import play.api.libs.ws.{ WSClient, WSRequest, WSResponse }
-import tracing.{ TraceData, TraceWSClient }
+import org.scalatest.{EitherValues, FreeSpec, Matchers}
+import play.api.libs.ws.{WSClient, WSRequest, WSResponse}
+import tracing.{TraceData, TraceWSClient}
 import utils.url.BaseUrl
 import utils.url.BaseUrl.Protocol.Http
 

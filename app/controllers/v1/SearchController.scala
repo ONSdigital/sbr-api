@@ -11,7 +11,7 @@ import javax.inject.{Inject, Singleton}
 import javax.naming.ServiceUnavailableException
 import org.slf4j.{Logger, LoggerFactory}
 import play.api.Configuration
-import play.api.i18n.{I18nSupport, Messages, MessagesProvider}
+import play.api.i18n.{Messages, MessagesProvider}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.{JsValue, Json, _}
 import play.api.libs.ws.WSResponse

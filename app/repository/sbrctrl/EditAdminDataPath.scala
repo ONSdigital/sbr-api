@@ -1,6 +1,6 @@
 package repository.sbrctrl
 
-import uk.gov.ons.sbr.models.{ Period, UnitId, UnitKey, UnitType }
+import uk.gov.ons.sbr.models.{Period, UnitKey, UnitType}
 
 private[sbrctrl] object EditAdminDataPath {
   def apply(unitKey: UnitKey): String =

@@ -8,11 +8,11 @@ import handlers.LinkedUnitRetrievalHandler
 import jp.co.bizreach.trace.ZipkinTraceServiceLike
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{FreeSpec, Matchers}
-import org.scalatestplus.play.guice.{GuiceOneAppPerSuite, GuiceOneAppPerTest}
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.mvc.Results.NotFound
 import play.api.mvc._
-import play.api.test.{FakeRequest, StubPlayBodyParsersFactory}
 import play.api.test.Helpers._
+import play.api.test.{FakeRequest, StubPlayBodyParsersFactory}
 import services.LinkedUnitService
 import support.tracing.FakeTracing
 import tracing.TraceData

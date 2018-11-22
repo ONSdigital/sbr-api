@@ -6,19 +6,18 @@ import jp.co.bizreach.trace.ZipkinTraceServiceLike
 import org.scalamock.scalatest.MockFactory
 import org.scalatest._
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.time.{ Millis, Second, Span }
+import org.scalatest.time.{Millis, Second, Span}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import parsers.JsonUnitLinkEditBodyParser
 import play.api.Application
 import play.api.http.HeaderNames
-import play.api.http.Status.{ BAD_REQUEST, SERVICE_UNAVAILABLE }
+import play.api.http.Status.{BAD_REQUEST, SERVICE_UNAVAILABLE}
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.libs.json.{ JsString, Json }
-import play.api.libs.ws.WSClient
+import play.api.libs.json.{JsString, Json}
 import support.wiremock.WireMockSbrControlApi
-import tracing.{ TraceData, TraceWSClient }
-import uk.gov.ons.sbr.models.{ Period, VatRef }
-import uk.gov.ons.sbr.models.edit.{ Operation, OperationTypes, _ }
+import tracing.{TraceData, TraceWSClient}
+import uk.gov.ons.sbr.models.edit._
+import uk.gov.ons.sbr.models.{Period, VatRef}
 import utils.url.BaseUrl
 import utils.url.BaseUrl.Protocol.Http
 

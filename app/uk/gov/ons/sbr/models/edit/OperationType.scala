@@ -1,8 +1,6 @@
 package uk.gov.ons.sbr.models.edit
 
 import play.api.libs.json._
-import play.api.libs.json.Reads.JsStringReads
-import uk.gov.ons.sbr.models.edit.OperationTypes.{ Replace, Test }
 
 sealed trait OperationType
 

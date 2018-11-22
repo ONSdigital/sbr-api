@@ -1,8 +1,8 @@
 package utils.edit
 
 import play.api.libs.json.JsString
-import uk.gov.ons.sbr.models.{ IdAndType, UnitId, UnitType }
 import uk.gov.ons.sbr.models.edit._
+import uk.gov.ons.sbr.models.{IdAndType, UnitType}
 
 object PatchCreation {
 
