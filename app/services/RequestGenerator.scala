@@ -40,7 +40,7 @@ class RequestGenerator @Inject() (
 
   def singleGETRequest(path: String, headers: Seq[(String, String)] = Seq.empty, params: Seq[(String, String)] = Seq.empty): Future[WSResponse] =
     ws.url(path.toString)
-      .withQueryString(params: _*)
+      .withQueryStringParameters(params: _*)
       .withHttpHeaders(headers: _*)
       .withRequestTimeout(Duration(TIMEOUT_REQUEST, DURATION_METRIC))
       .get
