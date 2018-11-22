@@ -8,9 +8,9 @@ import org.scalatest._
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Millis, Second, Span}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import parsers.JsonUnitLinkEditBodyParser
+import parsers.JsonUnitLinkEditBodyParser.JsonPatchMediaType
 import play.api.Application
-import play.api.http.HeaderNames
+import play.api.http.HeaderNames.CONTENT_TYPE
 import play.api.http.Status.{BAD_REQUEST, SERVICE_UNAVAILABLE}
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.{JsString, Json}
@@ -108,7 +108,7 @@ class RestRepository_WiremockSpec extends org.scalatest.fixture.FreeSpec with Gu
     "when requested to patch json for a resource" - {
       "returns PatchSuccess when the resource is found" in { fixture =>
         stubSbrControlApiFor(aVatParentLinkEditRequest(withVatRef = TargetVAT, withPeriod = TargetPeriod)
-          .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonUnitLinkEditBodyParser.JsonPatchMediaType))
+          .withHeader(CONTENT_TYPE, equalTo(JsonPatchMediaType))
           .withRequestBody(equalToJson(VATEditParentLinkPatchBody))
           .willReturn(aNoContentResponse()))
 
@@ -168,7 +168,7 @@ class RestRepository_WiremockSpec extends org.scalatest.fixture.FreeSpec with Gu
       "when requested to patch json for a resource" - {
         "when the response is a server error" in { fixture =>
           stubSbrControlApiFor(aVatParentLinkEditRequest(withVatRef = TargetVAT, withPeriod = TargetPeriod)
-            .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonUnitLinkEditBodyParser.JsonPatchMediaType))
+            .withHeader(CONTENT_TYPE, equalTo(JsonPatchMediaType))
             .withRequestBody(equalToJson(VATEditParentLinkPatchBody))
             .willReturn(anInternalServerError()))
 
@@ -179,7 +179,7 @@ class RestRepository_WiremockSpec extends org.scalatest.fixture.FreeSpec with Gu
 
         "when the patch request is rejected" in { fixture =>
           stubSbrControlApiFor(aVatParentLinkEditRequest(withVatRef = TargetVAT, withPeriod = TargetPeriod)
-            .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonUnitLinkEditBodyParser.JsonPatchMediaType))
+            .withHeader(CONTENT_TYPE, equalTo(JsonPatchMediaType))
             .withRequestBody(equalToJson(VATEditParentLinkPatchBody))
             .willReturn(anUnprocessableEntityResponse()))
 
@@ -190,7 +190,7 @@ class RestRepository_WiremockSpec extends org.scalatest.fixture.FreeSpec with Gu
 
         "when the response is conflict" in { fixture =>
           stubSbrControlApiFor(aVatParentLinkEditRequest(withVatRef = TargetVAT, withPeriod = TargetPeriod)
-            .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonUnitLinkEditBodyParser.JsonPatchMediaType))
+            .withHeader(CONTENT_TYPE, equalTo(JsonPatchMediaType))
             .withRequestBody(equalToJson(VATEditParentLinkPatchBody))
             .willReturn(aConflictResponse()))
 
@@ -200,11 +200,11 @@ class RestRepository_WiremockSpec extends org.scalatest.fixture.FreeSpec with Gu
         }
 
         /*
-       * Test patienceConfig must exceed the fixedDelay for this to work ...
-       */
+         * Test patienceConfig must exceed the fixedDelay for this to work ...
+         */
         "when the server takes longer than the configured client-side timeout" in { fixture =>
           stubSbrControlApiFor(aVatParentLinkEditRequest(withVatRef = TargetVAT, withPeriod = TargetPeriod)
-            .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonUnitLinkEditBodyParser.JsonPatchMediaType))
+            .withHeader(CONTENT_TYPE, equalTo(JsonPatchMediaType))
             .withRequestBody(equalToJson(VATEditParentLinkPatchBody))
             .willReturn(aConflictResponse().withFixedDelay(RequestTimeoutMillis * 2)))
 

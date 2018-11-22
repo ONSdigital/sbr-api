@@ -44,7 +44,7 @@ class RestRepository @Inject() (config: RestRepositoryConfig, wsClient: TraceWSC
   private def requestForWithTracing(url: String, contentType: String, spanName: String, traceData: TraceData): WSRequest =
     wsClient.
       url(url, spanName, traceData).
-      withHeaders(ACCEPT -> contentType)
+      withHttpHeaders(ACCEPT -> contentType)
 
   /**
    * Explicit tracing will be removed in future, hence the duplication of the requestFor method below without
@@ -53,7 +53,7 @@ class RestRepository @Inject() (config: RestRepositoryConfig, wsClient: TraceWSC
   private def requestFor(url: String, contentType: String): WSRequest =
     wsClient.
       untracedUrl(url).
-      withHeaders(CONTENT_TYPE -> contentType)
+      withHttpHeaders(CONTENT_TYPE -> contentType)
 
   private def fromResponseToErrorOrJson(response: WSResponse): Either[ErrorMessage, Option[JsValue]] =
     response.status match {

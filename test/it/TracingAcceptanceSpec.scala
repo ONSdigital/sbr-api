@@ -137,7 +137,7 @@ class TracingAcceptanceSpec extends ServerAcceptanceSpec with MockFactory with W
       val timestampMicrosBeforeRequest = currentTimestampMicros
 
       When(s"a request is made for the sbr-api version")
-      whenReady(wsClient.url("/version").withHeaders(traceContext: _*).get()) { _ =>
+      whenReady(wsClient.url("/version").withHttpHeaders(traceContext: _*).get()) { _ =>
 
         Then(s"a child span is created within the existing trace to capture the request latency")
         (traceReporter.report _).verify(where(aChildSpan(
@@ -166,7 +166,7 @@ class TracingAcceptanceSpec extends ServerAcceptanceSpec with MockFactory with W
       val timestampMicrosBeforeRequest = currentTimestampMicros
 
       When(s"a request is made to retrieve a unit")
-      whenReady(wsClient.url(s"/v1/periods/${Period.asString(TargetPeriod)}/ents/${TargetErn.value}").withHeaders(traceContext: _*).get()) { _ =>
+      whenReady(wsClient.url(s"/v1/periods/${Period.asString(TargetPeriod)}/ents/${TargetErn.value}").withHttpHeaders(traceContext: _*).get()) { _ =>
 
         Then(s"a child span is created within the existing trace to capture the request latency")
         (traceReporter.report _).verify(where(aChildSpan(

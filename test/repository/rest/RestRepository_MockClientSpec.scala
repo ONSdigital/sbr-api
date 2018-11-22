@@ -31,7 +31,7 @@ class RestRepository_MockClientSpec extends FreeSpec with Matchers with MockFact
     )
     val repository = new RestRepository(config, wsClient)
 
-    (wsRequest.withHeaders _).expects(*).returning(wsRequest)
+    (wsRequest.withHttpHeaders _).expects(*).returning(wsRequest)
   }
 
   "A SBR Control unit repository" - {

@@ -11,6 +11,7 @@ import uk.gov.ons.sbr.models._
 import fixture.ServerAcceptanceSpec
 import parsers.JsonUnitLinkEditBodyParser.JsonPatchMediaType
 import support.wiremock.WireMockSbrControlApi
+import HeaderNames.CONTENT_TYPE
 
 class EditVatParentLinkAcceptanceSpec extends ServerAcceptanceSpec with WireMockSbrControlApi with OptionValues {
 
@@ -79,26 +80,26 @@ class EditVatParentLinkAcceptanceSpec extends ServerAcceptanceSpec with WireMock
       Given(s"a VAT record with $TargetVAT for $TargetPeriod has a unit link to a parent legal unit identified by $ParentLEU")
       And(s"And the parent unit link needs to be changed to the legal unit with LEU $NewParentLEU")
       stubSbrControlApiFor(aVatParentLinkEditRequest(withVatRef = TargetVAT, withPeriod = TargetPeriod)
-        .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonPatchMediaType))
+        .withHeader(CONTENT_TYPE, equalTo(JsonPatchMediaType))
         .withRequestBody(equalToJson(EditParentLinkPatchBody))
         .willReturn(aNoContentResponse()))
 
       And(s"the request to add the new VAT child link [$TargetVAT] succeeds")
       stubSbrControlApiFor(aLegalUnitEditRequest(withUbrn = UnitId(NewParentLEU), withPeriod = TargetPeriod)
-        .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonPatchMediaType))
+        .withHeader(CONTENT_TYPE, equalTo(JsonPatchMediaType))
         .withRequestBody(equalToJson(VatCreateChildLinkPatchBody))
         .willReturn(aNoContentResponse()))
 
       And(s"the request to remove the LEU child link [$TargetVAT] succeeds")
       stubSbrControlApiFor(aLegalUnitEditRequest(withUbrn = UnitId(ParentLEU), withPeriod = TargetPeriod)
-        .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonPatchMediaType))
+        .withHeader(CONTENT_TYPE, equalTo(JsonPatchMediaType))
         .withRequestBody(equalToJson(VatDeleteChildUnitLink))
         .willReturn(aNoContentResponse()))
 
       When(s"an edit request for the VAT unit with $TargetVAT is requested for $TargetPeriod")
       val response = await(wsClient
         .url(s"/v1/periods/${Period.asString(TargetPeriod)}/edit/vats/${TargetVAT.value}")
-        .withHeaders((HeaderNames.CONTENT_TYPE, JSON))
+        .withHttpHeaders((CONTENT_TYPE, JSON))
         .post(EditParentLinkPostBody))
 
       Then(s"a Created response will be returned")
@@ -110,14 +111,14 @@ class EditVatParentLinkAcceptanceSpec extends ServerAcceptanceSpec with WireMock
     scenario("by VAT reference (vatref) and UBRN for a specific period") { wsClient =>
       Given(s"a VAT record with $TargetVAT for $TargetPeriod does not exist")
       stubSbrControlApiFor(aVatParentLinkEditRequest(withVatRef = TargetVAT, withPeriod = TargetPeriod)
-        .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonPatchMediaType))
+        .withHeader(CONTENT_TYPE, equalTo(JsonPatchMediaType))
         .withRequestBody(equalToJson(EditParentLinkPatchBody))
         .willReturn(aNotFoundResponse()))
 
       When(s"an edit request for the VAT unit with $TargetVAT is requested for $TargetPeriod")
       val response = await(wsClient
         .url(s"/v1/periods/${Period.asString(TargetPeriod)}/edit/vats/${TargetVAT.value}")
-        .withHeaders((HeaderNames.CONTENT_TYPE, JSON))
+        .withHttpHeaders((CONTENT_TYPE, JSON))
         .post(EditParentLinkPostBody))
 
       Then(s"a Not Found response will be returned")
@@ -130,14 +131,14 @@ class EditVatParentLinkAcceptanceSpec extends ServerAcceptanceSpec with WireMock
       Given(s"a VAT record with $TargetVAT for $TargetPeriod exists")
       And(s"And the parent unit link $ParentLEU cannot be found (resulting in a 422 response)")
       stubSbrControlApiFor(aVatParentLinkEditRequest(withVatRef = TargetVAT, withPeriod = TargetPeriod)
-        .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonPatchMediaType))
+        .withHeader(CONTENT_TYPE, equalTo(JsonPatchMediaType))
         .withRequestBody(equalToJson(EditParentLinkPatchBody))
         .willReturn(anUnprocessableEntityResponse()))
 
       When(s"an edit request for the VAT unit with $TargetVAT is requested for $TargetPeriod")
       val response = await(wsClient
         .url(s"/v1/periods/${Period.asString(TargetPeriod)}/edit/vats/${TargetVAT.value}")
-        .withHeaders((HeaderNames.CONTENT_TYPE, JSON))
+        .withHttpHeaders((CONTENT_TYPE, JSON))
         .post(EditParentLinkPostBody))
 
       Then(s"an Unprocessable response will be returned")
@@ -150,21 +151,21 @@ class EditVatParentLinkAcceptanceSpec extends ServerAcceptanceSpec with WireMock
       Given(s"a VAT record with $TargetVAT for $TargetPeriod exists")
       And(s"And the VAT record is also being edited by somebody else, resulting in a conflict")
       stubSbrControlApiFor(aVatParentLinkEditRequest(withVatRef = TargetVAT, withPeriod = TargetPeriod)
-        .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonPatchMediaType))
+        .withHeader(CONTENT_TYPE, equalTo(JsonPatchMediaType))
         .withRequestBody(equalToJson(EditParentLinkPatchBody))
         .willReturn(aConflictResponse()))
 
       And(s"And an update request using the same from/to $NewParentLEU value is submitted, to confirm the conflict")
       And("as an actual conflict has occurred, a Conflict status is returned")
       stubSbrControlApiFor(aVatParentLinkEditRequest(withVatRef = TargetVAT, withPeriod = TargetPeriod)
-        .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonPatchMediaType))
+        .withHeader(CONTENT_TYPE, equalTo(JsonPatchMediaType))
         .withRequestBody(equalToJson(EditParentLinkConflictPatchBody))
         .willReturn(aConflictResponse()))
 
       When(s"an edit request for the VAT unit with $TargetVAT is requested for $TargetPeriod")
       val response = await(wsClient
         .url(s"/v1/periods/${Period.asString(TargetPeriod)}/edit/vats/${TargetVAT.value}")
-        .withHeaders((HeaderNames.CONTENT_TYPE, JSON))
+        .withHttpHeaders((CONTENT_TYPE, JSON))
         .post(EditParentLinkPostBody))
 
       Then(s"a Conflict response will be returned")
@@ -177,33 +178,33 @@ class EditVatParentLinkAcceptanceSpec extends ServerAcceptanceSpec with WireMock
       Given(s"a VAT record with $TargetVAT for $TargetPeriod exists")
       And("And the UBRN from value is invalid (as the previous update operation succeeded), resulting in a Conflict")
       stubSbrControlApiFor(aVatParentLinkEditRequest(withVatRef = TargetVAT, withPeriod = TargetPeriod)
-        .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonPatchMediaType))
+        .withHeader(CONTENT_TYPE, equalTo(JsonPatchMediaType))
         .withRequestBody(equalToJson(EditParentLinkPatchBody))
         .willReturn(aConflictResponse()))
 
       And(s"And an update request using the same from/to $NewParentLEU value is submitted, to confirm the conflict")
       And("as the from/to values match whats in the database, a NoContentResponse is returned")
       stubSbrControlApiFor(aVatParentLinkEditRequest(withVatRef = TargetVAT, withPeriod = TargetPeriod)
-        .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonPatchMediaType))
+        .withHeader(CONTENT_TYPE, equalTo(JsonPatchMediaType))
         .withRequestBody(equalToJson(EditParentLinkConflictPatchBody))
         .willReturn(aNoContentResponse()))
 
       And(s"the request to add the new VAT child link [$TargetVAT] succeeds")
       stubSbrControlApiFor(aLegalUnitEditRequest(withUbrn = UnitId(NewParentLEU), withPeriod = TargetPeriod)
-        .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonPatchMediaType))
+        .withHeader(CONTENT_TYPE, equalTo(JsonPatchMediaType))
         .withRequestBody(equalToJson(VatCreateChildLinkPatchBody))
         .willReturn(aNoContentResponse()))
 
       And(s"the request to remove the LEU child link [$TargetVAT] succeeds")
       stubSbrControlApiFor(aLegalUnitEditRequest(withUbrn = UnitId(ParentLEU), withPeriod = TargetPeriod)
-        .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonPatchMediaType))
+        .withHeader(CONTENT_TYPE, equalTo(JsonPatchMediaType))
         .withRequestBody(equalToJson(VatDeleteChildUnitLink))
         .willReturn(aNoContentResponse()))
 
       When(s"an edit request for the VAT unit with $TargetVAT is requested for $TargetPeriod")
       val response = await(wsClient
         .url(s"/v1/periods/${Period.asString(TargetPeriod)}/edit/vats/${TargetVAT.value}")
-        .withHeaders((HeaderNames.CONTENT_TYPE, JSON))
+        .withHttpHeaders((CONTENT_TYPE, JSON))
         .post(EditParentLinkPostBody))
 
       Then(s"a Created response will be returned")
@@ -215,14 +216,14 @@ class EditVatParentLinkAcceptanceSpec extends ServerAcceptanceSpec with WireMock
     scenario("by VAT reference (vatref) and UBRN for a specific period") { wsClient =>
       Given(s"a VAT record with $TargetVAT for $TargetPeriod exists")
       stubSbrControlApiFor(aVatParentLinkEditRequest(withVatRef = TargetVAT, withPeriod = TargetPeriod)
-        .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonPatchMediaType))
+        .withHeader(CONTENT_TYPE, equalTo(JsonPatchMediaType))
         .withRequestBody(equalToJson(EditParentLinkPatchBody))
         .willReturn(anInternalServerError()))
 
       When(s"an edit request for the VAT unit with $TargetVAT is requested for $TargetPeriod")
       val response = await(wsClient
         .url(s"/v1/periods/${Period.asString(TargetPeriod)}/edit/vats/${TargetVAT.value}")
-        .withHeaders((HeaderNames.CONTENT_TYPE, JSON))
+        .withHttpHeaders((CONTENT_TYPE, JSON))
         .post(EditParentLinkPostBody))
 
       Then(s"an Internal Server Error response will be returned")
@@ -236,7 +237,7 @@ class EditVatParentLinkAcceptanceSpec extends ServerAcceptanceSpec with WireMock
       When(s"an edit request for the VAT unit with $TargetVAT is requested for $TargetPeriod")
       val response = await(wsClient
         .url(s"/v1/periods/${Period.asString(TargetPeriod)}/edit/vats/${TargetVAT.value}")
-        .withHeaders((HeaderNames.CONTENT_TYPE, JSON))
+        .withHttpHeaders((CONTENT_TYPE, JSON))
         .post(InvalidEditParentLinkPostBody))
 
       Then(s"a Bad Request response will be returned")
@@ -250,7 +251,7 @@ class EditVatParentLinkAcceptanceSpec extends ServerAcceptanceSpec with WireMock
       When(s"an edit request is made containing two from operations and no to operations")
       val response = await(wsClient
         .url(s"/v1/periods/${Period.asString(TargetPeriod)}/edit/vats/${TargetVAT.value}")
-        .withHeaders((HeaderNames.CONTENT_TYPE, JSON))
+        .withHttpHeaders((CONTENT_TYPE, JSON))
         .post(UnprocessableEditParentLinkPostBody))
 
       Then(s"an Unprocessable response will be returned")
@@ -262,26 +263,26 @@ class EditVatParentLinkAcceptanceSpec extends ServerAcceptanceSpec with WireMock
     scenario("by VAT reference (vatref) for a specific period") { wsClient =>
       Given(s"a VAT record with $TargetVAT for $TargetPeriod exists")
       stubSbrControlApiFor(aVatParentLinkEditRequest(withVatRef = TargetVAT, withPeriod = TargetPeriod)
-        .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonPatchMediaType))
+        .withHeader(CONTENT_TYPE, equalTo(JsonPatchMediaType))
         .withRequestBody(equalToJson(EditParentLinkPatchBody))
         .willReturn(aNoContentResponse()))
 
       And(s"the request for LEU unit [$ParentLEU] succeeds")
       stubSbrControlApiFor(aLegalUnitEditRequest(withUbrn = UnitId(ParentLEU), withPeriod = TargetPeriod)
-        .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonPatchMediaType))
+        .withHeader(CONTENT_TYPE, equalTo(JsonPatchMediaType))
         .withRequestBody(equalToJson(VatDeleteChildUnitLink))
         .willReturn(aNoContentResponse()))
 
       And(s"the requested LEU unit [$NewParentLEU] does not exist")
       stubSbrControlApiFor(aLegalUnitEditRequest(withUbrn = UnitId(NewParentLEU), withPeriod = TargetPeriod)
-        .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonPatchMediaType))
+        .withHeader(CONTENT_TYPE, equalTo(JsonPatchMediaType))
         .withRequestBody(equalToJson(VatCreateChildLinkPatchBody))
         .willReturn(aNotFoundResponse()))
 
       When(s"an edit request for the VAT unit with $TargetVAT is requested for $TargetPeriod")
       val response = await(wsClient
         .url(s"/v1/periods/${Period.asString(TargetPeriod)}/edit/vats/${TargetVAT.value}")
-        .withHeaders((HeaderNames.CONTENT_TYPE, JSON))
+        .withHttpHeaders((CONTENT_TYPE, JSON))
         .post(EditParentLinkPostBody))
 
       Then(s"an Internal Server Error response will be returned")
@@ -293,26 +294,26 @@ class EditVatParentLinkAcceptanceSpec extends ServerAcceptanceSpec with WireMock
     scenario("by VAT reference (vatref) for a specific period") { wsClient =>
       Given(s"a VAT record with $TargetVAT for $TargetPeriod exists")
       stubSbrControlApiFor(aVatParentLinkEditRequest(withVatRef = TargetVAT, withPeriod = TargetPeriod)
-        .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonPatchMediaType))
+        .withHeader(CONTENT_TYPE, equalTo(JsonPatchMediaType))
         .withRequestBody(equalToJson(EditParentLinkPatchBody))
         .willReturn(aNoContentResponse()))
 
       And(s"the request for LEU unit [$ParentLEU] succeeds")
       stubSbrControlApiFor(aLegalUnitEditRequest(withUbrn = UnitId(ParentLEU), withPeriod = TargetPeriod)
-        .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonPatchMediaType))
+        .withHeader(CONTENT_TYPE, equalTo(JsonPatchMediaType))
         .withRequestBody(equalToJson(VatDeleteChildUnitLink))
         .willReturn(aNoContentResponse()))
 
       And(s"the request for LEU unit [$NewParentLEU] is unprocessable (cannot be found)")
       stubSbrControlApiFor(aLegalUnitEditRequest(withUbrn = UnitId(NewParentLEU), withPeriod = TargetPeriod)
-        .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonPatchMediaType))
+        .withHeader(CONTENT_TYPE, equalTo(JsonPatchMediaType))
         .withRequestBody(equalToJson(VatCreateChildLinkPatchBody))
         .willReturn(anUnprocessableEntityResponse()))
 
       When(s"an edit request for the VAT unit with $TargetVAT is requested for $TargetPeriod")
       val response = await(wsClient
         .url(s"/v1/periods/${Period.asString(TargetPeriod)}/edit/vats/${TargetVAT.value}")
-        .withHeaders((HeaderNames.CONTENT_TYPE, JSON))
+        .withHttpHeaders((CONTENT_TYPE, JSON))
         .post(EditParentLinkPostBody))
 
       Then(s"an Internal Server Error response will be returned")
@@ -324,26 +325,26 @@ class EditVatParentLinkAcceptanceSpec extends ServerAcceptanceSpec with WireMock
     scenario("by VAT reference (vatref) for a specific period") { wsClient =>
       Given(s"a VAT record with $TargetVAT for $TargetPeriod exists")
       stubSbrControlApiFor(aVatParentLinkEditRequest(withVatRef = TargetVAT, withPeriod = TargetPeriod)
-        .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonPatchMediaType))
+        .withHeader(CONTENT_TYPE, equalTo(JsonPatchMediaType))
         .withRequestBody(equalToJson(EditParentLinkPatchBody))
         .willReturn(aNoContentResponse()))
 
       And(s"the request for LEU unit [$ParentLEU] fails due to general errors on sbr-control-api")
       stubSbrControlApiFor(aLegalUnitEditRequest(withUbrn = UnitId(ParentLEU), withPeriod = TargetPeriod)
-        .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonPatchMediaType))
+        .withHeader(CONTENT_TYPE, equalTo(JsonPatchMediaType))
         .withRequestBody(equalToJson(VatDeleteChildUnitLink))
         .willReturn(anInternalServerError()))
 
       And(s"the request for LEU unit [$NewParentLEU] fails due to general errors on sbr-control-api")
       stubSbrControlApiFor(aLegalUnitEditRequest(withUbrn = UnitId(NewParentLEU), withPeriod = TargetPeriod)
-        .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonPatchMediaType))
+        .withHeader(CONTENT_TYPE, equalTo(JsonPatchMediaType))
         .withRequestBody(equalToJson(VatCreateChildLinkPatchBody))
         .willReturn(anInternalServerError()))
 
       When(s"an edit request for the VAT unit with $TargetVAT is requested for $TargetPeriod")
       val response = await(wsClient
         .url(s"/v1/periods/${Period.asString(TargetPeriod)}/edit/vats/${TargetVAT.value}")
-        .withHeaders((HeaderNames.CONTENT_TYPE, JSON))
+        .withHttpHeaders((CONTENT_TYPE, JSON))
         .post(EditParentLinkPostBody))
 
       Then(s"an Internal Server Error response will be returned")
