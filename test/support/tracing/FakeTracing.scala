@@ -13,7 +13,7 @@ trait FakeTracing {
    * We therefore use a hand-cranked stub.
    */
   protected class StubTraceService(span: Span) extends ZipkinTraceServiceLike {
-    override implicit val executionContext: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
+    override implicit val executionContext: ExecutionContext = scala.concurrent.ExecutionContext.global
     override val tracing: Tracing = Tracing.newBuilder().build()
 
     override def toSpan[A](headers: A)(getHeader: (A, String) => Option[String]): Span =

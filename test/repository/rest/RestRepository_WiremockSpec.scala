@@ -21,6 +21,8 @@ import uk.gov.ons.sbr.models.{Period, VatRef}
 import utils.url.BaseUrl
 import utils.url.BaseUrl.Protocol.Http
 
+import scala.concurrent.ExecutionContext
+
 class RestRepository_WiremockSpec extends org.scalatest.fixture.FreeSpec with GuiceOneAppPerSuite with WireMockSbrControlApi with Matchers with ScalaFutures with EitherValues with MockFactory {
 
   private val SomePath = "foo/bar/baz"
@@ -83,7 +85,7 @@ class RestRepository_WiremockSpec extends org.scalatest.fixture.FreeSpec with Gu
   private def newFixtureParam: FixtureParam = {
     val config = RestRepositoryConfig(BaseUrl(Http, "localhost", DefaultSbrControlApiPort))
     val wsClient = app.injector.instanceOf[TraceWSClient]
-    FixtureParam(new RestRepository(config, wsClient))
+    FixtureParam(new RestRepository(config, wsClient)(ExecutionContext.global))
   }
 
   "A unit repository" - {

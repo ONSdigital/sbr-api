@@ -4,14 +4,14 @@ import java.time.Month.APRIL
 
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{ EitherValues, FreeSpec, Matchers }
-import play.api.libs.json.{ JsError, JsSuccess, Json, Reads }
+import org.scalatest.{EitherValues, FreeSpec, Matchers}
+import play.api.libs.json.{JsError, JsSuccess, Json, Reads}
 import repository.rest.Repository
 import support.sample.SampleVat
 import tracing.TraceData
-import uk.gov.ons.sbr.models.{ AdminData, Period, UnitId, VatRef }
+import uk.gov.ons.sbr.models.{AdminData, Period, UnitId, VatRef}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class RestAdminDataRepositorySpec extends FreeSpec with Matchers with MockFactory with ScalaFutures with EitherValues {
 
@@ -30,7 +30,7 @@ class RestAdminDataRepositorySpec extends FreeSpec with Matchers with MockFactor
     val traceData = stub[TraceData]
     val unitRepository = mock[Repository]
     val readsAdminData = mock[Reads[AdminData]]
-    val adminDataRepository = new RestAdminDataRepository(unitRepository, readsAdminData, AdminDataType)
+    val adminDataRepository = new RestAdminDataRepository(unitRepository, readsAdminData, AdminDataType)(ExecutionContext.global)
   }
 
   "An AdminData repository" - {

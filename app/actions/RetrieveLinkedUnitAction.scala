@@ -2,7 +2,6 @@ package actions
 
 import actions.RetrieveLinkedUnitAction.LinkedUnitTracedRequestActionFunctionMaker
 import com.typesafe.scalalogging.LazyLogging
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc._
 import services.{ErrorMessage, LinkedUnitService}
 import uk.gov.ons.sbr.models.{LinkedUnit, Period}
@@ -22,7 +21,7 @@ class RetrieveLinkedUnitAction[T](linkedUnitService: LinkedUnitService[T], ec: E
         linkedUnitService.retrieve(period, unitRef, request.traceData).map { errorOrOptLinkedUnit =>
           errorOrOptLinkedUnit.left.foreach(errorMessage => logger.error(errorMessage))
           new LinkedUnitTracedRequest[A](errorOrOptLinkedUnit, request)
-        }
+        }(ec)
 
       override protected def executionContext: ExecutionContext = ec
     }

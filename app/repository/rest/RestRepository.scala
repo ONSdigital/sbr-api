@@ -4,25 +4,24 @@ import java.util.concurrent.TimeoutException
 
 import com.typesafe.scalalogging.LazyLogging
 import javax.inject.Inject
-
 import play.api.http.Status._
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import play.api.libs.json.{ JsValue, Json }
-import play.api.libs.ws.{ WSRequest, WSResponse }
-import play.mvc.Http.HeaderNames.{ ACCEPT, CONTENT_TYPE }
+import play.api.libs.json.{JsValue, Json}
+import play.api.libs.ws.{WSRequest, WSResponse}
+import play.mvc.Http.HeaderNames.{ACCEPT, CONTENT_TYPE}
 import play.mvc.Http.MimeTypes.JSON
 import repository.ErrorMessage
-import tracing.{ TraceData, TraceWSClient }
+import tracing.{TraceData, TraceWSClient}
 import uk.gov.ons.sbr.models.edit.Patch
 import utils.TrySupport
-import utils.url.{ BaseUrl, Url }
+import utils.url.{BaseUrl, Url}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 
 case class RestRepositoryConfig(baseUrl: BaseUrl)
 
-class RestRepository @Inject() (config: RestRepositoryConfig, wsClient: TraceWSClient) extends Repository with LazyLogging {
+class RestRepository @Inject() (config: RestRepositoryConfig, wsClient: TraceWSClient)
+                               (implicit ec: ExecutionContext) extends Repository with LazyLogging {
 
   // See here for details on JSON Patch: https://tools.ietf.org/html/rfc6902
   private val Patch_Json = s"$JSON-patch+json"

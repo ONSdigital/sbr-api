@@ -4,13 +4,13 @@ import java.time.Month.APRIL
 
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{ EitherValues, FreeSpec, Matchers }
-import play.api.libs.json.{ JsError, JsSuccess, Json, Reads }
+import org.scalatest.{EitherValues, FreeSpec, Matchers}
+import play.api.libs.json.{JsError, JsSuccess, Json, Reads}
 import repository.rest.Repository
 import tracing.TraceData
-import uk.gov.ons.sbr.models.{ Period, UnitId, UnitLinks, UnitType }
+import uk.gov.ons.sbr.models.{Period, UnitId, UnitLinks, UnitType}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class RestUnitLinksRepositorySpec extends FreeSpec with Matchers with MockFactory with ScalaFutures with EitherValues {
 
@@ -32,7 +32,7 @@ class RestUnitLinksRepositorySpec extends FreeSpec with Matchers with MockFactor
     val traceData = stub[TraceData]
     val unitRepository = mock[Repository]
     val readsUnitLinks = mock[Reads[UnitLinks]]
-    val unitLinksRepository = new RestUnitLinksRepository(unitRepository, readsUnitLinks)
+    val unitLinksRepository = new RestUnitLinksRepository(unitRepository, readsUnitLinks)(ExecutionContext.global)
   }
 
   "A Unit Links repository" - {

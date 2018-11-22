@@ -4,14 +4,14 @@ import java.time.Month.MAY
 
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{ EitherValues, FreeSpec, Matchers }
+import org.scalatest.{EitherValues, FreeSpec, Matchers}
 import play.api.libs.json.Json
 import repository.rest.Repository
 import support.sample.SampleReportingUnit
 import tracing.TraceData
-import uk.gov.ons.sbr.models.{ Ern, Period, Rurn }
+import uk.gov.ons.sbr.models.{Ern, Period, Rurn}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class RestReportingUnitRepositorySpec extends FreeSpec with Matchers with MockFactory with ScalaFutures with EitherValues {
 
@@ -24,7 +24,7 @@ class RestReportingUnitRepositorySpec extends FreeSpec with Matchers with MockFa
 
     val traceData = stub[TraceData]
     val unitRepository = mock[Repository]
-    val reportingUnitRepository = new RestReportingUnitRepository(unitRepository)
+    val reportingUnitRepository = new RestReportingUnitRepository(unitRepository)(ExecutionContext.global)
   }
 
   "A ReportingUnit repository" - {

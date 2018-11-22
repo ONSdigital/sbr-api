@@ -12,7 +12,6 @@ import javax.naming.ServiceUnavailableException
 import org.slf4j.{Logger, LoggerFactory}
 import play.api.Configuration
 import play.api.i18n.{Messages, MessagesProvider}
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.{JsValue, Json, _}
 import play.api.libs.ws.WSResponse
 import play.api.mvc._
@@ -30,10 +29,11 @@ import scala.util.Try
 @Singleton
 class SearchController @Inject() (val configuration: Configuration, mcc: MessagesControllerComponents)(implicit ws: RequestGenerator) extends MessagesAbstractController(mcc) with StrictLogging with Properties {
 
-  private[this] val LOGGER: Logger = LoggerFactory.getLogger(getClass.getName)
-
   private type UnitLinksListType = Seq[JsValue]
   private type StatisticalUnitLinkType = JsValue
+
+  private[this] val LOGGER: Logger = LoggerFactory.getLogger(getClass.getName)
+  private[this] implicit val executionContext = mcc.executionContext
 
   @ApiOperation(
     value = "Json id match or a list of unit conflicts",

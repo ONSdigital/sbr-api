@@ -1,4 +1,5 @@
 package services.finder
+
 import com.typesafe.scalalogging.LazyLogging
 import play.api.libs.json.JsObject
 import services.ErrorMessage

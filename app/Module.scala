@@ -106,68 +106,72 @@ class Module(
 
   // repositories
   @Provides @Named(SbrCtrl)
-  def providesSbrCtrlUnitRepository(@Inject()@Named(SbrCtrl) sbrCtrlUnitRepositoryConfig: RestRepositoryConfig, wsClient: TraceWSClient): Repository =
-    new RestRepository(sbrCtrlUnitRepositoryConfig, wsClient)
+  def providesSbrCtrlUnitRepository(@Inject()@Named(SbrCtrl) sbrCtrlUnitRepositoryConfig: RestRepositoryConfig,
+                                    wsClient: TraceWSClient, ec: ExecutionContext): Repository =
+    new RestRepository(sbrCtrlUnitRepositoryConfig, wsClient)(ec)
 
   @Provides @Named(Vat)
-  def providesVatAdminDataRepository(@Inject()@Named(Vat) vatUnitRepositoryConfig: RestRepositoryConfig, wsClient: TraceWSClient, readsAdminData: Reads[AdminData]): AdminDataRepository = {
-    val unitRepository = new RestRepository(vatUnitRepositoryConfig, wsClient)
-    new RestAdminDataRepository(unitRepository, readsAdminData, Vat)
+  def providesVatAdminDataRepository(@Inject()@Named(Vat) vatUnitRepositoryConfig: RestRepositoryConfig,
+                                     wsClient: TraceWSClient, readsAdminData: Reads[AdminData], ec: ExecutionContext): AdminDataRepository = {
+    val unitRepository = new RestRepository(vatUnitRepositoryConfig, wsClient)(ec)
+    new RestAdminDataRepository(unitRepository, readsAdminData, Vat)(ec)
   }
 
   @Provides @Named(Paye)
-  def providesPayeAdminDataRepository(@Inject()@Named(Paye) payeUnitRepositoryConfig: RestRepositoryConfig, wsClient: TraceWSClient, readsAdminData: Reads[AdminData]): AdminDataRepository = {
-    val unitRepository = new RestRepository(payeUnitRepositoryConfig, wsClient)
-    new RestAdminDataRepository(unitRepository, readsAdminData, Paye)
+  def providesPayeAdminDataRepository(@Inject()@Named(Paye) payeUnitRepositoryConfig: RestRepositoryConfig,
+                                      wsClient: TraceWSClient, readsAdminData: Reads[AdminData], ec: ExecutionContext): AdminDataRepository = {
+    val unitRepository = new RestRepository(payeUnitRepositoryConfig, wsClient)(ec)
+    new RestAdminDataRepository(unitRepository, readsAdminData, Paye)(ec)
   }
 
   @Provides @Named(CompaniesHouse)
-  def providesCompaniesHouseAdminDataRepository(@Inject()@Named(CompaniesHouse) chUnitRepositoryConfig: RestRepositoryConfig, wsClient: TraceWSClient, readsAdminData: Reads[AdminData]): AdminDataRepository = {
-    val unitRepository = new RestRepository(chUnitRepositoryConfig, wsClient)
-    new RestAdminDataRepository(unitRepository, readsAdminData, CompaniesHouse)
+  def providesCompaniesHouseAdminDataRepository(@Inject()@Named(CompaniesHouse) chUnitRepositoryConfig: RestRepositoryConfig,
+                                                wsClient: TraceWSClient, readsAdminData: Reads[AdminData], ec: ExecutionContext): AdminDataRepository = {
+    val unitRepository = new RestRepository(chUnitRepositoryConfig, wsClient)(ec)
+    new RestAdminDataRepository(unitRepository, readsAdminData, CompaniesHouse)(ec)
   }
 
   // services
   @Provides
   def providesVatService(@Inject() unitRefType: UnitRef[VatRef], unitLinksRepository: UnitLinksRepository,
-    @Named(Vat) vatRepository: AdminDataRepository): LinkedUnitService[VatRef] = {
-    val vatFinder = new AdminDataFinder[VatRef](unitRefType, vatRepository)
-    new RestLinkedUnitService[VatRef](unitRefType, unitLinksRepository, vatFinder)
+    @Named(Vat) vatRepository: AdminDataRepository, ec: ExecutionContext): LinkedUnitService[VatRef] = {
+    val vatFinder = new AdminDataFinder[VatRef](unitRefType, vatRepository)(ec)
+    new RestLinkedUnitService[VatRef](unitRefType, unitLinksRepository, vatFinder)(ec)
   }
 
   @Provides
   def providesPayeService(@Inject() unitRefType: UnitRef[PayeRef], unitLinksRepository: UnitLinksRepository,
-    @Named(Paye) payeRepository: AdminDataRepository): LinkedUnitService[PayeRef] = {
-    val payeFinder = new AdminDataFinder[PayeRef](unitRefType, payeRepository)
-    new RestLinkedUnitService[PayeRef](unitRefType, unitLinksRepository, payeFinder)
+    @Named(Paye) payeRepository: AdminDataRepository, ec: ExecutionContext): LinkedUnitService[PayeRef] = {
+    val payeFinder = new AdminDataFinder[PayeRef](unitRefType, payeRepository)(ec)
+    new RestLinkedUnitService[PayeRef](unitRefType, unitLinksRepository, payeFinder)(ec)
   }
 
   @Provides
   def providesCompaniesHouseService(@Inject() unitRefType: UnitRef[CompanyRefNumber], unitLinksRepository: UnitLinksRepository,
-    @Named(CompaniesHouse) chRepository: AdminDataRepository): LinkedUnitService[CompanyRefNumber] = {
-    val chFinder = new AdminDataFinder[CompanyRefNumber](unitRefType, chRepository)
-    new RestLinkedUnitService[CompanyRefNumber](unitRefType, unitLinksRepository, chFinder)
+    @Named(CompaniesHouse) chRepository: AdminDataRepository, ec: ExecutionContext): LinkedUnitService[CompanyRefNumber] = {
+    val chFinder = new AdminDataFinder[CompanyRefNumber](unitRefType, chRepository)(ec)
+    new RestLinkedUnitService[CompanyRefNumber](unitRefType, unitLinksRepository, chFinder)(ec)
   }
 
   @Provides
   def providesEnterpriseService(@Inject() enterpriseRefType: UnitRef[Ern], unitLinksRepository: UnitLinksRepository,
-    enterpriseRepository: EnterpriseRepository): LinkedUnitService[Ern] = {
+    enterpriseRepository: EnterpriseRepository, ec: ExecutionContext): LinkedUnitService[Ern] = {
     val enterpriseFinder = new EnterpriseFinder(enterpriseRepository)
-    new RestLinkedUnitService[Ern](enterpriseRefType, unitLinksRepository, enterpriseFinder)
+    new RestLinkedUnitService[Ern](enterpriseRefType, unitLinksRepository, enterpriseFinder)(ec)
   }
 
   @Provides
   def providesLocalUnitService(@Inject() localUnitRefType: UnitRef[Lurn], enterpriseUnitRefType: UnitRef[Ern],
-    unitLinksRepository: UnitLinksRepository, localUnitRepository: LocalUnitRepository): LinkedUnitService[Lurn] = {
+    unitLinksRepository: UnitLinksRepository, localUnitRepository: LocalUnitRepository, ec: ExecutionContext): LinkedUnitService[Lurn] = {
     val localUnitFinder = new ByParentEnterpriseUnitFinder[Lurn](localUnitRepository.retrieveLocalUnit, enterpriseUnitRefType)
-    new RestLinkedUnitService[Lurn](localUnitRefType, unitLinksRepository, localUnitFinder)
+    new RestLinkedUnitService[Lurn](localUnitRefType, unitLinksRepository, localUnitFinder)(ec)
   }
 
   @Provides
   def providesReportingUnitService(@Inject() reportingUnitRefType: UnitRef[Rurn], enterpriseUnitRefType: UnitRef[Ern],
-    unitLinksRepository: UnitLinksRepository, reportingUnitRepository: ReportingUnitRepository): LinkedUnitService[Rurn] = {
+    unitLinksRepository: UnitLinksRepository, reportingUnitRepository: ReportingUnitRepository, ec: ExecutionContext): LinkedUnitService[Rurn] = {
     val reportingUnitFinder = new ByParentEnterpriseUnitFinder[Rurn](reportingUnitRepository.retrieveReportingUnit, enterpriseUnitRefType)
-    new RestLinkedUnitService[Rurn](reportingUnitRefType, unitLinksRepository, reportingUnitFinder)
+    new RestLinkedUnitService[Rurn](reportingUnitRefType, unitLinksRepository, reportingUnitFinder)(ec)
   }
 
   // controller actions
