@@ -4,8 +4,8 @@ import akka.actor.ActorSystem
 import brave.Tracing
 import brave.sampler.Sampler
 import brave.sampler.Sampler.ALWAYS_SAMPLE
-import javax.inject.{ Inject, Singleton }
-import jp.co.bizreach.trace.ZipkinTraceConfig.{ AkkaName, ZipkinSampleRate }
+import javax.inject.{Inject, Singleton}
+import jp.co.bizreach.trace.ZipkinTraceConfig.{AkkaName, ZipkinSampleRate}
 import jp.co.bizreach.trace.ZipkinTraceServiceLike
 import play.api.Configuration
 import zipkin2.Span
@@ -28,7 +28,7 @@ class ZipkinTraceService @Inject() (conf: Configuration, actorSystem: ActorSyste
     .build()
 
   private def samplerFrom(conf: Configuration): Sampler = {
-    val sampleRateOpt = conf.getString(ZipkinSampleRate).map(_.toFloat)
+    val sampleRateOpt = conf.getOptional[String](ZipkinSampleRate).map(_.toFloat)
     sampleRateOpt.fold(ALWAYS_SAMPLE)(Sampler.create)
   }
 }
