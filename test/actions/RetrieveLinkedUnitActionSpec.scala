@@ -4,14 +4,14 @@ import java.time.Month.MAY
 
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{ EitherValues, FreeSpec, Matchers }
-import play.api.libs.json.{ JsObject, Json }
-import play.api.mvc.{ AnyContent, Request }
+import org.scalatest.{EitherValues, FreeSpec, Matchers}
+import play.api.libs.json.{JsObject, Json}
+import play.api.mvc.{AnyContent, Request}
 import services.LinkedUnitService
 import tracing.TraceData
-import uk.gov.ons.sbr.models.{ LinkedUnit, Period, UnitId, UnitType }
+import uk.gov.ons.sbr.models.{LinkedUnit, Period, UnitId, UnitType}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class RetrieveLinkedUnitActionSpec extends FreeSpec with Matchers with MockFactory with ScalaFutures with EitherValues {
 
@@ -33,7 +33,7 @@ class RetrieveLinkedUnitActionSpec extends FreeSpec with Matchers with MockFacto
     val traceData = stub[TraceData]
     val request = stub[Request[AnyContent]]
     val service = mock[LinkedUnitService[FakeRef]]
-    val retrieveLinkedUnitAction = new RetrieveLinkedUnitAction[FakeRef](service)
+    val retrieveLinkedUnitAction = new RetrieveLinkedUnitAction[FakeRef](service, ExecutionContext.global)
   }
 
   "A RetrieveLinkedUnitAction" - {
