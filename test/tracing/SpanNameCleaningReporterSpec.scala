@@ -10,7 +10,7 @@ import zipkin2.reporter.Reporter
 class SpanNameCleaningReporterSpec extends FreeSpec with Matchers with MockFactory {
 
   private trait Fixture {
-    private val spanBuilder = Span.builder().
+    private val spanBuilder = Span.newBuilder().
       traceId(1122334455L).
       id(98765L).
       parentId(123456L).
