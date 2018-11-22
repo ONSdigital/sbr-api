@@ -1,18 +1,17 @@
 package controllers.v1
 
 import com.typesafe.scalalogging.LazyLogging
-import io.swagger.annotations.{ Api, ApiOperation, ApiResponse, ApiResponses }
-import javax.inject.{ Inject, Singleton }
+import controllers.AbstractSbrController
+import io.swagger.annotations.{Api, ApiOperation, ApiResponse, ApiResponses}
+import javax.inject.{Inject, Singleton}
 import parsers.JsonUnitLinkEditBodyParser
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import play.api.mvc.{ Action, Controller, Result }
+import play.api.mvc.{ControllerComponents, Result}
 import services._
 import uk.gov.ons.sbr.models._
 
 @Api("AdminDataEdit")
 @Singleton
-class AdminDataParentLinkEditController @Inject() (editService: EditService) extends Controller with LazyLogging {
-
+class AdminDataParentLinkEditController @Inject() (editService: EditService, components: ControllerComponents) extends AbstractSbrController(components) with LazyLogging {
   @ApiOperation(
     value = "Submit JSON with edit details for editing a VAT Parent Unit Link from one value to another",
     notes = """Use the following template: {"parent": "from": {"id":"123456789", "type":"LEU"}, "to": {"id":"123456789", "type":"LEU"}}""",

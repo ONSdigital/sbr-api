@@ -1,17 +1,13 @@
 package controllers
 
-import javax.inject.Singleton
-
-import io.swagger.annotations.{ Api, ApiOperation, ApiResponse, ApiResponses }
+import io.swagger.annotations.{Api, ApiOperation, ApiResponse, ApiResponses}
+import javax.inject.{Inject, Singleton}
 import org.joda.time.DateTime
-import play.api.mvc.{ Action, Controller }
+import play.api.mvc.ControllerComponents
 
-/**
- * ...............
- */
 @Api("Utils")
 @Singleton
-class HealthController extends Controller {
+class HealthController @Inject() (components: ControllerComponents) extends AbstractSbrController(components) {
   private[this] val startTime = System.currentTimeMillis()
 
   //public api
@@ -32,5 +28,4 @@ class HealthController extends Controller {
     val uptimeInMillis = System.currentTimeMillis() - startTime
     uptimeInMillis
   }
-
 }

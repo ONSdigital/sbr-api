@@ -12,7 +12,7 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.mvc.Results.NotFound
 import play.api.mvc._
 import play.api.test.Helpers._
-import play.api.test.{FakeRequest, StubPlayBodyParsersFactory}
+import play.api.test.{FakeRequest, StubControllerComponentsFactory, StubPlayBodyParsersFactory}
 import services.LinkedUnitService
 import support.tracing.FakeTracing
 import tracing.TraceData
@@ -23,14 +23,15 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class LinkedUnitControllerSpec extends FreeSpec with Matchers with MockFactory with FakeTracing with GuiceOneAppPerSuite {
 
-  private trait Fixture extends StubPlayBodyParsersFactory {
+  private trait Fixture extends StubControllerComponentsFactory with StubPlayBodyParsersFactory {
     case class FakeUnitRef(value: String)
     class FakeUnitController(
         unitRefType: UnitRef[FakeUnitRef],
         withTracingAction: ActionBuilder[TracedRequest, AnyContent],
         retrieveLinkedUnitAction: LinkedUnitTracedRequestActionFunctionMaker[FakeUnitRef],
-        handleLinkedUnitRetrievalResult: LinkedUnitRetrievalHandler[Result]
-    ) extends LinkedUnitController[FakeUnitRef](unitRefType, withTracingAction, retrieveLinkedUnitAction, handleLinkedUnitRetrievalResult) {
+        handleLinkedUnitRetrievalResult: LinkedUnitRetrievalHandler[Result],
+        components: ControllerComponents
+    ) extends LinkedUnitController[FakeUnitRef](unitRefType, withTracingAction, retrieveLinkedUnitAction, handleLinkedUnitRetrievalResult, components) {
 
       // make the method public so that we can invoke it from a test
       override def retrieveLinkedUnit(periodStr: String, unitRefStr: String): Action[AnyContent] =
@@ -58,7 +59,8 @@ class LinkedUnitControllerSpec extends FreeSpec with Matchers with MockFactory w
       unitRefType,
       new WithTracingAction(stubPlayBodyParsers.default, tracerService)(ExecutionContext.global),
       new RetrieveLinkedUnitAction[FakeUnitRef](linkedUnitService, ExecutionContext.global),
-      linkedUnitRetrievalHandler
+      linkedUnitRetrievalHandler,
+      stubControllerComponents()
     )
   }
 

@@ -1,21 +1,12 @@
 package controllers
 
-import javax.inject.Singleton
+import io.swagger.annotations.{Api, ApiOperation, ApiResponse, ApiResponses}
+import javax.inject.{Inject, Singleton}
+import play.api.mvc.ControllerComponents
 
-import io.swagger.annotations.{ Api, ApiOperation, ApiResponse, ApiResponses }
-import play.api.mvc.{ Action, Controller }
-
-/**
- * HomeController
- * ----------------
- * Author: haqa
- * Date: 12 July 2017 - 09:25
- * Copyright (c) 2017  Office for National Statistics
- */
 @Api("Utils")
 @Singleton
-class HomeController extends Controller {
-
+class HomeController @Inject() (components: ControllerComponents) extends AbstractSbrController(components) {
   //public api
   @ApiOperation(
     value = "Swagger Documentation",
@@ -59,5 +50,4 @@ class HomeController extends Controller {
   def preflight(all: String) = Action {
     Ok("")
   }
-
 }

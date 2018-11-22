@@ -4,10 +4,10 @@ import actions.RetrieveLinkedUnitAction.LinkedUnitTracedRequestActionFunctionMak
 import actions.TracedRequest
 import handlers.LinkedUnitRetrievalHandler
 import io.swagger.annotations._
-import javax.inject.{ Inject, Singleton }
+import javax.inject.{Inject, Singleton}
 import play.api.libs.json.JsObject
-import play.api.mvc.{ Action, ActionBuilder, AnyContent, Result }
-import uk.gov.ons.sbr.models.{ PayeRef, Period, UnitId, UnitType }
+import play.api.mvc._
+import uk.gov.ons.sbr.models.{PayeRef, Period, UnitId, UnitType}
 import unitref.UnitRef
 
 @Api("PAYE")
@@ -16,8 +16,9 @@ class PayeController @Inject() (
     unitRefType: UnitRef[PayeRef],
     tracingAction: ActionBuilder[TracedRequest, AnyContent],
     retrieveLinkedUnitAction: LinkedUnitTracedRequestActionFunctionMaker[PayeRef],
-    handleLinkedUnitRetrievalResult: LinkedUnitRetrievalHandler[Result]
-) extends LinkedUnitController[PayeRef](unitRefType, tracingAction, retrieveLinkedUnitAction, handleLinkedUnitRetrievalResult) {
+    handleLinkedUnitRetrievalResult: LinkedUnitRetrievalHandler[Result],
+    components: ControllerComponents
+) extends LinkedUnitController[PayeRef](unitRefType, tracingAction, retrieveLinkedUnitAction, handleLinkedUnitRetrievalResult, components) {
   @ApiOperation(
     value = "Json representation of the PAYE unit along with its links to other units",
     notes = "parents represent a mapping from a parent unitType to the associated unit identifier; " +

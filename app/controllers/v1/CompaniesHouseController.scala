@@ -3,11 +3,11 @@ package controllers.v1
 import actions.RetrieveLinkedUnitAction.LinkedUnitTracedRequestActionFunctionMaker
 import actions.TracedRequest
 import handlers.LinkedUnitRetrievalHandler
-import io.swagger.annotations.{ Api, _ }
-import javax.inject.{ Inject, Singleton }
+import io.swagger.annotations.{Api, _}
+import javax.inject.{Inject, Singleton}
 import play.api.libs.json.JsObject
-import play.api.mvc.{ Action, ActionBuilder, AnyContent, Result }
-import uk.gov.ons.sbr.models.{ CompanyRefNumber, Period, UnitId, UnitType }
+import play.api.mvc._
+import uk.gov.ons.sbr.models.{CompanyRefNumber, Period, UnitId, UnitType}
 import unitref.UnitRef
 
 @Api("Companies House")
@@ -16,8 +16,9 @@ class CompaniesHouseController @Inject() (
     unitRefType: UnitRef[CompanyRefNumber],
     tracingAction: ActionBuilder[TracedRequest, AnyContent],
     retrieveLinkedUnitAction: LinkedUnitTracedRequestActionFunctionMaker[CompanyRefNumber],
-    handleLinkedUnitRetrievalResult: LinkedUnitRetrievalHandler[Result]
-) extends LinkedUnitController[CompanyRefNumber](unitRefType, tracingAction, retrieveLinkedUnitAction, handleLinkedUnitRetrievalResult) {
+    handleLinkedUnitRetrievalResult: LinkedUnitRetrievalHandler[Result],
+    components: ControllerComponents
+) extends LinkedUnitController[CompanyRefNumber](unitRefType, tracingAction, retrieveLinkedUnitAction, handleLinkedUnitRetrievalResult, components) {
   @ApiOperation(
     value = "Json representation of the Companies House unit along with its links to other units",
     notes = "parents represent a mapping from a parent unitType to the associated unit identifier; " +

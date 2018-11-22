@@ -2,10 +2,10 @@ package controllers.v1
 
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{ FreeSpec, Matchers }
+import org.scalatest.{FreeSpec, Matchers}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.libs.json.JsString
-import play.api.test.FakeRequest
+import play.api.test.{FakeRequest, StubControllerComponentsFactory}
 import play.api.test.Helpers._
 import repository.sbrctrl.RestAdminDataUnitLinksEditRepository
 import services._
@@ -16,7 +16,7 @@ import scala.concurrent.Future
 
 class EditAdminDataParentLinkStatusMappingSpec extends FreeSpec with GuiceOneAppPerSuite with Matchers with MockFactory with ScalaFutures {
 
-  private trait Fixture {
+  private trait Fixture extends StubControllerComponentsFactory {
     val ValidVatRef = "397585634298"
     val ValidPayeRef = "192039485761"
     val TargetPeriod = Period.fromString("201803")
@@ -56,7 +56,7 @@ class EditAdminDataParentLinkStatusMappingSpec extends FreeSpec with GuiceOneApp
 
     val editService = mock[EditService]
     val repository = mock[RestAdminDataUnitLinksEditRepository]
-    val controller = new AdminDataParentLinkEditController(editService)
+    val controller = new AdminDataParentLinkEditController(editService, stubControllerComponents())
 
     implicit lazy val materializer = app.materializer
   }

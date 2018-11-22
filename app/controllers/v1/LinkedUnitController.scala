@@ -2,10 +2,10 @@ package controllers.v1
 
 import actions.RetrieveLinkedUnitAction.LinkedUnitTracedRequestActionFunctionMaker
 import actions.TracedRequest
+import controllers.AbstractSbrController
 import handlers.LinkedUnitRetrievalHandler
 import play.api.mvc._
-import play.mvc.Controller
-import uk.gov.ons.sbr.models.{ Period, UnitId }
+import uk.gov.ons.sbr.models.{Period, UnitId}
 import unitref.UnitRef
 
 /*
@@ -16,8 +16,9 @@ private[v1] class LinkedUnitController[T](
     unitRefType: UnitRef[T],
     withTracingAction: ActionBuilder[TracedRequest, AnyContent],
     retrieveLinkedUnitAction: LinkedUnitTracedRequestActionFunctionMaker[T],
-    handleLinkedUnitRetrievalResult: LinkedUnitRetrievalHandler[Result]
-) extends Controller {
+    handleLinkedUnitRetrievalResult: LinkedUnitRetrievalHandler[Result],
+    components: ControllerComponents
+) extends AbstractSbrController(components) {
   protected def retrieveLinkedUnit(periodStr: String, unitRefStr: String): Action[AnyContent] = {
     val period = Period.fromString(periodStr)
     val unitRef = unitRefType.fromUnitId(UnitId(unitRefStr))

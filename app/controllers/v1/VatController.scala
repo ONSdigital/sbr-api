@@ -4,10 +4,10 @@ import actions.RetrieveLinkedUnitAction.LinkedUnitTracedRequestActionFunctionMak
 import actions.TracedRequest
 import handlers.LinkedUnitRetrievalHandler
 import io.swagger.annotations._
-import javax.inject.{ Inject, Singleton }
+import javax.inject.{Inject, Singleton}
 import play.api.libs.json.JsObject
-import play.api.mvc.{ Action, ActionBuilder, AnyContent, Result }
-import uk.gov.ons.sbr.models.{ Period, UnitId, UnitType, _ }
+import play.api.mvc._
+import uk.gov.ons.sbr.models.{Period, UnitId, UnitType, _}
 import unitref.UnitRef
 
 @Api("VAT")
@@ -16,8 +16,9 @@ class VatController @Inject() (
     unitRefType: UnitRef[VatRef],
     tracingAction: ActionBuilder[TracedRequest, AnyContent],
     retrieveLinkedUnitAction: LinkedUnitTracedRequestActionFunctionMaker[VatRef],
-    handleLinkedUnitRetrievalResult: LinkedUnitRetrievalHandler[Result]
-) extends LinkedUnitController[VatRef](unitRefType, tracingAction, retrieveLinkedUnitAction, handleLinkedUnitRetrievalResult) {
+    handleLinkedUnitRetrievalResult: LinkedUnitRetrievalHandler[Result],
+    components: ControllerComponents
+) extends LinkedUnitController[VatRef](unitRefType, tracingAction, retrieveLinkedUnitAction, handleLinkedUnitRetrievalResult, components) {
   @ApiOperation(
     value = "Json representation of the VAT unit along with its links to other units",
     notes = "parents represent a mapping from a parent unitType to the associated unit identifier; " +

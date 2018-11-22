@@ -16,8 +16,9 @@ class EnterpriseController @Inject() (
     unitRefType: UnitRef[Ern],
     tracingAction: ActionBuilder[TracedRequest, AnyContent],
     retrieveLinkedUnitAction: LinkedUnitTracedRequestActionFunctionMaker[Ern],
-    handleLinkedUnitRetrievalResult: LinkedUnitRetrievalHandler[Result]
-) extends LinkedUnitController[Ern](unitRefType, tracingAction, retrieveLinkedUnitAction, handleLinkedUnitRetrievalResult) {
+    handleLinkedUnitRetrievalResult: LinkedUnitRetrievalHandler[Result],
+    components: ControllerComponents
+) extends LinkedUnitController[Ern](unitRefType, tracingAction, retrieveLinkedUnitAction, handleLinkedUnitRetrievalResult, components) {
   @ApiOperation(
     value = "Json representation of the enterprise along with its links to other units",
     notes = "children represents a mapping from each child's unique identifier to the associated unitType; " +
