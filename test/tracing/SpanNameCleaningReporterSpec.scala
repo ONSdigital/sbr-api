@@ -11,9 +11,9 @@ class SpanNameCleaningReporterSpec extends FreeSpec with Matchers with MockFacto
 
   private trait Fixture {
     private val spanBuilder = Span.newBuilder().
-      traceId(1122334455L).
-      id(98765L).
-      parentId(123456L).
+      traceId("4e441824ec2b6a44ffdc9bb9a6453df3").
+      id("ffdc9bb9a6453df3").
+      parentId("ffdc9bb9a6453df3").
       timestamp(currentTimeMillis()).
       duration(500L).
       debug(false)

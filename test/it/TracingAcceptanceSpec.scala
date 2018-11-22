@@ -1,15 +1,14 @@
-
 import java.time.Month.JUNE
 
-import TracingAcceptanceSpec.SpanMatcher.{ aChildSpan, aRootSpan }
+import TracingAcceptanceSpec.SpanMatcher.{aChildSpan, aRootSpan}
 import TracingAcceptanceSpec._
-import com.google.inject.{ AbstractModule, TypeLiteral }
+import com.google.inject.{AbstractModule, TypeLiteral}
 import com.typesafe.scalalogging.LazyLogging
 import fixture.ServerAcceptanceSpec
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.time.{ Millis, Seconds }
-import org.scalatest.{ Outcome, TestData }
+import org.scalatest.time.{Millis, Seconds}
+import org.scalatest.{Outcome, TestData}
 import play.api.Application
 import play.api.http.Port
 import play.api.inject.guice.GuiceApplicationBuilder
@@ -17,7 +16,7 @@ import play.api.libs.ws.WSClient
 import play.api.test.WsTestClient
 import support.wiremock.WireMockSbrControlApi
 import tracing.SpanNameCleaningReporter
-import uk.gov.ons.sbr.models.{ Ern, Period }
+import uk.gov.ons.sbr.models.{Ern, Period}
 import zipkin2.Span
 import zipkin2.reporter.Reporter
 
@@ -134,7 +133,7 @@ class TracingAcceptanceSpec extends ServerAcceptanceSpec with MockFactory with W
   feature("a span is created for incoming requests that have an existing trace context") {
     scenario("when serving the request does not entail making downstream requests") { wsClient =>
       Given("the request will have a trace context")
-      val traceContext = makeTraceContext(RequestTraceIdHigh, RequestTraceIdLow, RequestSpanId)
+      val traceContext = makeTraceContext(RequestTraceId, RequestSpanId)
       val timestampMicrosBeforeRequest = currentTimestampMicros
 
       When(s"a request is made for the sbr-api version")
@@ -142,9 +141,8 @@ class TracingAcceptanceSpec extends ServerAcceptanceSpec with MockFactory with W
 
         Then(s"a child span is created within the existing trace to capture the request latency")
         (traceReporter.report _).verify(where(aChildSpan(
-          withTraceIdHigh = RequestTraceIdHigh,
-          withTraceIdLow = RequestTraceIdLow,
-          withParentSpanId = RequestSpanId,
+          withTraceId = RequestTraceId,
+          withParentId = RequestSpanId,
           withName = "get - /version",
           withTimestampMicrosAfter = timestampMicrosBeforeRequest
         )))
@@ -164,7 +162,7 @@ class TracingAcceptanceSpec extends ServerAcceptanceSpec with MockFactory with W
         anOkResponse().withBody(unitResponseBody(TargetErn))
       ))
       And("the incoming request will have a trace context")
-      val traceContext = makeTraceContext(RequestTraceIdHigh, RequestTraceIdLow, RequestSpanId)
+      val traceContext = makeTraceContext(RequestTraceId, RequestSpanId)
       val timestampMicrosBeforeRequest = currentTimestampMicros
 
       When(s"a request is made to retrieve a unit")
@@ -172,9 +170,8 @@ class TracingAcceptanceSpec extends ServerAcceptanceSpec with MockFactory with W
 
         Then(s"a child span is created within the existing trace to capture the request latency")
         (traceReporter.report _).verify(where(aChildSpan(
-          withTraceIdHigh = RequestTraceIdHigh,
-          withTraceIdLow = RequestTraceIdLow,
-          withParentSpanId = RequestSpanId,
+          withTraceId = RequestTraceId,
+          withParentId = RequestSpanId,
           withName = "get - /v1/periods/$period/ents/$ern",
           withTimestampMicrosAfter = timestampMicrosBeforeRequest
         )))
@@ -204,9 +201,8 @@ class TracingAcceptanceSpec extends ServerAcceptanceSpec with MockFactory with W
 object TracingAcceptanceSpec {
   private val TargetErn = Ern("1234567890")
   private val TargetPeriod = Period.fromYearMonth(2018, JUNE)
-  private val RequestTraceIdHigh = 0x36599d86b3de7f62L
-  private val RequestTraceIdLow = 0x71ddb90fd26ac6a3L
-  private val RequestSpanId = 0x09b5600fe57d0333L
+  private val RequestTraceId = "36599d86b3de7f6271ddb90fd26ac6a3"
+  private val RequestSpanId = "09b5600fe57d0333"
 
   private def unitLinksResponseBody(ern: Ern, period: Period): String =
     s"""
@@ -229,10 +225,10 @@ object TracingAcceptanceSpec {
   private def currentTimestampMicros: Long =
     System.currentTimeMillis() * 100L
 
-  private def makeTraceContext(traceIdHigh: Long, traceIdLow: Long, spanId: Long): List[(String, String)] =
+  private def makeTraceContext(traceId: String, spanId: String): List[(String, String)] =
     List(
-      ("X-B3-TraceId", traceIdHigh.toHexString + traceIdLow.toHexString),
-      ("X-B3-SpanId", spanId.toHexString)
+      ("X-B3-TraceId", traceId),
+      ("X-B3-SpanId", spanId)
     )
 
   private def singletonSpanByName(spans: List[Span], name: String): Span = {
@@ -251,19 +247,16 @@ object TracingAcceptanceSpec {
 
     def aChildSpan(withParentSpan: Span, withName: String, withTimestampMicrosAfter: Long): Span => Boolean =
       aChildSpan(
-        withTraceIdHigh = withParentSpan.traceIdHigh,
-        withTraceIdLow = withParentSpan.traceId,
-        withParentSpanId = withParentSpan.id,
+        withTraceId = withParentSpan.traceId(),
+        withParentId = withParentSpan.id,
         withName,
         withTimestampMicrosAfter
       )
 
-    def aChildSpan(withTraceIdHigh: Long, withTraceIdLow: Long, withParentSpanId: Long,
-      withName: String, withTimestampMicrosAfter: Long): Span => Boolean =
+    def aChildSpan(withTraceId: String, withParentId: String, withName: String, withTimestampMicrosAfter: Long): Span => Boolean =
       (span: Span) =>
-        span.traceIdHigh == withTraceIdHigh &&
-          span.traceId == withTraceIdLow &&
-          span.parentId == withParentSpanId &&
+        span.traceId() == withTraceId &&
+          span.parentId == withParentId &&
           span.name == withName &&
           span.timestamp > withTimestampMicrosAfter &&
           span.duration > 0L &&
