@@ -6,9 +6,10 @@ import com.typesafe.scalalogging.LazyLogging
 import config.{BaseUrlConfigLoader, RestAdminDataRepositoryConfigLoader, SbrCtrlRestUnitRepositoryConfigLoader}
 import handlers.LinkedUnitRetrievalHandler
 import handlers.http.HttpLinkedUnitRetrievalHandler
-import javax.inject.{Inject, Named}
+import javax.inject.{Inject, Named, Singleton}
+import parsers.JsonUnitLinkEditBodyParser
 import play.api.libs.json.{Reads, Writes}
-import play.api.mvc.Result
+import play.api.mvc.{BodyParser, PlayBodyParsers, Result}
 import play.api.{Configuration, Environment}
 import repository.DataSourceNames.{CompaniesHouse, Paye, SbrCtrl, Vat}
 import repository._
@@ -193,4 +194,10 @@ class Module(
   @Provides
   def providesCompaniesHouseLinkedUnitRequestActionBuilderMaker(@Inject() chService: LinkedUnitService[CompanyRefNumber], ec: ExecutionContext): LinkedUnitTracedRequestActionFunctionMaker[CompanyRefNumber] =
     new RetrieveLinkedUnitAction[CompanyRefNumber](chService, ec)
+  
+  // body parsers
+  @Provides
+  @Singleton
+  def providesEditParentLinkBodyParser(@Inject() bodyParsers: PlayBodyParsers, ec: ExecutionContext): BodyParser[EditParentLink] =
+    new JsonUnitLinkEditBodyParser(bodyParsers.json)(ec)
 }
