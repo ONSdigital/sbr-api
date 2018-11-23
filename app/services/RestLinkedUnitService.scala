@@ -35,7 +35,7 @@ class RestLinkedUnitService[T](
   private def onUnitLinksFound(period: Period, unitRef: T, unitLinks: UnitLinks, traceData: TraceData): Future[Either[ErrorMessage, Option[LinkedUnit]]] = {
     logger.debug(s"Found Unit Links for [$period] and [$unitRef].  Attempting to find unit ...")
     unitFinder.find(period, unitRef, unitLinks, traceData).map { errorOrJson =>
-      errorOrJson.right.map { optJson =>
+      errorOrJson.map { optJson =>
         if (optJson.isEmpty) logger.warn(s"Inconsistent Database.  No unit found for [$period] and [$unitRef] that has Unit Links [$unitLinks].")
         optJson.map { json =>
           val linkedUnit = LinkedUnit.wrap(unitLinks, json)

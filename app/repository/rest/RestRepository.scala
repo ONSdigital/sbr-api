@@ -55,7 +55,7 @@ class RestRepository @Inject() (config: RestRepositoryConfig, wsClient: TraceWSC
 
   private def fromResponseToErrorOrJson(response: WSResponse): Either[ErrorMessage, Option[JsValue]] =
     response.status match {
-      case OK => bodyAsJson(response).right.map(Some(_))
+      case OK => bodyAsJson(response).map(Some(_))
       case NOT_FOUND => Right(None)
       case _ => Left(describeStatus(response))
     }

@@ -14,7 +14,7 @@ import scala.concurrent.ExecutionContext
 class JsonUnitLinkEditBodyParser @Inject() (jsonBodyParser: BodyParser[JsValue])(implicit ec: ExecutionContext) extends BodyParser[EditParentLink] with LazyLogging {
   override def apply(rh: RequestHeader): Accumulator[ByteString, Either[Result, EditParentLink]] =
     jsonBodyParser(rh).map { resultOrJsValue =>
-      resultOrJsValue.right.flatMap(jsonToBadRequestOrEditParentLink)
+      resultOrJsValue.flatMap(jsonToBadRequestOrEditParentLink)
     }
 
   private def jsonToBadRequestOrEditParentLink(jsValue: JsValue): Either[Result, EditParentLink] = {

@@ -13,7 +13,7 @@ class AdminDataFinder[T](unitRefType: UnitRef[T], adminDataRepository: AdminData
                         (implicit ec: ExecutionContext) extends UnitFinder[T] {
   override def find(period: Period, unitRef: T, unitLinks: UnitLinks, traceData: TraceData): Future[Either[ErrorMessage, Option[JsObject]]] =
     adminDataRepository.retrieveAdminData(unitRefType.toUnitId(unitRef), period, traceData).map { errorOrAdminData =>
-      errorOrAdminData.right.map { optAdminData =>
+      errorOrAdminData.map { optAdminData =>
         optAdminData.map(_.variables)
       }
     }
