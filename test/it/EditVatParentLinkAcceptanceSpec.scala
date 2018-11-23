@@ -41,25 +41,25 @@ class EditVatParentLinkAcceptanceSpec extends ServerAcceptanceSpec with WireMock
 
   private val EditParentLinkPatchBody =
     s"""|[
-        |  { "op": "test", path: "/parents/LEU", value: "$ParentLEU" },
-        |  { "op": "replace", path: "/parents/LEU", value: "$NewParentLEU" }
+        |  { "op": "test", "path": "/parents/LEU", "value": "$ParentLEU" },
+        |  { "op": "replace", "path": "/parents/LEU", "value": "$NewParentLEU" }
         |]""".stripMargin
 
   private val EditParentLinkConflictPatchBody =
     s"""|[
-        |  { "op": "test", path: "/parents/LEU", value: "$NewParentLEU" },
-        |  { "op": "replace", path: "/parents/LEU", value: "$NewParentLEU" }
+        |  { "op": "test", "path": "/parents/LEU", "value": "$NewParentLEU" },
+        |  { "op": "replace", "path": "/parents/LEU", "value": "$NewParentLEU" }
         |]""".stripMargin
 
   private val VatCreateChildLinkPatchBody =
     s"""|[
-        |  { "op": "add", path: "/children/${TargetVAT.value}", value: "VAT" }
+        |  { "op": "add", "path": "/children/${TargetVAT.value}", "value": "VAT" }
         |]""".stripMargin
 
   private val VatDeleteChildUnitLink =
     s"""|[
-        |  { "op": "test", path: "/children/${TargetVAT.value}", value: "VAT" },
-        |  { "op": "remove", path: "/children/${TargetVAT.value}" }
+        |  { "op": "test", "path": "/children/${TargetVAT.value}", "value": "VAT" },
+        |  { "op": "remove", "path": "/children/${TargetVAT.value}" }
         |]""".stripMargin
 
   override type FixtureParam = WSClient

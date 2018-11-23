@@ -43,8 +43,8 @@ class RestRepository_WiremockSpec extends org.scalatest.fixture.FreeSpec with Gu
 
   private val VATEditParentLinkPatchBody =
     s"""|[
-        |  { "op": "test", path: "/parents/LEU", value: "123456789" },
-        |  { "op": "replace", path: "/parents/LEU", value: "987654321" }
+        |  { "op": "test", "path": "/parents/LEU", "value": "123456789" },
+        |  { "op": "replace", "path": "/parents/LEU", "value": "987654321" }
         |]""".stripMargin
 
   /*

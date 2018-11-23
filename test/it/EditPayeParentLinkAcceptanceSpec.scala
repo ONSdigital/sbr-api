@@ -41,25 +41,25 @@ class EditPayeParentLinkAcceptanceSpec extends ServerAcceptanceSpec with WireMoc
 
   private val EditParentLinkPatchBody =
     s"""|[
-        |  { "op": "test", path: "/parents/LEU", value: "$ParentLEU" },
-        |  { "op": "replace", path: "/parents/LEU", value: "$NewParentLEU" }
+        |  { "op": "test", "path": "/parents/LEU", "value": "$ParentLEU" },
+        |  { "op": "replace", "path": "/parents/LEU", "value": "$NewParentLEU" }
         |]""".stripMargin
 
   private val EditParentLinkConflictPatchBody =
     s"""|[
-        |  { "op": "test", path: "/parents/LEU", value: "$NewParentLEU" },
-        |  { "op": "replace", path: "/parents/LEU", value: "$NewParentLEU" }
+        |  { "op": "test", "path": "/parents/LEU", "value": "$NewParentLEU" },
+        |  { "op": "replace", "path": "/parents/LEU", "value": "$NewParentLEU" }
         |]""".stripMargin
 
   private val PayeCreateChildLinkPatchBody =
     s"""|[
-        |  { "op": "add", path: "/children/${TargetPAYE.value}", value: "PAYE" }
+        |  { "op": "add", "path": "/children/${TargetPAYE.value}", "value": "PAYE" }
         |]""".stripMargin
 
   private val PayeDeleteChildUnitLink =
     s"""|[
-        |  { "op": "test", path: "/children/${TargetPAYE.value}", value: "PAYE" },
-        |  { "op": "remove", path: "/children/${TargetPAYE.value}" }
+        |  { "op": "test", "path": "/children/${TargetPAYE.value}", "value": "PAYE" },
+        |  { "op": "remove", "path": "/children/${TargetPAYE.value}" }
         |]""".stripMargin
 
   override type FixtureParam = WSClient
