@@ -31,7 +31,7 @@ class LocalUnitRoutingSpec extends FreeSpec with Matchers with GuiceOneAppPerSui
    * We therefore override the HTTP timeout configuration to minimise the time this spec waits on a connection that
    * we know cannot be established.
    */
-  override def fakeApplication(): Application = new GuiceApplicationBuilder().configure(Map("play.ws.timeout.connection" -> "50")).build()
+  override def fakeApplication(): Application = new GuiceApplicationBuilder().configure(Map("play.ws.timeout.connection" -> "50ms")).build()
 
   private trait Fixture {
     val ValidLurn = "900000011"

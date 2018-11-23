@@ -36,7 +36,7 @@ class EditAdminDataParentLinkRoutingSpec extends FreeSpec with Matchers with Gui
    * we know cannot be established.
    */
 
-  override def fakeApplication(): Application = new GuiceApplicationBuilder().configure(Map("play.ws.timeout.connection" -> "50")).build()
+  override def fakeApplication(): Application = new GuiceApplicationBuilder().configure(Map("play.ws.timeout.connection" -> "50ms")).build()
 
   private trait Fixture {
     val ValidVatRef = "987628475012"

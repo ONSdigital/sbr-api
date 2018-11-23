@@ -61,7 +61,7 @@ class RestRepository_WiremockSpec extends org.scalatest.fixture.FreeSpec with Gu
   autoVerify = false
 
   // artificially reduce the default request timeout for the purposes of testing timeout handling.
-  override def fakeApplication(): Application = new GuiceApplicationBuilder().configure("play.ws.timeout.request" -> RequestTimeoutMillis).build()
+  override def fakeApplication(): Application = new GuiceApplicationBuilder().configure("play.ws.timeout.request" -> s"${RequestTimeoutMillis}ms").build()
 
   // test patience must exceed the configured fixedDelay to properly test client-side timeout handling
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(timeout = scaled(Span(1, Second)), interval = scaled(Span(100, Millis)))
