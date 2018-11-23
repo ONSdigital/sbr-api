@@ -6,7 +6,7 @@ import scala.util.Try
 
 object JsResultSupport {
   def fromTry[A](tryA: Try[A]): JsResult[A] =
-    TrySupport.fold(tryA)(
+    tryA.fold(
       err => JsError(err.getMessage),
       a => JsSuccess(a)
     )

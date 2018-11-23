@@ -12,7 +12,6 @@ import play.mvc.Http.MimeTypes.JSON
 import repository.ErrorMessage
 import tracing.{TraceData, TraceWSClient}
 import uk.gov.ons.sbr.models.edit.Patch
-import utils.TrySupport
 import utils.url.{BaseUrl, Url}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -72,7 +71,7 @@ class RestRepository @Inject() (config: RestRepositoryConfig, wsClient: TraceWSC
   }
 
   private def bodyAsJson(response: WSResponse): Either[ErrorMessage, JsValue] =
-    TrySupport.fold(Try(response.json))(
+    Try(response.json).fold(
       err => Left(s"Unable to create JsValue from unit response [${err.getMessage}]"),
       json => Right(json)
     )
