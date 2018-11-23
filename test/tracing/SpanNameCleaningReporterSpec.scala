@@ -4,16 +4,16 @@ import java.lang.System.currentTimeMillis
 
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{ FreeSpec, Matchers }
-import zipkin2.Span
-import zipkin2.reporter.Reporter
+import zipkin.Span
+import zipkin.reporter.Reporter
 
 class SpanNameCleaningReporterSpec extends FreeSpec with Matchers with MockFactory {
 
   private trait Fixture {
-    private val spanBuilder = Span.newBuilder().
-      traceId("4e441824ec2b6a44ffdc9bb9a6453df3").
-      id("ffdc9bb9a6453df3").
-      parentId("ffdc9bb9a6453df3").
+    private val spanBuilder = Span.builder().
+      traceId(1122334455L).
+      id(98765L).
+      parentId(123456L).
       timestamp(currentTimeMillis()).
       duration(500L).
       debug(false)

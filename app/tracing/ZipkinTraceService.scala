@@ -8,8 +8,8 @@ import javax.inject.{Inject, Singleton}
 import jp.co.bizreach.trace.ZipkinTraceConfig.{AkkaName, ZipkinSampleRate}
 import jp.co.bizreach.trace.ZipkinTraceServiceLike
 import play.api.Configuration
-import zipkin2.Span
-import zipkin2.reporter.Reporter
+import zipkin.Span
+import zipkin.reporter.Reporter
 
 import scala.concurrent.ExecutionContext
 
@@ -23,7 +23,7 @@ class ZipkinTraceService @Inject() (conf: Configuration, actorSystem: ActorSyste
 
   override val tracing: Tracing = Tracing.newBuilder()
     .localServiceName("sbr-api")
-    .spanReporter(reporter)
+    .reporter(reporter)
     .sampler(samplerFrom(conf))
     .build()
 

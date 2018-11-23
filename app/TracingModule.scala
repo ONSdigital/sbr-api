@@ -4,15 +4,15 @@ import com.google.inject.{AbstractModule, Provides}
 import config.BaseUrlConfigLoader
 import javax.inject.Inject
 import jp.co.bizreach.trace.ZipkinTraceServiceLike
-import jp.co.bizreach.trace.play.filter.ZipkinTraceFilter
+import jp.co.bizreach.trace.play26.filter.ZipkinTraceFilter
 import play.api.Mode.{Dev, Prod, Test}
 import play.api.mvc.{ActionBuilder, AnyContent, Filter, PlayBodyParsers}
 import play.api.{Configuration, Environment}
 import tracing._
 import utils.url.Url
-import zipkin2.Span
-import zipkin2.reporter.okhttp3.OkHttpSender
-import zipkin2.reporter.{AsyncReporter, Reporter}
+import zipkin.Span
+import zipkin.reporter.okhttp3.OkHttpSender
+import zipkin.reporter.{AsyncReporter, Reporter}
 
 import scala.concurrent.ExecutionContext
 

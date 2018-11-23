@@ -148,7 +148,7 @@ lazy val deps = Seq(
   "org.webjars"                  %     "swagger-ui"                  % "3.19.5",
   "com.typesafe"                 %     "config"                      % "1.3.3"
     excludeAll ExclusionRule("commons-logging", "commons-logging"),
-  "jp.co.bizreach"               %% "play-zipkin-tracing-play"       % "2.1.0"
+  "jp.co.bizreach"               %%    "play-zipkin-tracing-play26"  % "1.4.0"
 )
 
 lazy val depOverrides = Seq(

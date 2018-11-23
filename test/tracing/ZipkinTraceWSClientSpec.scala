@@ -14,7 +14,7 @@ class ZipkinTraceWSClientSpec extends FreeSpec with Matchers with MockFactory {
 
     val wsClient = mock[WSClient]
     val zipkinTraceServiceLike = stub[ZipkinTraceServiceLike]
-    val zipkinTraceWSClient = new jp.co.bizreach.trace.play.TraceWSClient(wsClient, zipkinTraceServiceLike)
+    val zipkinTraceWSClient = new jp.co.bizreach.trace.play26.TraceWSClient(wsClient, zipkinTraceServiceLike)
 
     val wsRequest = stub[WSRequest]
     val traceData = stub[TraceData]
