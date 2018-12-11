@@ -27,6 +27,7 @@ import scala.util.Try
 
 @Api("Search")
 @Singleton
+@SuppressWarnings(Array("TraversableHead", "OptionGet"))    // disable scapegoat errors for this class
 class SearchController @Inject() (val configuration: Configuration, mcc: MessagesControllerComponents)(implicit ws: RequestGenerator) extends MessagesAbstractController(mcc) with StrictLogging with Properties {
 
   private type UnitLinksListType = Seq[JsValue]
