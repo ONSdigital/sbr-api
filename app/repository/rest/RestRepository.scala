@@ -4,25 +4,23 @@ import java.util.concurrent.TimeoutException
 
 import com.typesafe.scalalogging.LazyLogging
 import javax.inject.Inject
-
 import play.api.http.Status._
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import play.api.libs.json.{ JsValue, Json }
-import play.api.libs.ws.{ WSRequest, WSResponse }
-import play.mvc.Http.HeaderNames.{ ACCEPT, CONTENT_TYPE }
+import play.api.libs.json.{JsValue, Json}
+import play.api.libs.ws.{WSRequest, WSResponse}
+import play.mvc.Http.HeaderNames.{ACCEPT, CONTENT_TYPE}
 import play.mvc.Http.MimeTypes.JSON
 import repository.ErrorMessage
-import tracing.{ TraceData, TraceWSClient }
+import tracing.{TraceData, TraceWSClient}
 import uk.gov.ons.sbr.models.edit.Patch
-import utils.TrySupport
-import utils.url.{ BaseUrl, Url }
+import utils.url.{BaseUrl, Url}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 
 case class RestRepositoryConfig(baseUrl: BaseUrl)
 
-class RestRepository @Inject() (config: RestRepositoryConfig, wsClient: TraceWSClient) extends Repository with LazyLogging {
+class RestRepository @Inject() (config: RestRepositoryConfig, wsClient: TraceWSClient)
+                               (implicit ec: ExecutionContext) extends Repository with LazyLogging {
 
   // See here for details on JSON Patch: https://tools.ietf.org/html/rfc6902
   private val Patch_Json = s"$JSON-patch+json"
@@ -44,7 +42,7 @@ class RestRepository @Inject() (config: RestRepositoryConfig, wsClient: TraceWSC
   private def requestForWithTracing(url: String, contentType: String, spanName: String, traceData: TraceData): WSRequest =
     wsClient.
       url(url, spanName, traceData).
-      withHeaders(ACCEPT -> contentType)
+      withHttpHeaders(ACCEPT -> contentType)
 
   /**
    * Explicit tracing will be removed in future, hence the duplication of the requestFor method below without
@@ -53,11 +51,11 @@ class RestRepository @Inject() (config: RestRepositoryConfig, wsClient: TraceWSC
   private def requestFor(url: String, contentType: String): WSRequest =
     wsClient.
       untracedUrl(url).
-      withHeaders(CONTENT_TYPE -> contentType)
+      withHttpHeaders(CONTENT_TYPE -> contentType)
 
   private def fromResponseToErrorOrJson(response: WSResponse): Either[ErrorMessage, Option[JsValue]] =
     response.status match {
-      case OK => bodyAsJson(response).right.map(Some(_))
+      case OK => bodyAsJson(response).map(Some(_))
       case NOT_FOUND => Right(None)
       case _ => Left(describeStatus(response))
     }
@@ -73,7 +71,7 @@ class RestRepository @Inject() (config: RestRepositoryConfig, wsClient: TraceWSC
   }
 
   private def bodyAsJson(response: WSResponse): Either[ErrorMessage, JsValue] =
-    TrySupport.fold(Try(response.json))(
+    Try(response.json).fold(
       err => Left(s"Unable to create JsValue from unit response [${err.getMessage}]"),
       json => Right(json)
     )

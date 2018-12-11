@@ -1,10 +1,10 @@
 package controllers
 
-import javax.inject.Singleton
-import play.api.mvc.{ Action, AnyContent, Controller }
+import javax.inject.{Inject, Singleton}
+import play.api.mvc.{Action, AnyContent, ControllerComponents}
 
 @Singleton
-class BadRequestController extends Controller {
+class BadRequestController @Inject() (components: ControllerComponents) extends AbstractSbrController(components) {
   def badRequest(arg1: String, arg2: String): Action[AnyContent] = Action {
     BadRequest
   }

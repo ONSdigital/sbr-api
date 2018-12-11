@@ -3,21 +3,22 @@ package controllers.v1
 import actions.RetrieveLinkedUnitAction.LinkedUnitTracedRequestActionFunctionMaker
 import actions.TracedRequest
 import handlers.LinkedUnitRetrievalHandler
-import io.swagger.annotations.{ Api, _ }
-import javax.inject.{ Inject, Singleton }
+import io.swagger.annotations.{Api, _}
+import javax.inject.{Inject, Singleton}
 import play.api.libs.json.JsObject
-import play.api.mvc.{ Action, ActionBuilder, AnyContent, Result }
-import uk.gov.ons.sbr.models.{ Lurn, Period, UnitId, UnitType }
+import play.api.mvc._
+import uk.gov.ons.sbr.models.{Lurn, Period, UnitId, UnitType}
 import unitref.UnitRef
 
 @Api("Local Unit")
 @Singleton
 class LocalUnitController @Inject() (
     unitRefType: UnitRef[Lurn],
-    tracingAction: ActionBuilder[TracedRequest],
+    tracingAction: ActionBuilder[TracedRequest, AnyContent],
     retrieveLinkedUnitAction: LinkedUnitTracedRequestActionFunctionMaker[Lurn],
-    handleLinkedUnitRetrievalResult: LinkedUnitRetrievalHandler[Result]
-) extends LinkedUnitController[Lurn](unitRefType, tracingAction, retrieveLinkedUnitAction, handleLinkedUnitRetrievalResult) {
+    handleLinkedUnitRetrievalResult: LinkedUnitRetrievalHandler[Result],
+    components: ControllerComponents
+) extends LinkedUnitController[Lurn](unitRefType, tracingAction, retrieveLinkedUnitAction, handleLinkedUnitRetrievalResult, components) {
   @ApiOperation(
     value = "Json representation of the local unit along with its links to other units",
     notes = "parents represent a mapping from the parent unitType to its associated unique identifier; " +

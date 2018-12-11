@@ -6,21 +6,22 @@ import jp.co.bizreach.trace.ZipkinTraceServiceLike
 import org.scalamock.scalatest.MockFactory
 import org.scalatest._
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.time.{ Millis, Second, Span }
+import org.scalatest.time.{Millis, Second, Span}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import parsers.JsonUnitLinkEditBodyParser
+import parsers.JsonUnitLinkEditBodyParser.JsonPatchMediaType
 import play.api.Application
-import play.api.http.HeaderNames
-import play.api.http.Status.{ BAD_REQUEST, SERVICE_UNAVAILABLE }
+import play.api.http.HeaderNames.CONTENT_TYPE
+import play.api.http.Status.{BAD_REQUEST, SERVICE_UNAVAILABLE}
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.libs.json.{ JsString, Json }
-import play.api.libs.ws.WSClient
+import play.api.libs.json.{JsString, Json}
 import support.wiremock.WireMockSbrControlApi
-import tracing.{ TraceData, TraceWSClient }
-import uk.gov.ons.sbr.models.{ Period, VatRef }
-import uk.gov.ons.sbr.models.edit.{ Operation, OperationTypes, _ }
+import tracing.{TraceData, TraceWSClient}
+import uk.gov.ons.sbr.models.edit._
+import uk.gov.ons.sbr.models.{Period, VatRef}
 import utils.url.BaseUrl
 import utils.url.BaseUrl.Protocol.Http
+
+import scala.concurrent.ExecutionContext
 
 class RestRepository_WiremockSpec extends org.scalatest.fixture.FreeSpec with GuiceOneAppPerSuite with WireMockSbrControlApi with Matchers with ScalaFutures with EitherValues with MockFactory {
 
@@ -42,8 +43,8 @@ class RestRepository_WiremockSpec extends org.scalatest.fixture.FreeSpec with Gu
 
   private val VATEditParentLinkPatchBody =
     s"""|[
-        |  { "op": "test", path: "/parents/LEU", value: "123456789" },
-        |  { "op": "replace", path: "/parents/LEU", value: "987654321" }
+        |  { "op": "test", "path": "/parents/LEU", "value": "123456789" },
+        |  { "op": "replace", "path": "/parents/LEU", "value": "987654321" }
         |]""".stripMargin
 
   /*
@@ -60,7 +61,7 @@ class RestRepository_WiremockSpec extends org.scalatest.fixture.FreeSpec with Gu
   autoVerify = false
 
   // artificially reduce the default request timeout for the purposes of testing timeout handling.
-  override def fakeApplication(): Application = new GuiceApplicationBuilder().configure("play.ws.timeout.request" -> RequestTimeoutMillis).build()
+  override def fakeApplication(): Application = new GuiceApplicationBuilder().configure("play.ws.timeout.request" -> s"${RequestTimeoutMillis}ms").build()
 
   // test patience must exceed the configured fixedDelay to properly test client-side timeout handling
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(timeout = scaled(Span(1, Second)), interval = scaled(Span(100, Millis)))
@@ -84,7 +85,7 @@ class RestRepository_WiremockSpec extends org.scalatest.fixture.FreeSpec with Gu
   private def newFixtureParam: FixtureParam = {
     val config = RestRepositoryConfig(BaseUrl(Http, "localhost", DefaultSbrControlApiPort))
     val wsClient = app.injector.instanceOf[TraceWSClient]
-    FixtureParam(new RestRepository(config, wsClient))
+    FixtureParam(new RestRepository(config, wsClient)(ExecutionContext.global))
   }
 
   "A unit repository" - {
@@ -109,7 +110,7 @@ class RestRepository_WiremockSpec extends org.scalatest.fixture.FreeSpec with Gu
     "when requested to patch json for a resource" - {
       "returns PatchSuccess when the resource is found" in { fixture =>
         stubSbrControlApiFor(aVatParentLinkEditRequest(withVatRef = TargetVAT, withPeriod = TargetPeriod)
-          .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonUnitLinkEditBodyParser.JsonPatchMediaType))
+          .withHeader(CONTENT_TYPE, equalTo(JsonPatchMediaType))
           .withRequestBody(equalToJson(VATEditParentLinkPatchBody))
           .willReturn(aNoContentResponse()))
 
@@ -169,7 +170,7 @@ class RestRepository_WiremockSpec extends org.scalatest.fixture.FreeSpec with Gu
       "when requested to patch json for a resource" - {
         "when the response is a server error" in { fixture =>
           stubSbrControlApiFor(aVatParentLinkEditRequest(withVatRef = TargetVAT, withPeriod = TargetPeriod)
-            .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonUnitLinkEditBodyParser.JsonPatchMediaType))
+            .withHeader(CONTENT_TYPE, equalTo(JsonPatchMediaType))
             .withRequestBody(equalToJson(VATEditParentLinkPatchBody))
             .willReturn(anInternalServerError()))
 
@@ -180,7 +181,7 @@ class RestRepository_WiremockSpec extends org.scalatest.fixture.FreeSpec with Gu
 
         "when the patch request is rejected" in { fixture =>
           stubSbrControlApiFor(aVatParentLinkEditRequest(withVatRef = TargetVAT, withPeriod = TargetPeriod)
-            .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonUnitLinkEditBodyParser.JsonPatchMediaType))
+            .withHeader(CONTENT_TYPE, equalTo(JsonPatchMediaType))
             .withRequestBody(equalToJson(VATEditParentLinkPatchBody))
             .willReturn(anUnprocessableEntityResponse()))
 
@@ -191,7 +192,7 @@ class RestRepository_WiremockSpec extends org.scalatest.fixture.FreeSpec with Gu
 
         "when the response is conflict" in { fixture =>
           stubSbrControlApiFor(aVatParentLinkEditRequest(withVatRef = TargetVAT, withPeriod = TargetPeriod)
-            .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonUnitLinkEditBodyParser.JsonPatchMediaType))
+            .withHeader(CONTENT_TYPE, equalTo(JsonPatchMediaType))
             .withRequestBody(equalToJson(VATEditParentLinkPatchBody))
             .willReturn(aConflictResponse()))
 
@@ -201,11 +202,11 @@ class RestRepository_WiremockSpec extends org.scalatest.fixture.FreeSpec with Gu
         }
 
         /*
-       * Test patienceConfig must exceed the fixedDelay for this to work ...
-       */
+         * Test patienceConfig must exceed the fixedDelay for this to work ...
+         */
         "when the server takes longer than the configured client-side timeout" in { fixture =>
           stubSbrControlApiFor(aVatParentLinkEditRequest(withVatRef = TargetVAT, withPeriod = TargetPeriod)
-            .withHeader(HeaderNames.CONTENT_TYPE, equalTo(JsonUnitLinkEditBodyParser.JsonPatchMediaType))
+            .withHeader(CONTENT_TYPE, equalTo(JsonPatchMediaType))
             .withRequestBody(equalToJson(VATEditParentLinkPatchBody))
             .willReturn(aConflictResponse().withFixedDelay(RequestTimeoutMillis * 2)))
 

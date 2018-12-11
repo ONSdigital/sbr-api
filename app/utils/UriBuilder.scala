@@ -1,7 +1,7 @@
 package utils
 
-import com.netaporter.uri.Uri
-import com.netaporter.uri.dsl._
+import io.lemonlabs.uri.Uri
+import io.lemonlabs.uri.dsl._
 import play.api.libs.json.JsValue
 import uk.gov.ons.sbr.models._
 

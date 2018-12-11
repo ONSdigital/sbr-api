@@ -1,15 +1,15 @@
 package services
 
 import org.scalamock.scalatest.MockFactory
-import org.scalatest.{ FreeSpec, Matchers }
+import org.scalatest.{FreeSpec, Matchers}
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.time.{ Seconds, Span }
+import org.scalatest.time.{Seconds, Span}
 import repository.rest._
 import repository.sbrctrl.RestAdminDataUnitLinksEditRepository
-import uk.gov.ons.sbr.models.UnitType.{ LegalUnit, PayAsYouEarn, ValueAddedTax }
+import uk.gov.ons.sbr.models.UnitType.{LegalUnit, PayAsYouEarn, ValueAddedTax}
 import uk.gov.ons.sbr.models._
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class UnitLinksEditServiceSpec extends FreeSpec with MockFactory with ScalaFutures with Matchers {
 
@@ -31,7 +31,7 @@ class UnitLinksEditServiceSpec extends FreeSpec with MockFactory with ScalaFutur
 
   private trait Fixture {
     val repository = mock[RestAdminDataUnitLinksEditRepository]
-    val editService = new UnitLinksEditService(repository)
+    val editService = new UnitLinksEditService(repository)(ExecutionContext.global)
   }
 
   "a UnitLinksEditService" - {

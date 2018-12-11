@@ -4,14 +4,14 @@ import java.time.Month.APRIL
 
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{ EitherValues, FreeSpec, Matchers }
+import org.scalatest.{EitherValues, FreeSpec, Matchers}
 import play.api.libs.json.Json
 import repository.rest.Repository
 import support.sample.SampleEnterprise
 import tracing.TraceData
-import uk.gov.ons.sbr.models.{ Ern, Period }
+import uk.gov.ons.sbr.models.{Ern, Period}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class RestEnterpriseRepositorySpec extends FreeSpec with Matchers with MockFactory with ScalaFutures with EitherValues {
 
@@ -23,7 +23,7 @@ class RestEnterpriseRepositorySpec extends FreeSpec with Matchers with MockFacto
 
     val traceData = stub[TraceData]
     val unitRepository = mock[Repository]
-    val enterpriseRepository = new RestEnterpriseRepository(unitRepository)
+    val enterpriseRepository = new RestEnterpriseRepository(unitRepository)(ExecutionContext.global)
   }
 
   "An Enterprise repository" - {

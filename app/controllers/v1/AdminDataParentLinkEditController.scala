@@ -1,18 +1,18 @@
 package controllers.v1
 
 import com.typesafe.scalalogging.LazyLogging
-import io.swagger.annotations.{ Api, ApiOperation, ApiResponse, ApiResponses }
-import javax.inject.{ Inject, Singleton }
-import parsers.JsonUnitLinkEditBodyParser
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import play.api.mvc.{ Action, Controller, Result }
+import controllers.AbstractSbrController
+import io.swagger.annotations.{Api, ApiOperation, ApiResponse, ApiResponses}
+import javax.inject.{Inject, Singleton}
+import play.api.mvc.{Action, BodyParser, ControllerComponents, Result}
 import services._
 import uk.gov.ons.sbr.models._
 
 @Api("AdminDataEdit")
 @Singleton
-class AdminDataParentLinkEditController @Inject() (editService: EditService) extends Controller with LazyLogging {
-
+class AdminDataParentLinkEditController @Inject() (editParentLinkBodyParser: BodyParser[EditParentLink],
+                                                   editService: EditService,
+                                                   components: ControllerComponents) extends AbstractSbrController(components) with LazyLogging {
   @ApiOperation(
     value = "Submit JSON with edit details for editing a VAT Parent Unit Link from one value to another",
     notes = """Use the following template: {"parent": "from": {"id":"123456789", "type":"LEU"}, "to": {"id":"123456789", "type":"LEU"}}""",
@@ -27,7 +27,7 @@ class AdminDataParentLinkEditController @Inject() (editService: EditService) ext
     new ApiResponse(code = 422, message = "The request cannot be processed, e.g. specified LEU does not exist"),
     new ApiResponse(code = 500, message = "The attempt to edit the VAT parent unit link could not complete due to an unrecoverable error")
   ))
-  def editVatParentLink(periodStr: String, vatrefStr: String) = Action.async(JsonUnitLinkEditBodyParser) { request =>
+  def editVatParentLink(periodStr: String, vatrefStr: String): Action[EditParentLink] = Action.async(editParentLinkBodyParser) { request =>
     editService.editVatAdminDataParentUnitLink(Period.fromString(periodStr), VatRef(vatrefStr), request.body)
       .map(editStatusToHttpStatus)
   }
@@ -46,7 +46,7 @@ class AdminDataParentLinkEditController @Inject() (editService: EditService) ext
     new ApiResponse(code = 422, message = "The request cannot be processed, e.g. specified LEU does not exist"),
     new ApiResponse(code = 500, message = "The attempt to edit the PAYE parent unit link could not complete due to an unrecoverable error")
   ))
-  def editPayeParentLink(periodStr: String, payerefStr: String) = Action.async(JsonUnitLinkEditBodyParser) { request =>
+  def editPayeParentLink(periodStr: String, payerefStr: String): Action[EditParentLink] = Action.async(editParentLinkBodyParser) { request =>
     editService.editPayeAdminDataParentUnitLink(Period.fromString(periodStr), PayeRef(payerefStr), request.body)
       .map(editStatusToHttpStatus)
   }

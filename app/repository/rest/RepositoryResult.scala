@@ -5,9 +5,9 @@ import repository.ErrorMessage
 
 object RepositoryResult {
   def as[T](reads: Reads[T])(errorOrOptJson: Either[ErrorMessage, Option[JsValue]]): Either[ErrorMessage, Option[T]] =
-    errorOrOptJson.right.flatMap { optJson =>
+    errorOrOptJson.flatMap { optJson =>
       optJson.fold[Either[ErrorMessage, Option[T]]](Right(None)) { jsValue =>
-        readJson(reads, jsValue).right.map(Some(_))
+        readJson(reads, jsValue).map(Some(_))
       }
     }
 

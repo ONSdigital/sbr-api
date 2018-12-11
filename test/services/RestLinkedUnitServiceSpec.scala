@@ -4,16 +4,16 @@ import java.time.Month.FEBRUARY
 
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{ EitherValues, FreeSpec, Matchers }
-import play.api.libs.json.{ JsObject, Json }
+import org.scalatest.{EitherValues, FreeSpec, Matchers}
+import play.api.libs.json.{JsObject, Json}
 import repository.UnitLinksRepository
 import services.finder.UnitFinder
 import tracing.TraceData
 import uk.gov.ons.sbr.models.UnitType.Enterprise
-import uk.gov.ons.sbr.models.{ UnitType, _ }
+import uk.gov.ons.sbr.models.{UnitType, _}
 import unitref.UnitRef
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class RestLinkedUnitServiceSpec extends FreeSpec with Matchers with MockFactory with ScalaFutures with EitherValues {
 
@@ -39,7 +39,7 @@ class RestLinkedUnitServiceSpec extends FreeSpec with Matchers with MockFactory 
 
     val unitLinksRepository = mock[UnitLinksRepository]
     val unitFinder = mock[UnitFinder[FakeRef]]
-    val service = new RestLinkedUnitService[FakeRef](unitRefType, unitLinksRepository, unitFinder)
+    val service = new RestLinkedUnitService[FakeRef](unitRefType, unitLinksRepository, unitFinder)(ExecutionContext.global)
   }
 
   "A Rest LinkedUnitService" - {

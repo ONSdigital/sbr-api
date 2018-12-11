@@ -26,6 +26,10 @@
   <!-- default (but not used by anything using a named logger e.g. if LazyLogging is mixed-in to the logging class )-->
   <logger name="application" level="INFO"/>
 
+  <!-- quiet swagger -->
+  <logger name="io.swagger" level="WARN"/>
+  <logger name="swagger" level="WARN"/>
+
   <root level="INFO">
     <appender-ref ref="ASYNCSTDOUT"/>
   </root>

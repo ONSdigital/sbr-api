@@ -1,15 +1,14 @@
-
 import java.time.Month.JUNE
 
-import TracingAcceptanceSpec.SpanMatcher.{ aChildSpan, aRootSpan }
+import TracingAcceptanceSpec.SpanMatcher.{aChildSpan, aRootSpan}
 import TracingAcceptanceSpec._
-import com.google.inject.{ AbstractModule, TypeLiteral }
+import com.google.inject.{AbstractModule, TypeLiteral}
 import com.typesafe.scalalogging.LazyLogging
 import fixture.ServerAcceptanceSpec
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.time.{ Millis, Seconds }
-import org.scalatest.{ Outcome, TestData }
+import org.scalatest.time.{Millis, Seconds}
+import org.scalatest.{Outcome, TestData}
 import play.api.Application
 import play.api.http.Port
 import play.api.inject.guice.GuiceApplicationBuilder
@@ -17,7 +16,7 @@ import play.api.libs.ws.WSClient
 import play.api.test.WsTestClient
 import support.wiremock.WireMockSbrControlApi
 import tracing.SpanNameCleaningReporter
-import uk.gov.ons.sbr.models.{ Ern, Period }
+import uk.gov.ons.sbr.models.{Ern, Period}
 import zipkin.Span
 import zipkin.reporter.Reporter
 
@@ -138,7 +137,7 @@ class TracingAcceptanceSpec extends ServerAcceptanceSpec with MockFactory with W
       val timestampMicrosBeforeRequest = currentTimestampMicros
 
       When(s"a request is made for the sbr-api version")
-      whenReady(wsClient.url("/version").withHeaders(traceContext: _*).get()) { _ =>
+      whenReady(wsClient.url("/version").withHttpHeaders(traceContext: _*).get()) { _ =>
 
         Then(s"a child span is created within the existing trace to capture the request latency")
         (traceReporter.report _).verify(where(aChildSpan(
@@ -168,7 +167,7 @@ class TracingAcceptanceSpec extends ServerAcceptanceSpec with MockFactory with W
       val timestampMicrosBeforeRequest = currentTimestampMicros
 
       When(s"a request is made to retrieve a unit")
-      whenReady(wsClient.url(s"/v1/periods/${Period.asString(TargetPeriod)}/ents/${TargetErn.value}").withHeaders(traceContext: _*).get()) { _ =>
+      whenReady(wsClient.url(s"/v1/periods/${Period.asString(TargetPeriod)}/ents/${TargetErn.value}").withHttpHeaders(traceContext: _*).get()) { _ =>
 
         Then(s"a child span is created within the existing trace to capture the request latency")
         (traceReporter.report _).verify(where(aChildSpan(
@@ -259,7 +258,7 @@ object TracingAcceptanceSpec {
       )
 
     def aChildSpan(withTraceIdHigh: Long, withTraceIdLow: Long, withParentSpanId: Long,
-      withName: String, withTimestampMicrosAfter: Long): Span => Boolean =
+                   withName: String, withTimestampMicrosAfter: Long): Span => Boolean =
       (span: Span) =>
         span.traceIdHigh == withTraceIdHigh &&
           span.traceId == withTraceIdLow &&

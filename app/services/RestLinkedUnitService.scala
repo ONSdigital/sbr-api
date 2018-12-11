@@ -1,20 +1,19 @@
 package services
 
 import com.typesafe.scalalogging.LazyLogging
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import repository.UnitLinksRepository
 import services.finder.UnitFinder
 import tracing.TraceData
-import uk.gov.ons.sbr.models.{ LinkedUnit, Period, UnitLinks }
+import uk.gov.ons.sbr.models.{LinkedUnit, Period, UnitLinks}
 import unitref.UnitRef
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class RestLinkedUnitService[T](
     unitRefType: UnitRef[T],
     unitLinksRepository: UnitLinksRepository,
     unitFinder: UnitFinder[T]
-) extends LinkedUnitService[T] with LazyLogging {
+)(implicit ec: ExecutionContext) extends LinkedUnitService[T] with LazyLogging {
 
   override def retrieve(period: Period, unitRef: T, traceData: TraceData): Future[Either[ErrorMessage, Option[LinkedUnit]]] = {
     val (unitId, unitType) = unitRefType.toIdTypePair(unitRef)
@@ -36,7 +35,7 @@ class RestLinkedUnitService[T](
   private def onUnitLinksFound(period: Period, unitRef: T, unitLinks: UnitLinks, traceData: TraceData): Future[Either[ErrorMessage, Option[LinkedUnit]]] = {
     logger.debug(s"Found Unit Links for [$period] and [$unitRef].  Attempting to find unit ...")
     unitFinder.find(period, unitRef, unitLinks, traceData).map { errorOrJson =>
-      errorOrJson.right.map { optJson =>
+      errorOrJson.map { optJson =>
         if (optJson.isEmpty) logger.warn(s"Inconsistent Database.  No unit found for [$period] and [$unitRef] that has Unit Links [$unitLinks].")
         optJson.map { json =>
           val linkedUnit = LinkedUnit.wrap(unitLinks, json)

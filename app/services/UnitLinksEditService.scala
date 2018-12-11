@@ -2,15 +2,15 @@ package services
 
 import com.typesafe.scalalogging.LazyLogging
 import javax.inject.Inject
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import repository.AdminDataUnitLinksEditRepository
 import repository.rest._
-import uk.gov.ons.sbr.models.{ Period, _ }
-import unitref.{ PayeUnitRef, VatUnitRef }
+import uk.gov.ons.sbr.models.{Period, _}
+import unitref.{PayeUnitRef, VatUnitRef}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
-class UnitLinksEditService @Inject() (repository: AdminDataUnitLinksEditRepository) extends EditService with LazyLogging {
+
+class UnitLinksEditService @Inject() (repository: AdminDataUnitLinksEditRepository)(implicit ec: ExecutionContext) extends EditService with LazyLogging {
 
   override def editVatAdminDataParentUnitLink(period: Period, vatref: VatRef, editParentLink: EditParentLink): Future[EditParentLinkStatus] = {
     val idAndType = (IdAndType.apply _).tupled(VatUnitRef.toIdTypePair(vatref))

@@ -3,33 +3,35 @@ package controllers.v1
 import java.time.Month.FEBRUARY
 
 import actions.RetrieveLinkedUnitAction.LinkedUnitTracedRequestActionFunctionMaker
-import actions.{ RetrieveLinkedUnitAction, TracedRequest, WithTracingAction }
+import actions.{RetrieveLinkedUnitAction, TracedRequest, WithTracingAction}
 import handlers.LinkedUnitRetrievalHandler
 import jp.co.bizreach.trace.ZipkinTraceServiceLike
 import org.scalamock.scalatest.MockFactory
-import org.scalatest.{ FreeSpec, Matchers }
+import org.scalatest.{FreeSpec, Matchers}
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.mvc.Results.NotFound
 import play.api.mvc._
-import play.api.test.FakeRequest
 import play.api.test.Helpers._
+import play.api.test.{FakeRequest, StubControllerComponentsFactory, StubPlayBodyParsersFactory}
 import services.LinkedUnitService
 import support.tracing.FakeTracing
 import tracing.TraceData
-import uk.gov.ons.sbr.models.{ Period, UnitId }
+import uk.gov.ons.sbr.models.{Period, UnitId}
 import unitref.UnitRef
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
-class LinkedUnitControllerSpec extends FreeSpec with Matchers with MockFactory with FakeTracing {
+class LinkedUnitControllerSpec extends FreeSpec with Matchers with MockFactory with FakeTracing with GuiceOneAppPerSuite {
 
-  private trait Fixture {
+  private trait Fixture extends StubControllerComponentsFactory with StubPlayBodyParsersFactory {
     case class FakeUnitRef(value: String)
     class FakeUnitController(
         unitRefType: UnitRef[FakeUnitRef],
-        withTracingAction: ActionBuilder[TracedRequest],
+        withTracingAction: ActionBuilder[TracedRequest, AnyContent],
         retrieveLinkedUnitAction: LinkedUnitTracedRequestActionFunctionMaker[FakeUnitRef],
-        handleLinkedUnitRetrievalResult: LinkedUnitRetrievalHandler[Result]
-    ) extends LinkedUnitController[FakeUnitRef](unitRefType, withTracingAction, retrieveLinkedUnitAction, handleLinkedUnitRetrievalResult) {
+        handleLinkedUnitRetrievalResult: LinkedUnitRetrievalHandler[Result],
+        components: ControllerComponents
+    ) extends LinkedUnitController[FakeUnitRef](unitRefType, withTracingAction, retrieveLinkedUnitAction, handleLinkedUnitRetrievalResult, components) {
 
       // make the method public so that we can invoke it from a test
       override def retrieveLinkedUnit(periodStr: String, unitRefStr: String): Action[AnyContent] =
@@ -52,11 +54,13 @@ class LinkedUnitControllerSpec extends FreeSpec with Matchers with MockFactory w
     /*
      * We use the real implementations of the Actions here.  Trying to mock/stub these got complicated very quickly.
      */
+    implicit val materializer = app.materializer
     val controller = new FakeUnitController(
       unitRefType,
-      new WithTracingAction(tracerService),
-      new RetrieveLinkedUnitAction[FakeUnitRef](linkedUnitService),
-      linkedUnitRetrievalHandler
+      new WithTracingAction(stubPlayBodyParsers.default, tracerService)(ExecutionContext.global),
+      new RetrieveLinkedUnitAction[FakeUnitRef](linkedUnitService, ExecutionContext.global),
+      linkedUnitRetrievalHandler,
+      stubControllerComponents()
     )
   }
 

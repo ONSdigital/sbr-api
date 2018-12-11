@@ -1,6 +1,6 @@
 package utils
 
-import com.netaporter.uri.Uri
+import io.lemonlabs.uri.Uri
 import play.api.libs.json._
 import support.TestUtils
 import uk.gov.ons.sbr.models.{ CRN, ENT }
@@ -59,19 +59,19 @@ class UtilitiesSpec extends TestUtils {
   // TODO - case using the if condition
   "uriPathBuilder" should {
     "return a uri with types and units path arg set as ENT and 0000 respectively" in {
-      val expected = "/localhost:8080/v0/types/ENT/units/0000"
+      val expected = "localhost:8080/v0/types/ENT/units/0000"
       val uri = createUri("localhost:8080/v0", "0000", None, Some(ENT))
       uri mustBe a[Uri]
       uri.toString mustEqual expected
     }
     "return a uri for control-api route to get unit with the specified type and period param" in {
-      val expected = "/localhost:8080/v0/periods/201706/types/CH/units/00011"
+      val expected = "localhost:8080/v0/periods/201706/types/CH/units/00011"
       val uri = createUri("localhost:8080/v0", "00011", Some("201706"), Some(CRN))
       uri mustBe a[Uri]
       uri.toString mustEqual expected
     }
     "return a uri that a request to LEU hbase rest api" in {
-      val expected = "/leu-localhost:8080/v0/records/1000345"
+      val expected = "leu-localhost:8080/v0/records/1000345"
       val uri = createUri("leu-localhost:8080/v0", "1000345", group = "ch")
       uri mustBe a[Uri]
       uri.toString mustEqual expected

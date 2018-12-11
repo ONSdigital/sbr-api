@@ -40,8 +40,8 @@ class RequestGenerator @Inject() (
 
   def singleGETRequest(path: String, headers: Seq[(String, String)] = Seq.empty, params: Seq[(String, String)] = Seq.empty): Future[WSResponse] =
     ws.url(path.toString)
-      .withQueryString(params: _*)
-      .withHeaders(headers: _*)
+      .withQueryStringParameters(params: _*)
+      .withHttpHeaders(headers: _*)
       .withRequestTimeout(Duration(TIMEOUT_REQUEST, DURATION_METRIC))
       .get
 
@@ -53,7 +53,7 @@ class RequestGenerator @Inject() (
   def singlePOSTRequest(url: String, headers: (String, String), body: JsValue): Future[WSResponse] = {
     LOGGER.debug(s"Rerouting to route: $url")
     ws.url(url.toString)
-      .withHeaders(headers)
+      .withHttpHeaders(headers)
       .withRequestTimeout(Duration(TIMEOUT_REQUEST, DURATION_METRIC))
       .post(body)
   }

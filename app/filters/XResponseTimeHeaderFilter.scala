@@ -3,13 +3,12 @@ package filters
 import akka.stream.Materializer
 import controllers.BuildInfo
 import javax.inject.Inject
-import play.Configuration
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import play.api.mvc.{ Filter, RequestHeader, Result }
+import play.api.Configuration
+import play.api.mvc.{Filter, RequestHeader, Result}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
-class XResponseTimeHeaderFilter @Inject() (implicit val mat: Materializer, config: Configuration) extends Filter {
+class XResponseTimeHeaderFilter @Inject() (implicit val mat: Materializer, ec: ExecutionContext, config: Configuration) extends Filter {
   def apply(nextFilter: RequestHeader => Future[Result])(requestHeader: RequestHeader): Future[Result] = {
     val startTime = System.currentTimeMillis
 
@@ -17,7 +16,7 @@ class XResponseTimeHeaderFilter @Inject() (implicit val mat: Materializer, confi
       val endTime = System.currentTimeMillis
       val responseTime = endTime - startTime
 
-      if (config.getBoolean("play.filters.cors.allowAll")) {
+      if (config.get[Boolean]("play.filters.cors.allowAll")) {
         result.withHeaders(
           "X-Response-Time" -> responseTime.toString,
           "Server" -> (BuildInfo.name + "/" + BuildInfo.version),

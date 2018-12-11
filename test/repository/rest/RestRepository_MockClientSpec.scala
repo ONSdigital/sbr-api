@@ -1,16 +1,14 @@
 package repository.rest
 
-import javax.inject.Inject
-
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{ EitherValues, FreeSpec, Matchers }
-import play.api.libs.ws.{ WSClient, WSRequest, WSResponse }
-import tracing.{ TraceData, TraceWSClient }
+import org.scalatest.{EitherValues, FreeSpec, Matchers}
+import play.api.libs.ws.{WSClient, WSRequest, WSResponse}
+import tracing.{TraceData, TraceWSClient}
 import utils.url.BaseUrl
 import utils.url.BaseUrl.Protocol.Http
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /*
  * This spec mocks the wsClient, which disregards the rule "don't mock types you don't own" (see "Growing
@@ -31,9 +29,9 @@ class RestRepository_MockClientSpec extends FreeSpec with Matchers with MockFact
     val config = RestRepositoryConfig(
       BaseUrl(protocol = Http, host = "somehost", port = 4321)
     )
-    val repository = new RestRepository(config, wsClient)
+    val repository = new RestRepository(config, wsClient)(ExecutionContext.global)
 
-    (wsRequest.withHeaders _).expects(*).returning(wsRequest)
+    (wsRequest.withHttpHeaders _).expects(*).returning(wsRequest)
   }
 
   "A SBR Control unit repository" - {

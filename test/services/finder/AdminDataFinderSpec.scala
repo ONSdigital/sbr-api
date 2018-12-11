@@ -4,15 +4,15 @@ import java.time.Month.JUNE
 
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{ EitherValues, FreeSpec, Matchers }
-import play.api.libs.json.{ JsObject, Json }
+import org.scalatest.{EitherValues, FreeSpec, Matchers}
+import play.api.libs.json.{JsObject, Json}
 import repository.AdminDataRepository
 import tracing.TraceData
-import uk.gov.ons.sbr.models.UnitType.{ LegalUnit, ValueAddedTax }
+import uk.gov.ons.sbr.models.UnitType.{LegalUnit, ValueAddedTax}
 import uk.gov.ons.sbr.models._
 import unitref.UnitRef
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class AdminDataFinderSpec extends FreeSpec with Matchers with MockFactory with ScalaFutures with EitherValues {
 
@@ -40,7 +40,7 @@ class AdminDataFinderSpec extends FreeSpec with Matchers with MockFactory with S
     val unitRefType = stub[UnitRef[FakeAdminDataRef]]
     (unitRefType.toIdTypePair _).when(TargetUnitRef).returns(TargetUnitId -> TargetUnitType)
     val adminDatarepository = mock[AdminDataRepository]
-    val finder = new AdminDataFinder[FakeAdminDataRef](unitRefType, adminDatarepository)
+    val finder = new AdminDataFinder[FakeAdminDataRef](unitRefType, adminDatarepository)(ExecutionContext.global)
   }
 
   "An AdminData finder" - {

@@ -2,21 +2,22 @@ package controllers.v1
 
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{ FreeSpec, Matchers }
+import org.scalatest.{FreeSpec, Matchers}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import parsers.JsonUnitLinkEditBodyParser
 import play.api.libs.json.JsString
-import play.api.test.FakeRequest
+import play.api.test.{FakeRequest, StubControllerComponentsFactory, StubPlayBodyParsersFactory}
 import play.api.test.Helpers._
 import repository.sbrctrl.RestAdminDataUnitLinksEditRepository
 import services._
 import uk.gov.ons.sbr.models._
 import uk.gov.ons.sbr.models.edit._
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class EditAdminDataParentLinkStatusMappingSpec extends FreeSpec with GuiceOneAppPerSuite with Matchers with MockFactory with ScalaFutures {
 
-  private trait Fixture {
+  private trait Fixture extends StubControllerComponentsFactory with StubPlayBodyParsersFactory {
     val ValidVatRef = "397585634298"
     val ValidPayeRef = "192039485761"
     val TargetPeriod = Period.fromString("201803")
@@ -56,9 +57,10 @@ class EditAdminDataParentLinkStatusMappingSpec extends FreeSpec with GuiceOneApp
 
     val editService = mock[EditService]
     val repository = mock[RestAdminDataUnitLinksEditRepository]
-    val controller = new AdminDataParentLinkEditController(editService)
 
     implicit lazy val materializer = app.materializer
+    val editParentLinkBodyParser = new JsonUnitLinkEditBodyParser(stubPlayBodyParsers.json)(ExecutionContext.global)
+    val controller = new AdminDataParentLinkEditController(editParentLinkBodyParser, editService, stubControllerComponents())
   }
 
   "A request to edit a parent LEU unit link by reference number and period" - {

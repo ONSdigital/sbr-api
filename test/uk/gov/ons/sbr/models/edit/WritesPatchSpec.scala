@@ -1,8 +1,7 @@
 package uk.gov.ons.sbr.models.edit
 
-import org.scalatest.{ FreeSpec, Matchers }
-import play.api.libs.json.{ JsArray, JsObject, JsString, Json }
-import uk.gov.ons.sbr.models.edit.OperationTypes.{ Replace, Test }
+import org.scalatest.{FreeSpec, Matchers}
+import play.api.libs.json.{JsString, Json}
 
 class WritesPatchSpec extends FreeSpec with Matchers {
 
